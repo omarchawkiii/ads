@@ -1,0 +1,212 @@
+models:
+  Location:
+    name: string
+    cpm: integer
+    relationships:
+      hasMany:
+        - Compaign
+
+  Slot:
+    name: string
+    cpm: integer
+    relationships:
+      hasMany:
+        - Compaign
+
+  TargetType:
+    name: string
+    detail: string
+    cpm: integer
+    relationships:
+      belongsToMany:
+        - Compaign
+
+  Compaign:
+    name: string
+    compaign_objective_id: id foreign
+    compaign_category_id: id foreign
+    brand_id: id foreign
+    start_date: date
+    end_date: date
+    budget: integer
+    langue_id: id foreign
+    note: text
+    movie_id: id foreign
+    gender_id: id foreign
+    slot_id: id foreign
+    ad_duration: integer
+    location_id: id foreign
+    relationships:
+      belongsTo:
+        - CompaignObjective
+        - CompaignCategory
+        - Brand
+        - Langue
+        - Movie
+        - Gender
+        - Slot
+        - Location
+      belongsToMany:
+        - TargetType
+        - HallType
+        - MovieGenre
+        - Interest
+
+  CompaignObjective:
+    name: string
+    relationships:
+      hasMany:
+        - Compaign
+
+  CompaignCategory:
+    name: string
+    relationships:
+      hasMany:
+        - Compaign
+
+  Brand:
+    name: string
+    relationships:
+      hasMany:
+        - Compaign
+
+  Langue:
+    name: string
+    relationships:
+      hasMany:
+        - Compaign
+
+  HallType:
+    name: string
+    relationships:
+      belongsToMany:
+        - Compaign
+
+  Movie:
+    name: string
+    relationships:
+      hasMany:
+        - Compaign
+
+  MovieGenre:
+    name: string
+    relationships:
+      belongsToMany:
+        - Compaign
+
+  Gender:
+    name: string
+    relationships:
+      hasMany:
+        - Compaign
+
+  Interest:
+    name: string
+    relationships:
+      belongsToMany:
+        - Compaign
+
+controllers:
+  LocationController:
+    index:
+      query: all
+      render: locations.index with:locations
+    show:
+      render: locations.show with:location
+
+
+  SlotController:
+    index:
+      query: all
+      render: slots.index with:slots
+    show:
+      render: slots.show with:slot
+
+
+  TargetTypeController:
+    index:
+      query: all
+      render: target_types.index with:target_types
+    show:
+      render: target_types.show with:target_type
+
+
+  CompaignController:
+    index:
+      query: all
+      render: compaigns.index with:compaigns
+    show:
+      render: compaigns.show with:compaign
+
+
+  CompaignObjectiveController:
+    index:
+      query: all
+      render: compaign_objectives.index with:compaign_objectives
+    show:
+      render: compaign_objectives.show with:compaign_objective
+
+
+  CompaignCategoryController:
+    index:
+      query: all
+      render: compaign_categories.index with:compaign_categories
+    show:
+      render: compaign_categories.show with:compaign_category
+
+
+  BrandController:
+    index:
+      query: all
+      render: brands.index with:brands
+    show:
+      render: brands.show with:brand
+
+
+  LangueController:
+    index:
+      query: all
+      render: langues.index with:langues
+    show:
+      render: langues.show with:langue
+
+
+  HallTypeController:
+    index:
+      query: all
+      render: hall_types.index with:hall_types
+    show:
+      render: hall_types.show with:hall_type
+
+
+  MovieController:
+    index:
+      query: all
+      render: movies.index with:movies
+    show:
+      render: movies.show with:movie
+
+
+  MovieGenreController:
+    index:
+      query: all
+      render: movie_genres.index with:movie_genres
+    show:
+      render: movie_genres.show with:movie_genre
+
+
+  GenderController:
+    index:
+      query: all
+      render: genders.index with:genders
+    show:
+      render: genders.show with:gender
+
+
+  InterestController:
+    index:
+      query: all
+      render: interests.index with:interests
+    show:
+      render: interests.show with:interest
+

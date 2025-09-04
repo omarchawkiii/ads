@@ -1,0 +1,117 @@
+created:
+    - app/Http/Controllers/LocationController.php
+    - app/Http/Controllers/SlotController.php
+    - app/Http/Controllers/TargetTypeController.php
+    - app/Http/Controllers/CompaignController.php
+    - app/Http/Controllers/CompaignObjectiveController.php
+    - app/Http/Controllers/CompaignCategoryController.php
+    - app/Http/Controllers/BrandController.php
+    - app/Http/Controllers/LangueController.php
+    - app/Http/Controllers/HallTypeController.php
+    - app/Http/Controllers/MovieController.php
+    - app/Http/Controllers/MovieGenreController.php
+    - app/Http/Controllers/GenderController.php
+    - app/Http/Controllers/InterestController.php
+    - database/factories/LocationFactory.php
+    - database/factories/SlotFactory.php
+    - database/factories/TargetTypeFactory.php
+    - database/factories/CompaignFactory.php
+    - database/factories/CompaignObjectiveFactory.php
+    - database/factories/CompaignCategoryFactory.php
+    - database/factories/BrandFactory.php
+    - database/factories/LangueFactory.php
+    - database/factories/HallTypeFactory.php
+    - database/factories/MovieFactory.php
+    - database/factories/MovieGenreFactory.php
+    - database/factories/GenderFactory.php
+    - database/factories/InterestFactory.php
+    - database/migrations/2025_08_29_215204_create_locations_table.php
+    - database/migrations/2025_08_29_215205_create_slots_table.php
+    - database/migrations/2025_08_29_215206_create_target_types_table.php
+    - database/migrations/2025_08_29_215207_create_compaigns_table.php
+    - database/migrations/2025_08_29_215208_create_compaign_objectives_table.php
+    - database/migrations/2025_08_29_215209_create_compaign_categories_table.php
+    - database/migrations/2025_08_29_215210_create_brands_table.php
+    - database/migrations/2025_08_29_215211_create_langues_table.php
+    - database/migrations/2025_08_29_215212_create_hall_types_table.php
+    - database/migrations/2025_08_29_215213_create_movies_table.php
+    - database/migrations/2025_08_29_215214_create_movie_genres_table.php
+    - database/migrations/2025_08_29_215215_create_genders_table.php
+    - database/migrations/2025_08_29_215216_create_interests_table.php
+    - database/migrations/2025_08_29_215217_create_compaign_target_type_table.php
+    - database/migrations/2025_08_29_215218_create_compaign_target_type_hall_type_movie_genre_interest_table.php
+    - database/migrations/2025_08_29_215219_create_compaign_hall_type_table.php
+    - database/migrations/2025_08_29_215220_create_compaign_movie_genre_table.php
+    - database/migrations/2025_08_29_215221_create_compaign_interest_table.php
+    - app/Models/Location.php
+    - app/Models/Slot.php
+    - app/Models/TargetType.php
+    - app/Models/Compaign.php
+    - app/Models/CompaignObjective.php
+    - app/Models/CompaignCategory.php
+    - app/Models/Brand.php
+    - app/Models/Langue.php
+    - app/Models/HallType.php
+    - app/Models/Movie.php
+    - app/Models/MovieGenre.php
+    - app/Models/Gender.php
+    - app/Models/Interest.php
+    - tests/Feature/Http/Controllers/LocationControllerTest.php
+    - tests/Feature/Http/Controllers/SlotControllerTest.php
+    - tests/Feature/Http/Controllers/TargetTypeControllerTest.php
+    - tests/Feature/Http/Controllers/CompaignControllerTest.php
+    - tests/Feature/Http/Controllers/CompaignObjectiveControllerTest.php
+    - tests/Feature/Http/Controllers/CompaignCategoryControllerTest.php
+    - tests/Feature/Http/Controllers/BrandControllerTest.php
+    - tests/Feature/Http/Controllers/LangueControllerTest.php
+    - tests/Feature/Http/Controllers/HallTypeControllerTest.php
+    - tests/Feature/Http/Controllers/MovieControllerTest.php
+    - tests/Feature/Http/Controllers/MovieGenreControllerTest.php
+    - tests/Feature/Http/Controllers/GenderControllerTest.php
+    - tests/Feature/Http/Controllers/InterestControllerTest.php
+    - resources/views/locations/index.blade.php
+    - resources/views/locations/show.blade.php
+    - resources/views/slots/index.blade.php
+    - resources/views/slots/show.blade.php
+    - resources/views/target_types/index.blade.php
+    - resources/views/target_types/show.blade.php
+    - resources/views/compaigns/index.blade.php
+    - resources/views/compaigns/show.blade.php
+    - resources/views/compaign_objectives/index.blade.php
+    - resources/views/compaign_objectives/show.blade.php
+    - resources/views/compaign_categories/index.blade.php
+    - resources/views/compaign_categories/show.blade.php
+    - resources/views/brands/index.blade.php
+    - resources/views/brands/show.blade.php
+    - resources/views/langues/index.blade.php
+    - resources/views/langues/show.blade.php
+    - resources/views/hall_types/index.blade.php
+    - resources/views/hall_types/show.blade.php
+    - resources/views/movies/index.blade.php
+    - resources/views/movies/show.blade.php
+    - resources/views/movie_genres/index.blade.php
+    - resources/views/movie_genres/show.blade.php
+    - resources/views/genders/index.blade.php
+    - resources/views/genders/show.blade.php
+    - resources/views/interests/index.blade.php
+    - resources/views/interests/show.blade.php
+updated:
+    - routes/web.php
+models:
+    Location: { name: string, cpm: integer, relationships: { hasMany: Compaign } }
+    Screen: { name: 'string:255', seat: 'bigInteger:100 unsigned', api_namespace: 'string:255', type: 'string:255', masking_movement: 'string:255', screen_h: 'decimal:8,2 unsigned', screen_w: 'decimal:8,2 unsigned', screen_d: 'decimal:8,2 unsigned', projector_brand: 'string:255', projector_model: 'string:255', projector_ip_lan: 'string:255', lens_model: 'string:255', installed: boolean, server_brand: 'string:255', server_model: 'string:255', server_ip_lan: 'string:255', ingest_capabilities: 'string:255', 3d_brand: 'string:255 nullable', 3d_model: 'string:255 nullable', automation_brand: 'string:255', automation_model: 'string:255', automation_ip_lan: 'string:255', satelite_or_live: 'string:255', transmission_brand: 'string:255', transmission_model: 'string:255', transmission_ip_lan: 'string:255', processor_brand: 'string:255', processor_model: 'string:255', processor_ip_lan: 'string:255', audio_type: 'string:255', audio_brand: 'string:255', audio_model: 'string:255', audio_channel: 'string:255', audio_frequency: 'string:255', relationships: { belongsTo: Location } }
+    Spl: { name: 'string:100', uuid: 'string:255', annotation: 'string:255', issue_date: 'string:255', creator: 'string:255', path_file: 'string:255', server_name: 'string:255', last_update: dateTime, file_type: 'string:255', duration: integer, is_downloaded: integer, tms_path: 'string:255', id_server: 'string:255', id_local_server: integer, file_size: 'decimal:8,2 unsigned', file_progress: 'decimal:8,2 unsigned', spl_type: 'string:255', location_id: 'id foreign', relationships: { hasMany: Cpl, belongsTo: Location } }
+    Cpl: { uuid: 'string:255', durationEdits: 'string:255', storageKind: 'string:255', name: 'string:255', contentKind: 'string:255', editRate_numerator: 'string:255', editRate_denominator: 'string:255', editRateFPS: 'string:255', pictureWidth: 'decimal:8,2 unsigned', pictureHeight: 'decimal:8,2 unsigned', pictureEncodingAlgorithm: 'string:255', pictureEncryptionAlgorithm: 'string:255', soundChannelCount: 'decimal:8,2 unsigned', soundQuantizationBits: 'decimal:8,2 unsigned', soundEncodingAlgorithm: 'string:255', soundEncryptionAlgorithm: 'string:255', encryptionKeysCount: 'decimal:8,2 unsigned', framesPerEdit: 'decimal:8,2 unsigned', is3D: boolean, standardCompliance: 'string:255', soundSamplingRate_numerator: 'string:255', soundSamplingRate_denominator: 'string:255', assets: 'decimal:8,2 unsigned', cplSizeInBytes: 'decimal:8,2 unsigned', packageSizeInBytes: 'decimal:8,2 unsigned', markersCount: 'string:255', playable: 'string:255', last_update: dateTime, cpl_list_uuivd: 'string:255', id_auditorium: 'decimal:8,2 unsigned', id_server: 'string:255', location_id: 'id foreign', relationships: { hasMany: Spl, belongsTo: Location } }
+    Kdm: { uuid: 'string:255', name: 'string:255', AnnotationText: 'string:255', ContentKeysNotValidBefore: 'string:255', ContentKeysNotValidAfter: 'string:255', SubjectName: 'string:255', DeviceListDescription: 'string:255', SerialNumber: 'string:255', path_file: 'string:255', server_name: 'string:255', file_type: 'string:255', id_server: 'string:255', file_size: 'decimal:8,2 unsigned', file_progress: 'decimal:8,2 unsigned', tms_path: 'string:255', last_update: dateTime, screen_id: 'id foreign', cpl_id: 'id foreign', relationships: { belongsTo: 'Cpl, Screen' } }
+    Slot: { name: string, cpm: integer, relationships: { hasMany: Compaign } }
+    TargetType: { name: string, detail: string, cpm: integer, relationships: { belongsToMany: Compaign } }
+    Compaign: { name: string, compaign_objective_id: 'id foreign', compaign_category_id: 'id foreign', brand_id: 'id foreign', start_date: date, end_date: date, budget: integer, langue_id: 'id foreign', note: text, movie_id: 'id foreign', gender_id: 'id foreign', slot_id: 'id foreign', ad_duration: integer, location_id: 'id foreign', relationships: { belongsTo: 'CompaignObjective CompaignCategory Brand Langue Movie Gender Slot Location', belongsToMany: 'TargetType HallType MovieGenre Interest' } }
+    CompaignObjective: { name: string, relationships: { hasMany: Compaign } }
+    CompaignCategory: { name: string, relationships: { hasMany: Compaign } }
+    Brand: { name: string, relationships: { hasMany: Compaign } }
+    Langue: { name: string, relationships: { hasMany: Compaign } }
+    HallType: { name: string, relationships: { belongsToMany: Compaign } }
+    Movie: { name: string, relationships: { hasMany: Compaign } }
+    MovieGenre: { name: string, relationships: { belongsToMany: Compaign } }
+    Gender: { name: string, relationships: { hasMany: Compaign } }
+    Interest: { name: string, relationships: { belongsToMany: Compaign } }
