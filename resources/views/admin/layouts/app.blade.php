@@ -47,35 +47,23 @@
             </div>
         </div>
     </div>
-    <div class="modal    " id="wait-modal" tabindex="-1" role="dialog"
-    aria-labelledby="loadingModal2Label"aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-body text-center" style="min-height: auto; height: 260px; display: flex ">
-                <h5 class="modal-title mb-3"> </h5>
-                <div class="loader">
-                    <h5 class="modal-title mb-3"> Loading...</h5>
-                    <div class="spinner-border text-primary " role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="spinner-border text-primary " role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="spinner-border text-primary " role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="spinner-border text-primary " role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="spinner-border text-primary " role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+    <div class="modal    " id="wait-modal" tabindex="-1" role="dialog" aria-labelledby="loadingModal2Label"aria-hidden="true" style="background: #00000038;">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="    background: transparent; border: none; box-shadow: none;">
+                <div class="modal-body text-center" style="min-height: auto; height: 260px; display: flex ">
+                    <h5 class="modal-title mb-3"> </h5>
+                    <div class="loader">
+                        <h5 class="modal-title mb-3 text-white"> Loading...</h5>
+                        <div class="spinner-border text-primary " role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
 
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
-</div>
     <script>
         function handleColorTheme(e)
         {

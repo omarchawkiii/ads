@@ -292,7 +292,7 @@
                     Swal.fire({
                         icon: 'success',
                         title: 'Upload completed',
-                        text: `Assembled file: ${completeRes.final.filename} (${(completeRes.final.size / (1024*1024)).toFixed(1)} MB)`,
+                        text: `DCP Creative: ${completeRes.cpl_meta.name} (${(completeRes.final.size / (1024*1024)).toFixed(1)} MB) Uploaded Successfully `,
                         confirmButtonText: 'OK'
                     });
 

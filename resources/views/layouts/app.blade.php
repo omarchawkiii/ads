@@ -49,7 +49,7 @@
             100% {
                 box-shadow: -38px 0 , -14px 0, 14px 0 , 38px -12px;
             }
-}
+        }
 
     </style>
 </head>
