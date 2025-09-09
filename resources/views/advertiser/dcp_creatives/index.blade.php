@@ -13,12 +13,11 @@
                         <nav aria-label="breadcrumb" class="ms-auto">
                             <ol class="breadcrumb">
                                 <li class="breadcrumb-item" aria-current="page">
-                                    <button class="btn bg-success  text-white " id="create_dcp_creative">
-                                        + New DCP Creative
-                                    </button>
 
-                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                                        Uploader un ZIP volumineux
+
+                                    <button class="btn bg-success  text-white" data-bs-toggle="modal"
+                                        data-bs-target="#uploadModal">
+                                        + New DCP Creative
                                     </button>
 
                                 </li>
@@ -185,13 +184,13 @@
                 if (!/\.(zip|tar|7z)$/i.test(file.name)) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Fichier invalide',
-                        text: 'Veuillez sélectionner un fichier .zip'
+                        title: 'Invalid file',
+                        text: 'Please select a .zip, .tar, or .7z file.'
                     });
                     return;
                 }
 
-                // Ouvrir la fenêtre de progression
+                // Open progress window
                 resetProgressUI();
                 cancelRequested = false;
                 uploadModal.hide();
@@ -199,7 +198,7 @@
 
                 try {
                     // 1) INIT
-                    setProgress(0, 'Initialisation…');
+                    setProgress(0, 'Initialization…');
                     const initRes = await $.ajax({
                         url: "{{ route('advertiser.zip.upload.init') }}",
                         method: 'POST',
@@ -212,7 +211,7 @@
                         }
                     });
 
-                    if (!initRes.ok) throw new Error(initRes.message || 'Erreur init');
+                    if (!initRes.ok) throw new Error(initRes.message || 'Init error');
 
                     const uploadId = initRes.upload_id;
                     const CHUNK = initRes.chunk_size || CHUNK_SIZE_FALLBACK;
@@ -221,7 +220,7 @@
                     let uploadedBytesBefore = 0;
                     let currentIndex = 0;
 
-                    // 2) Envoi chunk par chunk
+                    // 2) Send chunk by chunk
                     while (currentIndex < total) {
                         if (cancelRequested) throw new Error('cancelled');
 
@@ -252,9 +251,9 @@
                                 if (xhr.upload) {
                                     xhr.upload.addEventListener('progress', function(e) {
                                         if (e.lengthComputable) {
-                                            const totalPct = pctBase + (e.loaded / file
-                                                .size) * 100;
-                                            setProgress(totalPct, `Upload…`);
+                                            const totalPct = pctBase + (e.loaded /
+                                                file.size) * 100;
+                                            setProgress(totalPct, 'Uploading…');
                                         }
                                     }, false);
                                 }
@@ -263,12 +262,12 @@
                         });
 
                         uploadedBytesBefore += (end - start);
-                        setProgress((uploadedBytesBefore / file.size) * 100, `Upload`);
+                        setProgress((uploadedBytesBefore / file.size) * 100, 'Uploading');
                         currentIndex++;
                     }
 
                     // 3) COMPLETE
-                    setProgress(99, 'Assemblage côté serveur…');
+                    setProgress(99, 'Server-side assembly…');
                     const completeRes = await $.ajax({
                         url: "{{ route('advertiser.zip.upload.complete') }}",
                         method: 'POST',
@@ -282,25 +281,25 @@
                         }
                     });
 
-                    if (!completeRes.ok) throw new Error(completeRes.message || 'Erreur complete');
+                    if (!completeRes.ok) throw new Error(completeRes.message || 'Complete error');
 
-                    setProgress(100, 'Terminé ✔️');
+                    setProgress(100, 'Completed ✔️');
                     $('#cancelBtn').prop('disabled', true);
                     $('#xCloseProgress').prop('disabled', false);
 
-                    // Fermer le popup de progression et SweetAlert succès
+                    // Close progress modal and show success alert
                     progressModal.hide();
                     Swal.fire({
                         icon: 'success',
-                        title: 'Upload terminé',
-                        text: `Fichier assemblé: ${completeRes.final.filename} (${(completeRes.final.size / (1024*1024)).toFixed(1)} Mo)`,
+                        title: 'Upload completed',
+                        text: `Assembled file: ${completeRes.final.filename} (${(completeRes.final.size / (1024*1024)).toFixed(1)} MB)`,
                         confirmButtonText: 'OK'
                     });
 
                     if (completeRes.warning) {
                         Swal.fire({
                             icon: 'warning',
-                            title: 'Avertissement ZIP',
+                            title: 'ZIP warning',
                             text: completeRes.warning,
                         });
                     }
@@ -310,25 +309,26 @@
                     if (String(err.message) === 'cancelled') {
                         Swal.fire({
                             icon: 'info',
-                            title: 'Upload annulé',
-                            text: 'Vous avez annulé l’upload.'
+                            title: 'Upload cancelled',
+                            text: 'You cancelled the upload.'
                         });
                     } else {
                         console.error(err);
-                        const msg = err.responseJSON?.message || err.message || 'Erreur inconnue';
+                        const msg = err.responseJSON?.message || err.message || 'Unknown error';
                         Swal.fire({
                             icon: 'error',
-                            title: 'Erreur upload',
+                            title: 'Upload error',
                             text: msg
                         });
                     }
                 } finally {
-                    // Reset visuel pour un prochain upload
+                    // Visual reset for next upload
                     resetProgressUI();
                     $('#fileInput').val('');
-                    get_dcp_creatives()
+                    get_dcp_creatives();
                 }
             });
+
 
 
             function get_dcp_creatives() {
