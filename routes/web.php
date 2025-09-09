@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('admin.welcome');
-});
+})->middleware(['auth']);;
 
 require __DIR__.'/auth.php';
 
@@ -150,9 +150,28 @@ Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::cla
 /* ************ End Admin route ********** */
 
 /* ************ advertiser  route ********** */
-Route::middleware(['auth', 'advertiser'])->prefix('advertiser')->name('advertiser.')->group(function () {
+    Route::middleware(['auth', 'advertiser'])->prefix('advertiser')->name('advertiser.')->group(function () {
     Route::get('compaigns', [App\Http\Controllers\CompaignController::class, 'advertiser_index'])->name('compaigns.index');
     Route::get('compaigns/list', [App\Http\Controllers\CompaignController::class, 'my_compaigns'])->name('compaigns.my_compaigns');
+    Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show');
+    Route::post('/compaigns', [App\Http\Controllers\CompaignController::class, 'store'])->name('compaigns.store');
+
+
+
+    Route::get('dcp_creatives', [App\Http\Controllers\DcpCreativeController::class, 'index'])->name('dcp_creatives.index');
+    Route::get('dcp_creatives/list', [App\Http\Controllers\DcpCreativeController::class, 'get'])->name('dcp_creatives.list');
+    Route::post('dcp_creatives', [App\Http\Controllers\DcpCreativeController::class, 'store'])->name('dcp_creatives.store');
+    Route::put('dcp_creatives/{interest}', [App\Http\Controllers\DcpCreativeController::class, 'update'])->name('dcp_creatives.update');
+    Route::delete('dcp_creatives', [App\Http\Controllers\DcpCreativeController::class, 'destroy'])->name('dcp_creatives.destroy');
+    Route::get('dcp_creatives/{id}/show', [App\Http\Controllers\DcpCreativeController::class, 'show'])->name('dcp_creatives.show');
+
+
+
+
+    Route::post('/zip-upload/init', [App\Http\Controllers\DcpCreativeController::class, 'init'])->name('zip.upload.init');
+    Route::post('/zip-upload/chunk', [App\Http\Controllers\DcpCreativeController::class, 'chunk'])->name('zip.upload.chunk');
+    Route::post('/zip-upload/complete', [App\Http\Controllers\DcpCreativeController::class, 'complete'])->name('zip.upload.complete');
+
 
 
 });

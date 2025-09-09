@@ -32,7 +32,10 @@
                         <tr class="text-center">
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
-                            <th class="text-center">Date</th>
+                            <th class="text-center">Created By</th>
+
+                            <th class="text-center">Start Date</th>
+                            <th class="text-center">End Date</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -267,7 +270,7 @@
                             </div>
                         </section>
                         <!-- Step 3 -->
-                        <h6>Upload & Slot</h6>
+                        <h6>DCP Creative & Slot</h6>
                         <section>
                             <div class="row">
                                 <div class="col-md-6">
@@ -299,14 +302,22 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="mb-3">
-                                        <label class="form-label" for="dcp_file"> Upload DCP Creative : <span
+                                        <label class="form-label" for="dcp_creative"> DCP Creative : <span
                                                 class="danger">*</span>
                                         </label>
-                                        <input class="form-control" type="file" id="dcp_file">
+
+                                        <select class="form-select required select2" id="dcp_creative" multiple=""  name="dcp_creative[]">
+                                            <option value="">Select...</option>
+                                            @foreach ($dcp_creatives as $dcp_creative)
+                                                <option value="{{ $dcp_creative->id }}">{{ $dcp_creative->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
+
+
                             </div>
                         </section>
                         <!-- Step 4 -->
@@ -848,7 +859,12 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     value.name + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                        (value.user ? value.user.name + ' ' + value.user.last_name : '') +
+                                    ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         formatDateEN(value.start_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                        formatDateEN(value.end_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
                                     '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +

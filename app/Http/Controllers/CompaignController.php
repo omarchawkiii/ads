@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Compaign;
 use App\Models\CompaignCategory;
 use App\Models\CompaignObjective;
+use App\Models\DcpCreative;
 use App\Models\Gender;
 use App\Models\HallType;
 use App\Models\Interest;
@@ -37,9 +38,10 @@ class CompaignController extends Controller
         $target_types = TargetType::orderBy('name', 'asc')->get() ;
         $interests = Interest::orderBy('name', 'asc')->get() ;
         $slots = Slot::orderBy('name', 'asc')->get() ;
+        $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
 
 
-        return view('admin.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots'));
+        return view('admin.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives'));
     }
 
     public function show(Request $request)
@@ -69,7 +71,7 @@ class CompaignController extends Controller
 
     public function get()
     {
-        $compaigns = Compaign::orderBy('name', 'asc')->get();
+        $compaigns = Compaign::with('user')->orderBy('name', 'asc')->get();
         return Response()->json(compact('compaigns'));
     }
 
@@ -101,7 +103,7 @@ class CompaignController extends Controller
             'movie_genre.*'=> 'integer|exists:movie_genres,id',
             'interest'     => 'array',
             'interest.*'   => 'integer|exists:interests,id',
-
+            'dcp_creative'   =>'array',
             // peut être int (single) ou array, on gère les deux
             'target_type'  => 'nullable',
         ]);
@@ -124,6 +126,7 @@ class CompaignController extends Controller
                 'user_id' => Auth::user()->id
             ]);
 
+
             // 2) SYNC des pivots (prend en charge [] et valeur simple)
             $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
 
@@ -133,6 +136,7 @@ class CompaignController extends Controller
             $compaign->movieGenres()->sync($ids('movie_genre'));
             $compaign->interests()->sync($ids('interest'));
             $compaign->targetTypes()->sync($ids('target_type'));
+            $compaign->dcpCreatives()->sync($ids('dcp_creative'));
 
             return response()->json([
                 'message' => 'Compaign created successfully.',
@@ -196,9 +200,10 @@ class CompaignController extends Controller
         $target_types = TargetType::orderBy('name', 'asc')->get() ;
         $interests = Interest::orderBy('name', 'asc')->get() ;
         $slots = Slot::orderBy('name', 'asc')->get() ;
+        $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
 
 
-        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots'));
+        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives'));
     }
 
 }

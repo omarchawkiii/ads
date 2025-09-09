@@ -1,5 +1,4 @@
-function reset_form(selector)
-{
+function reset_form(selector) {
     $(selector)[0].reset();
     $(selector).removeClass("was-validated");
 }
@@ -8,8 +7,8 @@ function reset_form(selector)
 
 
 
-function jn(x){ return Array.isArray(x) ? x.map(i => i?.name).filter(Boolean).join(', ') || '–' : (x?.name || '–'); }
-function jv(x){ return (x ?? '') === '' ? '–' : x; }
+function jn(x) { return Array.isArray(x) ? x.map(i => i?.name).filter(Boolean).join(', ') || '–' : (x?.name || '–'); }
+function jv(x) { return (x ?? '') === '' ? '–' : x; }
 
 
 function formatDateEN(input, { locale = 'en-US', variant = 'short' } = {}) {
@@ -22,9 +21,20 @@ function formatDateEN(input, { locale = 'en-US', variant = 'short' } = {}) {
     const d = new Date(+m[1], +m[2] - 1, +m[3]);      // évite les décalages
 
     if (variant === 'long') {
-      // ex en-US: "Sep 4, 2025", en-GB: "4 Sept 2025"
-      return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+        // ex en-US: "Sep 4, 2025", en-GB: "4 Sept 2025"
+        return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
     }
     // short = numérique selon la locale (en-US => MM/DD/YYYY, en-GB => DD/MM/YYYY)
     return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
+}
+
+
+function formatHMS(seconds) {
+    const sec = Math.max(0, Math.floor(Number(seconds) || 0));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+

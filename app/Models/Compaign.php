@@ -29,6 +29,7 @@ class Compaign extends Model
         'gender_id',
         'slot_id',
         'ad_duration',
+        'user_id',
     ];
 
     protected $casts = [
@@ -92,5 +93,13 @@ class Compaign extends Model
     public function interests()
     {
         return $this->belongsToMany(Interest::class, 'compaign_interest');
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function dcpCreatives()
+    {
+        return $this->belongsToMany(DcpCreative::class, 'compaign_dcp_creative');
     }
 }

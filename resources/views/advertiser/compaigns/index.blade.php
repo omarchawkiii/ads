@@ -32,7 +32,8 @@
                         <tr class="text-center">
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
-                            <th class="text-center">Date</th>
+                            <th class="text-center">Start Date</th>
+                            <th class="text-center">End Date</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -299,12 +300,18 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="mb-3">
-                                        <label class="form-label" for="dcp_file"> Upload DCP Creative : <span
+                                        <label class="form-label" for="dcp_creative"> DCP Creative : <span
                                                 class="danger">*</span>
                                         </label>
-                                        <input class="form-control" type="file" id="dcp_file">
+
+                                        <select class="form-select required select2" id="dcp_creative" multiple=""  name="dcp_creative[]">
+                                            <option value="">Select...</option>
+                                            @foreach ($dcp_creatives as $dcp_creative)
+                                                <option value="{{ $dcp_creative->id }}">{{ $dcp_creative->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -706,7 +713,7 @@
                         event.preventDefault();
 
 
-                        const url = "{{ url('') }}/compaigns";
+                        const url = "{{ url('') }}/advertiser/compaigns";
                         const data = $(this).serialize();
                         console.log(data)
                         $.ajax({
@@ -823,9 +830,7 @@
                 if (step4Visible) updateReview();
             });
 
-            $(document).on("submit", "#create_compaign_form", function(event) {
 
-            });
 
             function get_compaigns() {
                 $('#wait-modal').modal('show');
@@ -849,6 +854,8 @@
                                     value.name + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         formatDateEN(value.start_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                        formatDateEN(value.end_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
                                     '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +
@@ -889,7 +896,7 @@
 
             $(document).on('click', '.view', function() {
                 const id = $(this).attr('id');
-                const url = "{{ url('') }}/compaigns/" + encodeURIComponent(id) + '/show';
+                const url = "{{ url('') }}/advertiser/compaigns/" + encodeURIComponent(id) + '/show';
 
                 // reset + loader
                 $('#view_compaign_modal').modal('show');
@@ -946,7 +953,7 @@
                 event.preventDefault();
                 var name = $('#create_compaign_modal #name ').val();
 
-                var url = '{{ url('') }}' + '/compaigns';
+                var url = '{{ url('') }}' + '/advertiser/compaigns';
 
                 $.ajax({
                         url: url,
@@ -986,7 +993,7 @@
                 var id = $(this).attr('id');
                 console.log(id)
 
-                const url = '{{ url('') }}' + '/compaigns/' + encodeURIComponent(id);
+                const url = '{{ url('') }}' + '/advertiser/compaigns/' + encodeURIComponent(id);
                 const csrf = '{{ csrf_token() }}';
                 console.log(url)
                 // SweetAlert2 confirm
@@ -1047,31 +1054,30 @@
             function fmtNum(v){ const n=parseFloat(v); return isNaN(n)?'–':n.toLocaleString(undefined,{maximumFractionDigits:2}); }
 
             function updateEditReview(){
-            // basics
-            $('#ev_name').text(txtInput('#e_name'));
-            $('#ev_objective').text(txtSelect('#e_compaign_objective'));
-            $('#ev_category').text(txtSelect('#e_compaign_category'));
-            $('#ev_brands').text(txtSelect('#e_brand'));
-            $('#ev_start').text(txtInput('#e_start_date'));
-            $('#ev_end').text(txtInput('#e_end_date'));
-            $('#ev_budget').text(fmtNum($('#e_budget').val()));
-            $('#ev_langue').text(txtSelect('#e_langue'));
-            $('#ev_note').text(txtInput('#e_note'));
-            // targeting & slot
-            $('#ev_locations').text(txtSelect('#e_location'));
-            $('#ev_hall_types').text(txtSelect('#e_hall_type'));
-            $('#ev_movie').text(txtSelect('#e_movie'));
-            $('#ev_movie_genres').text(txtSelect('#e_movie_genre'));
-            $('#ev_gender').text(txtSelect('#e_gender'));
-            $('#ev_target_types').text(txtSelect('#e_target_type'));
-            $('#ev_slot_tier').text(txtSelect('#e_slot'));
-            $('#ev_ad_duration').text(txtSelect('#e_duration'));
+                // basics
+                $('#ev_name').text(txtInput('#e_name'));
+                $('#ev_objective').text(txtSelect('#e_compaign_objective'));
+                $('#ev_category').text(txtSelect('#e_compaign_category'));
+                $('#ev_brands').text(txtSelect('#e_brand'));
+                $('#ev_start').text(txtInput('#e_start_date'));
+                $('#ev_end').text(txtInput('#e_end_date'));
+                $('#ev_budget').text(fmtNum($('#e_budget').val()));
+                $('#ev_langue').text(txtSelect('#e_langue'));
+                $('#ev_note').text(txtInput('#e_note'));
+                // targeting & slot
+                $('#ev_locations').text(txtSelect('#e_location'));
+                $('#ev_hall_types').text(txtSelect('#e_hall_type'));
+                $('#ev_movie').text(txtSelect('#e_movie'));
+                $('#ev_movie_genres').text(txtSelect('#e_movie_genre'));
+                $('#ev_gender').text(txtSelect('#e_gender'));
+                $('#ev_target_types').text(txtSelect('#e_target_type'));
+                $('#ev_slot_tier').text(txtSelect('#e_slot'));
+                $('#ev_ad_duration').text(txtSelect('#e_duration'));
             }
-
 
             $(document).on('click', '.edit', function () {
                 const id = $(this).attr('id');
-                const url = "{{ url('') }}/compaigns/" + encodeURIComponent(id)+'/show';
+                const url = "{{ url('') }}/advertiser/compaigns/" + encodeURIComponent(id)+'/show';
 
                 // reset rapide
                 const f = document.getElementById('edit_compaign_form');
