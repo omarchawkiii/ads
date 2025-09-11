@@ -16,8 +16,16 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
-    return view('admin.welcome');
-})->middleware(['auth']);;
+    if(Auth::user()->role == 1)
+    {
+        return view('admin.welcome');
+    }
+    else
+    {
+        return view('advertiser.welcome');
+    }
+
+})->name('dashboard')->middleware(['auth']);
 
 require __DIR__.'/auth.php';
 
@@ -129,7 +137,6 @@ Route::post('/users', [App\Http\Controllers\UserController::class, 'store'])->na
 Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('users.destroy')->middleware(['auth','admin']);
 Route::get('/users/{id}/show', [App\Http\Controllers\UserController::class, 'show'])->name('users.show')->middleware(['auth','admin']);
 Route::put('/users/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('users.update')->middleware(['auth','admin']);
-Route::put('/users/{user}/update_password', [App\Http\Controllers\UserController::class, 'update_password'])->name('users.update_password')->middleware(['auth','admin']);
 Route::post('users/check_username', [App\Http\Controllers\UserController::class , 'check_username'])->name('users.check_username')->middleware(['auth','admin']);
 
 
@@ -145,8 +152,8 @@ Route::put('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::cl
 Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'destroy'])->name('compaigns.destroy')->middleware(['auth','admin']);
 //Route::get('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.destroy')->middleware(['auth','admin']);
 Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show')->middleware(['auth','admin']);
-
-
+Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
+Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.approuve')->middleware(['auth','admin']);
 /* ************ End Admin route ********** */
 
 /* ************ advertiser  route ********** */
@@ -175,3 +182,9 @@ Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::cla
 
 
 });
+
+
+
+/* ***** Auth route **** */
+
+Route::put('user/user_update_password', [App\Http\Controllers\UserController::class , 'user_update_password'])->name('users.update_password')->middleware(['auth']);

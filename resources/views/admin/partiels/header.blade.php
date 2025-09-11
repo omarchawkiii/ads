@@ -52,10 +52,10 @@
                     <div class="d-flex align-items-center mb-3 pb-3 border-bottom gap-6">
                       <img src="{{ asset('assets/images/profile/user-1.jpg')}}" class="rounded-circle" width="56" height="56" alt="matdash-img">
                       <div>
-                        <h5 class="mb-0 fs-12">David McMichael <span class="text-success fs-11">Pro</span>
+                        <h5 class="mb-0 fs-12">{{ Auth::user()->name }} {{Auth::user()->last_name  }}  <span class="text-success fs-11">@if( Auth::user()->role==1) Admin @elseif( Auth::user()->role==2) Advertiser  @endif</span>
                         </h5>
                         <p class="mb-0 text-dark">
-                          david@wrappixel.com
+                            {{ Auth::user()->email }}
                         </p>
                       </div>
                     </div>
@@ -63,8 +63,8 @@
                       <a href="../main/page-user-profile.html" class="p-2 dropdown-item h6 rounded-1">
                         My Profile
                       </a>
-                      <a href="../main/page-pricing.html" class="p-2 dropdown-item h6 rounded-1">
-                        My Subscription
+                      <a href="#" class="p-2 dropdown-item h6 rounded-1" id="reset_user_password">
+                        Reset Password
                       </a>
                       <a href="../main/app-invoice.html" class="p-2 dropdown-item h6 rounded-1">
                         My Invoice <span class="badge bg-danger-subtle text-danger rounded ms-8">4</span>
@@ -72,9 +72,15 @@
                       <a href="../main/page-account-settings.html" class="p-2 dropdown-item h6 rounded-1">
                         Account Settings
                       </a>
-                      <a href="../main/authentication-login2.html" class="p-2 dropdown-item h6 rounded-1">
+
+                      <a onclick="event.preventDefault(); document.getElementById('logout-form').submit();" href="{{ route('logout') }} " role="button" class="p-2 dropdown-item h6 rounded-1">
                         Sign Out
                       </a>
+                      <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                        </form>
+
+
                     </div>
                   </div>
                 </div>
@@ -250,103 +256,6 @@
                 </a>
               </li>
 
-              <!-- ------------------------------- -->
-              <!-- start notification Dropdown -->
-              <!-- ------------------------------- -->
-              <li class="nav-item dropdown nav-icon-hover-bg rounded-circle">
-                <a class="nav-link position-relative" href="javascript:void(0)" id="drop2" aria-expanded="false">
-                  <iconify-icon icon="solar:bell-bing-line-duotone" class="fs-6"></iconify-icon>
-                </a>
-                <div class="dropdown-menu content-dd dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop2">
-                  <div class="d-flex align-items-center justify-content-between py-3 px-7">
-                    <h5 class="mb-0 fs-5 fw-semibold">Notifications</h5>
-                    <span class="badge text-bg-primary rounded-4 px-3 py-1 lh-sm">5 new</span>
-                  </div>
-                  <div class="message-body" data-simplebar="">
-                    <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item gap-3">
-                      <span class="flex-shrink-0 bg-danger-subtle rounded-circle round d-flex align-items-center justify-content-center fs-6 text-danger">
-                        <iconify-icon icon="solar:widget-3-line-duotone"></iconify-icon>
-                      </span>
-                      <div class="w-75">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <h6 class="mb-1 fw-semibold">Launch Admin</h6>
-                          <span class="d-block fs-2">9:30 AM</span>
-                        </div>
-                        <span class="d-block text-truncate text-truncate fs-11">Just see the my new admin!</span>
-                      </div>
-                    </a>
-                    <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item gap-3">
-                      <span class="flex-shrink-0 bg-primary-subtle rounded-circle round d-flex align-items-center justify-content-center fs-6 text-primary">
-                        <iconify-icon icon="solar:calendar-line-duotone"></iconify-icon>
-                      </span>
-                      <div class="w-75">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <h6 class="mb-1 fw-semibold">Event today</h6>
-                          <span class="d-block fs-2">9:15 AM</span>
-                        </div>
-                        <span class="d-block text-truncate text-truncate fs-11">Just a reminder that you have event</span>
-                      </div>
-                    </a>
-                    <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item gap-3">
-                      <span class="flex-shrink-0 bg-secondary-subtle rounded-circle round d-flex align-items-center justify-content-center fs-6 text-secondary">
-                        <iconify-icon icon="solar:settings-line-duotone"></iconify-icon>
-                      </span>
-                      <div class="w-75">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <h6 class="mb-1 fw-semibold">Settings</h6>
-                          <span class="d-block fs-2">4:36 PM</span>
-                        </div>
-                        <span class="d-block text-truncate text-truncate fs-11">You can customize this template as you want</span>
-                      </div>
-                    </a>
-                    <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item gap-3">
-                      <span class="flex-shrink-0 bg-warning-subtle rounded-circle round d-flex align-items-center justify-content-center fs-6 text-warning">
-                        <iconify-icon icon="solar:widget-4-line-duotone"></iconify-icon>
-                      </span>
-                      <div class="w-75">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <h6 class="mb-1 fw-semibold">Launch Admin</h6>
-                          <span class="d-block fs-2">9:30 AM</span>
-                        </div>
-                        <span class="d-block text-truncate text-truncate fs-11">Just see the my new admin!</span>
-                      </div>
-                    </a>
-                    <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item gap-3">
-                      <span class="flex-shrink-0 bg-primary-subtle rounded-circle round d-flex align-items-center justify-content-center fs-6 text-primary">
-                        <iconify-icon icon="solar:calendar-line-duotone"></iconify-icon>
-                      </span>
-                      <div class="w-75">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <h6 class="mb-1 fw-semibold">Event today</h6>
-                          <span class="d-block fs-2">9:15 AM</span>
-                        </div>
-                        <span class="d-block text-truncate text-truncate fs-11">Just a reminder that you have event</span>
-                      </div>
-                    </a>
-                    <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item gap-3">
-                      <span class="flex-shrink-0 bg-secondary-subtle rounded-circle round d-flex align-items-center justify-content-center fs-6 text-secondary">
-                        <iconify-icon icon="solar:settings-line-duotone"></iconify-icon>
-                      </span>
-                      <div class="w-75">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <h6 class="mb-1 fw-semibold">Settings</h6>
-                          <span class="d-block fs-2">4:36 PM</span>
-                        </div>
-                        <span class="d-block text-truncate text-truncate fs-11">You can customize this template as you want</span>
-                      </div>
-                    </a>
-                  </div>
-                  <div class="py-6 px-7 mb-1">
-                    <button class="btn btn-primary w-100">See All Notifications</button>
-                  </div>
-
-                </div>
-              </li>
-              <!-- ------------------------------- -->
-              <!-- end notification Dropdown -->
-              <!-- ------------------------------- -->
-
-
 
               <!-- ------------------------------- -->
               <!-- start profile Dropdown -->
@@ -383,9 +292,12 @@
                       <a href="../main/page-account-settings.html" class="p-2 dropdown-item h6 rounded-1">
                         Account Settings
                       </a>
-                      <a href="../main/authentication-login2.html" class="p-2 dropdown-item h6 rounded-1">
-                        Sign Out
+                      <a onclick="event.preventDefault(); document.getElementById('logout-form').submit();" href="{{ route('logout') }} " role="button" class="p-2 dropdown-item h6 rounded-1">
+                        Sign Out test
                       </a>
+                      <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                        </form>
                     </div>
                   </div>
                 </div>

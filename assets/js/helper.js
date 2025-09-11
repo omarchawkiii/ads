@@ -38,3 +38,25 @@ function formatHMS(seconds) {
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
+
+
+function getStatusText(status) {
+    switch (status) {
+        case 1: return '<span class="badge bg-warning-subtle text-warning">Pending</span> ';
+        case 2: return '<span class="badge bg-success-subtle text-success">Approved</span> ';
+        case 3: return '<span class="badge bg-secondary-subtle text-secondary">Drafts</span> ';
+        case 4: return '<span class="badge bg-danger-subtle text-danger">Rejected</span> ';
+        default: return'<span class="badge bg-warning-subtle text-warning">Unknown</span> ';
+    }
+}
+
+
+function getStatusAction(status, id ) {
+    switch (status) {
+        case 1: return '<button   data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Approuve"  id="'+id+'" type="button" class="approuve  ustify-content-center btn mb-1 btn-rounded btn-success  m-1"><i class="mdi mdi-checkbox-marked-circle "></i></button> <button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Reject" title="Reject"  title="Reject" id="'+id+'" type="button" class="reject  ustify-content-center btn mb-1 btn-rounded btn-danger  m-1"><i class="mdi mdi-close-octagon "></i></button>       ';
+        case 2: return '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Reject" title="Reject"  id="'+id+'" type="button" class="reject  ustify-content-center btn mb-1 btn-rounded btn-danger  m-1"><i class="mdi mdi-close-octagon "></i></button>       ';
+        case 3: return ' ';
+        case 4: return '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Approuve" title="Approuve" id="'+id+'" type="button" class="approuve  ustify-content-center btn mb-1 btn-rounded btn-success  m-1"><i class="mdi mdi-checkbox-marked-circle "></i></button> ';
+        default: return'';
+    }
+}

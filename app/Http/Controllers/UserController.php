@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -116,5 +117,23 @@ class UserController extends Controller
         $exists =  $user->where('username', $request->username)->exists();
         return response()->json(['exists' => $exists]);
     }
+    public function user_update_password(Request $request)
+    {
+        $user = Auth::user();
+        if (!Hash::check($request->old_password, $user->password)) {
+             echo "The old password is incorrect.";
+        }
+        elseif($request->password != $request->confirm_password)
+        {
+            echo "The password and confirm password do not match.";
+        }
+        else
+        {
+            $user->update([
+                'password' => Hash::make($request->password) ,
+            ]);
+            echo "success" ;
+        }
 
+    }
 }

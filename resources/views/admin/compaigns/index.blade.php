@@ -36,7 +36,8 @@
 
                             <th class="text-center">Start Date</th>
                             <th class="text-center">End Date</th>
-                            <th class="text-center" style="width:160px;">Actions</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-left" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,8 +109,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label" for="brand">Ad Brand</label>
-                                        <select class="form-select required select2" multiple="" id="brand"
-                                            name="brand[]">
+                                        <select class="form-select required select2" multiple="" id="brand" name="brand[]">
                                             <option value="">Select...</option>
                                             @foreach ($brands as $brand)
                                                 <option value="{{ $brand->id }}">{{ $brand->name }}</option>
@@ -121,14 +121,14 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label" for="start_date">Start Date</label>
-                                        <input type="date" class="form-control" id="start_date" name="start_date" />
+                                        <input type="date" class="form-control required" id="start_date" name="start_date"  />
                                     </div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label" for="end_date">End Date</label>
-                                        <input type="date" class="form-control" id="end_date" name="end_date" />
+                                        <input type="date" class="form-control required" id="end_date" name="end_date"  />
                                     </div>
                                 </div>
 
@@ -136,7 +136,7 @@
                                     <div class="mb-3">
                                         <label class="form-label" for="budget">Desired Budget</label> <span
                                             class="danger">(RM)</span>
-                                        <input type="number" class="form-control" id="budget" name="budget" />
+                                        <input type="number" class="form-control required" id="budget" name="budget"  />
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -372,6 +372,7 @@
                                     </dl>
                                 </div>
                             </div>
+
                         </section>
                     </form>
                 </div>
@@ -851,30 +852,37 @@
                         contentType: false,
                         success: function(response) {
                             $.each(response.compaigns, function(index, value) {
+
+
                                 index++;
                                 result = result +
-                                    '<tr class="odd text-center">' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<tr class="odd ">' +
+                                    '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                     index + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                     value.name + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                         (value.user ? value.user.name + ' ' + value.user.last_name : '') +
                                     ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                         formatDateEN(value.start_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                         formatDateEN(value.end_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    '<button id="' + value.id +
-                                    '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +
+                                        '<td class="text-center align-middle fw-medium text-decoration-none">' +
+                                            getStatusText(value.status) + ' </td>' +
+                                    '<td class=" align-middle fw-medium text-decoration-none">' +
+                                        getStatusAction(value.status, value.id )+
+
+                                    '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="View" title="View"  id="' + value.id +
+                                    '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-info  m-1" >' +
                                     '<i class="mdi mdi-magnify "></i>' +
                                     '</button>' +
 
-                                    '<button id="' + value.id +
+                                    '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Delete" title="Delete"  id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
                                     '<i class="mdi mdi-delete"></i>' +
                                     '</button>' +
+
 
                                     '</td>' +
                                     '</tr>';
@@ -1056,8 +1064,6 @@
                 });
             });
 
-            $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
-
             function txtSelect(selector){ const $el=$(selector); return $el.length ? ($el.find('option:selected').map((_,o)=>$(o).text().trim()).get().join(', ') || '–') : '–'; }
             function txtInput(selector){ const v=$(selector).val(); return (v===null||v==='')?'–':v; }
             function fmtNum(v){ const n=parseFloat(v); return isNaN(n)?'–':n.toLocaleString(undefined,{maximumFractionDigits:2}); }
@@ -1083,7 +1089,6 @@
             $('#ev_slot_tier').text(txtSelect('#e_slot'));
             $('#ev_ad_duration').text(txtSelect('#e_duration'));
             }
-
 
             $(document).on('click', '.edit', function () {
                 const id = $(this).attr('id');
@@ -1146,77 +1151,191 @@
                 }
             });
 
-
             function initEditWizard(){
-            const $form = $("#edit_compaign_form").show();
+                const $form = $("#edit_compaign_form").show();
 
-            $form.steps({
-                headerTag: "h6",
-                bodyTag: "section",
-                transitionEffect: "fade",
-                titleTemplate: '<span class="step">#index#</span> #title#',
-                labels: { finish: "Save" },
-                onStepChanging: function (e, cur, next) {
-                if (cur < next) {
-                    $form.find(".body:eq(" + next + ") label.error").remove();
-                    $form.find(".body:eq(" + next + ") .error").removeClass("error");
-                }
-                $form.validate().settings.ignore=":disabled,:hidden";
-                return $form.valid();
-                },
-                onFinishing: function () {
-                $form.validate().settings.ignore=":disabled";
-                return $form.valid();
-                },
-                onFinished: function (e) {
-                e.preventDefault();
-                const id = $('#e_id').val();
-                const url = "{{ url('') }}/compaigns/" + encodeURIComponent(id);
-                const data = $form.serialize() + '&_method=PATCH';
-
-                $.ajax({
-                    url: url,
-                    method: 'POST', // PATCH via _method
-                    data: data
-                })
-                .done(function(){
-                    Swal.fire({icon:'success',title:'Saved',text:'Compaign updated successfully.'});
-                    $('#edit_compaign_modal').modal('hide');
-                    if (typeof get_compaigns === 'function') get_compaigns();
-                })
-                .fail(function(xhr){
-                    let msg='Update failed.';
-                    if (xhr.status===422 && xhr.responseJSON?.errors){
-                    msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                $form.steps({
+                    headerTag: "h6",
+                    bodyTag: "section",
+                    transitionEffect: "fade",
+                    titleTemplate: '<span class="step">#index#</span> #title#',
+                    labels: { finish: "Save" },
+                    onStepChanging: function (e, cur, next) {
+                    if (cur < next) {
+                        $form.find(".body:eq(" + next + ") label.error").remove();
+                        $form.find(".body:eq(" + next + ") .error").removeClass("error");
                     }
-                    Swal.fire({icon:'error',title:'Error',text:msg});
+                    $form.validate().settings.ignore=":disabled,:hidden";
+                    return $form.valid();
+                    },
+                    onFinishing: function () {
+                    $form.validate().settings.ignore=":disabled";
+                    return $form.valid();
+                    },
+                    onFinished: function (e) {
+                    e.preventDefault();
+                    const id = $('#e_id').val();
+                    const url = "{{ url('') }}/compaigns/" + encodeURIComponent(id);
+                    const data = $form.serialize() + '&_method=PATCH';
+
+                    $.ajax({
+                        url: url,
+                        method: 'POST', // PATCH via _method
+                        data: data
+                    })
+                    .done(function(){
+                        Swal.fire({icon:'success',title:'Saved',text:'Compaign updated successfully.'});
+                        $('#edit_compaign_modal').modal('hide');
+                        if (typeof get_compaigns === 'function') get_compaigns();
+                    })
+                    .fail(function(xhr){
+                        let msg='Update failed.';
+                        if (xhr.status===422 && xhr.responseJSON?.errors){
+                        msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        }
+                        Swal.fire({icon:'error',title:'Error',text:msg});
+                    });
+                    }
                 });
-                }
-            });
 
 
-            $form.validate({
-                ignore: "input[type=hidden]",
-                errorClass: "text-danger",
-                successClass: "text-success",
-                highlight: (el, ec)=>$(el).removeClass(ec),
-                unhighlight: (el, ec)=>$(el).removeClass(ec),
-                errorPlacement: (err, el)=>err.insertAfter(el)
-            });
+                $form.validate({
+                    ignore: "input[type=hidden]",
+                    errorClass: "text-danger",
+                    successClass: "text-success",
+                    highlight: (el, ec)=>$(el).removeClass(ec),
+                    unhighlight: (el, ec)=>$(el).removeClass(ec),
+                    errorPlacement: (err, el)=>err.insertAfter(el)
+                });
 
-            $form.on('stepChanged', function(e, idx){
-                if (idx === 3) updateEditReview();
-            });
+                $form.on('stepChanged', function(e, idx){
+                    if (idx === 3) updateEditReview();
+                });
 
-            $form.on('input change', 'input, select, textarea', function(){
-                if ($('#edit-review-summary').is(':visible')) updateEditReview();
-            });
+                $form.on('input change', 'input, select, textarea', function(){
+                    if ($('#edit-review-summary').is(':visible')) updateEditReview();
+                });
             }
 
             $(document).on('hidden.bs.modal', '#edit_compaign_modal', function(){
                 $(this).find('.select2.select2-hidden-accessible').select2('destroy');
             });
 
+            $(document).on('click', '.approuve', function() {
+                var id = $(this).attr('id');
+                console.log(id)
+
+                const url = '{{ url('') }}' + '/compaigns/approuve/' + encodeURIComponent(id);
+                const csrf = '{{ csrf_token() }}';
+                console.log(url)
+                // SweetAlert2 confirm
+                Swal.fire({
+                    title: 'Delete compaign?',
+                    text: 'Are you sure you want to approuve this compaign?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, approuve it',
+                    cancelButtonText: 'Cancel'
+                }).then(function(result) {
+                    if (!result.isConfirmed) return;
+                    $('#wait-modal').modal('show');
+                    // Bootstrap 5 Modal: passer un ELEMENT, pas une string
+                    const waitEl = document.getElementById('wait-modal');
+                    const wait = bootstrap.Modal.getOrCreateInstance(waitEl);
+                    wait.show();
+
+                    $.ajax({
+                            url: url,
+                            method: 'put', // compat Laravel
+                            data: {
+                                _method: 'put',
+                                _token: csrf
+                            },
+                            headers: {
+                                'X-CSRF-TOKEN': csrf
+                            }
+                        })
+                        .done(function(response) {
+
+                            get_compaigns();
+                            Swal.fire({
+                                title: 'Done!',
+                                text: 'compaign deleted successfully.',
+                                icon: 'success',
+                                confirmButtonText: 'Continue'
+                            });
+
+                        })
+                        .fail(function(xhr) {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Deletion failed.',
+                                icon: 'error'
+                            });
+                        })
+                        .always(function() {
+                            $('#wait-modal').modal('hide'); //
+                        });
+                });
+            });
+
+            $(document).on('click', '.reject', function() {
+                var id = $(this).attr('id');
+                console.log(id)
+
+                const url = '{{ url('') }}' + '/compaigns/reject/' + encodeURIComponent(id);
+                const csrf = '{{ csrf_token() }}';
+                console.log(url)
+                // SweetAlert2 confirm
+                Swal.fire({
+                    title: 'Delete compaign?',
+                    text: 'Are you sure you want to reject this compaign?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, reject it',
+                    cancelButtonText: 'Cancel'
+                }).then(function(result) {
+                    if (!result.isConfirmed) return;
+                    $('#wait-modal').modal('show');
+                    // Bootstrap 5 Modal: passer un ELEMENT, pas une string
+                    const waitEl = document.getElementById('wait-modal');
+                    const wait = bootstrap.Modal.getOrCreateInstance(waitEl);
+                    wait.show();
+
+                    $.ajax({
+                            url: url,
+                            method: 'put', // compat Laravel
+                            data: {
+                                _method: 'put',
+                                _token: csrf
+                            },
+                            headers: {
+                                'X-CSRF-TOKEN': csrf
+                            }
+                        })
+                        .done(function(response) {
+
+                            get_compaigns();
+                            Swal.fire({
+                                title: 'Done!',
+                                text: 'compaign deleted successfully.',
+                                icon: 'success',
+                                confirmButtonText: 'Continue'
+                            });
+
+                        })
+                        .fail(function(xhr) {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Deletion failed.',
+                                icon: 'error'
+                            });
+                        })
+                        .always(function() {
+                            $('#wait-modal').modal('hide'); //
+                        });
+                });
+            });
 
 
         });

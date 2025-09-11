@@ -123,7 +123,8 @@ class CompaignController extends Controller
                 'gender_id'             => $v['gender'],
                 'slot_id'               => $v['slot'],
                 'ad_duration'           => $v['duration'], // colonne en DB
-                'user_id' => Auth::user()->id
+                'user_id' => Auth::user()->id,
+                'status' =>1
             ]);
 
 
@@ -206,4 +207,33 @@ class CompaignController extends Controller
         return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives'));
     }
 
+
+    public function approuve(Compaign $compaign)
+    {
+        try
+        {
+            $compaign->update(['status' => 2]);
+            return response()->json([
+                'message' => 'Compaign approuved successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Operation failed.',
+            ], 500);
+        }
+    }
+    public function reject(Compaign $compaign)
+    {
+        try
+        {
+            $compaign->update(['status' => 4]);
+            return response()->json([
+                'message' => 'Compaign approuved successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Operation failed.',
+            ], 500);
+        }
+    }
 }

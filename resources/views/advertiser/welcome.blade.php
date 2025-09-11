@@ -1,5 +1,4 @@
-
-@extends('admin.layouts.app')
+@extends('advertiser.layouts.app')
 
 @section('content')
 <div class="row">
