@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr" data-bs-theme="light" data-color-theme="Blue_Theme" data-layout="vertical">
+<html lang="en" dir="ltr" @if(Auth::user()->theme?->light)  data-bs-theme="light" @else   data-bs-theme="dark"  @endif data-color-theme="Blue_Theme" data-layout="vertical">
 
 <head>
     <!-- Required meta tags -->
@@ -133,10 +133,7 @@
     </div>
 
     <script>
-        function handleColorTheme(e)
-        {
-            document.documentElement.setAttribute("data-color-theme", e);
-        }
+
 
 
     </script>
@@ -240,6 +237,29 @@
 
         })
 
+        $(document).on("click",".change_theme" , function(event) {
+
+            url = '{{ url('') }}' + '/change_theme';
+            event.preventDefault();
+            $.ajax({
+                url: url,
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                data: {}, // ta méthode change_theme() n'attend pas de payload
+                success: function (resp) {
+
+                    // si ton controller renvoie JSON { light: 1 } tu peux forcer l'état à partir de resp
+                    if (resp && typeof resp.light !== 'undefined') {
+
+
+                    }
+                },
+                error: function (xhr) {
+                },
+                complete: function () {
+                }
+            });
+        })
 
         new bootstrap.Tooltip(document.body, {
             selector: '[data-bs-toggle="tooltip"]',

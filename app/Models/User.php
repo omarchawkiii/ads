@@ -29,5 +29,8 @@ class User extends Authenticatable
 
     ];
 
-
+    public function theme()
+    {
+        return $this->hasOne(Theme::class);
+    }
 }

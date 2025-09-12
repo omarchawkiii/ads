@@ -22,3 +22,69 @@ table.dataTable thead>tr>th.sorting:after, table.dataTable thead>tr>th.sorting_a
 {
     display: inline-block !important;
 }
+
+
+/* ============================
+   Custom modal size: .modal-xxl
+   Place this AFTER bootstrap.css
+   ============================ */
+
+/* Base behaviour: use the same custom property pattern as Bootstrap */
+.modal-dialog.modal-xxl {
+    --bs-modal-width: 100%; /* fallback (mobile): full width minus Bootstrap modal paddings */
+    width: var(--bs-modal-width);
+    max-width: 100%;
+  }
+
+  /* Small screens: full width (handled by default above) */
+
+  /* Medium screens: a reasonable width */
+  @media (min-width: 768px) {
+    .modal-dialog.modal-xxl {
+      --bs-modal-width: 900px;
+    }
+  }
+
+  /* Large screens: wider */
+  @media (min-width: 992px) {
+    .modal-dialog.modal-xxl {
+      --bs-modal-width: 1050px;
+    }
+  }
+
+  /* Extra large: approach bootstrap .modal-xl size increase */
+  @media (min-width: 1200px) {
+    .modal-dialog.modal-xxl {
+      --bs-modal-width: 1155px;
+    }
+  }
+
+  /* Very large screens: make it truly xxl */
+  @media (min-width: 1400px) {
+    .modal-dialog.modal-xxl {
+      --bs-modal-width: 1350px;
+    }
+  }
+
+  /* Ultra wide screens: cap it but increase for very wide monitors */
+  @media (min-width: 1800px) {
+    .modal-dialog.modal-xxl {
+      --bs-modal-width: 1600px;
+    }
+  }
+
+  /* Ensure the modal-dialog respects Bootstrap modal layout (centering etc.) */
+  .modal-dialog.modal-xxl {
+    margin: 0.5rem auto; /* same vertical spacing as bootstrap */
+    max-width: calc(var(--bs-modal-width));
+    /* Preserve Bootstrap behavior for modal-scrollable */
+  }
+
+  /* If you use modal-dialog-centered, nothing more to add.
+     If you want the modal to be more compact on small screens you can add:
+  */
+  @media (max-width: 575.98px) {
+    .modal-dialog.modal-xxl {
+      padding: 0 0.5rem;
+    }
+  }

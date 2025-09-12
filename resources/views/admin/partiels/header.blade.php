@@ -26,12 +26,22 @@
             <ul class="navbar-nav flex-row mx-auto ms-lg-auto align-items-center justify-content-center">
 
               <li class="nav-item">
-                <a class="nav-link moon dark-layout nav-icon-hover-bg rounded-circle" href="javascript:void(0)">
-                  <iconify-icon icon="solar:moon-line-duotone" class="moon fs-6"></iconify-icon>
-                </a>
-                <a class="nav-link sun light-layout nav-icon-hover-bg rounded-circle" href="javascript:void(0)" style="display: none">
-                  <iconify-icon icon="solar:sun-2-line-duotone" class="sun fs-6"></iconify-icon>
-                </a>
+
+                @if(Auth::user()->theme?->light)
+                    <a class=" change_theme nav-link moon dark-layout nav-icon-hover-bg rounded-circle" href="{{ route('change_theme') }}">
+                        <iconify-icon icon="solar:moon-line-duotone" class="moon fs-6"></iconify-icon>
+                    </a>
+                    <a class="change_theme nav-link sun light-layout nav-icon-hover-bg rounded-circle" href="{{ route('change_theme') }}"  style="display: none">
+                        <iconify-icon icon="solar:sun-2-line-duotone" class="sun fs-6"></iconify-icon>
+                    </a>
+                @else
+                    <a class="change_theme nav-link sun light-layout nav-icon-hover-bg rounded-circle" href="{{ route('change_theme') }}" >
+                        <iconify-icon icon="solar:sun-2-line-duotone" class="sun fs-6"></iconify-icon>
+                    </a>
+                    <a class=" change_theme nav-link moon dark-layout nav-icon-hover-bg rounded-circle" href="{{ route('change_theme') }}" style="display: none">
+                        <iconify-icon icon="solar:moon-line-duotone" class="moon fs-6"></iconify-icon>
+                    </a>
+                @endif
               </li>
 
 

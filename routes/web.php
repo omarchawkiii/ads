@@ -27,6 +27,9 @@ Route::get('/', function () {
 
 })->name('dashboard')->middleware(['auth']);
 
+Route::post('change_theme', [App\Http\Controllers\ConfigController::class, 'change_theme'])->name('change_theme')->middleware(['auth']);
+
+
 require __DIR__.'/auth.php';
 
 Auth::routes(['verify' => true,'register' => true, 'reset' => true]);
@@ -154,6 +157,17 @@ Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController:
 Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show')->middleware(['auth','admin']);
 Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
 Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.approuve')->middleware(['auth','admin']);
+
+
+Route::get('invoices', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index')->middleware(['auth','admin']);
+Route::get('/invoices/list', [App\Http\Controllers\InvoiceController::class, 'get'])->name('invoices.list')->middleware(['auth','admin']);
+Route::post('/invoices', [App\Http\Controllers\InvoiceController::class, 'store'])->name('invoices.store')->middleware(['auth','admin']);
+Route::put('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class, 'update'])->name('invoices.update')->middleware(['auth','admin']);
+Route::delete('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoices.destroy')->middleware(['auth','admin']);
+Route::get('/invoices/{id}/show', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoices.show')->middleware(['auth','admin']);
+Route::get('/invoices/{id}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoices.download')->middleware(['auth','admin']);
+
+
 /* ************ End Admin route ********** */
 
 /* ************ advertiser  route ********** */

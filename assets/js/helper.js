@@ -60,3 +60,23 @@ function getStatusAction(status, id ) {
         default: return'';
     }
 }
+
+
+function getInvoiceStatusText(status) {
+    switch (status) {
+        case 1: return '<span class="badge bg-warning-subtle text-warning">Pending</span> ';
+        case 2: return '<span class="badge bg-success-subtle text-success">Paid</span> ';
+        case 3: return '<span class="badge bg-danger-subtle text-danger">Overdue</span> ';
+        default: return'<span class="badge bg-warning-subtle text-warning">Unknown</span> ';
+    }
+}
+
+function getInvoiceNumber(number) {
+    return 'INV-'+number;
+
+}
+
+function formatRM(n) {
+    n = Number(n || 0);
+    return  n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

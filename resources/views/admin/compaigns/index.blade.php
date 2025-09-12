@@ -3,7 +3,7 @@
     compaign
 @endsection
 @section('content')
-    <div class="container py-4">
+    <div class=" py-4">
 
         <div class="card card-body py-3">
             <div class="row align-items-center">
@@ -835,9 +835,7 @@
                 if (step4Visible) updateReview();
             });
 
-            $(document).on("submit", "#create_compaign_form", function(event) {
 
-            });
 
             function get_compaigns() {
                 $('#wait-modal').modal('show');
