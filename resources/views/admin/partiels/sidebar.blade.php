@@ -137,6 +137,13 @@
               <span class="hide-menu">Compaign Objectives</span>
             </a>
           </li>
+          <li class="sidebar-item">
+            <a class="sidebar-link" href="{{ route('invoices.index') }}" id="get-url" aria-expanded="false">
+              <i class=" mdi mdi-file-document" > </i>
+
+              <span class="hide-menu">Biiling</span>
+            </a>
+          </li>
 
         </ul>
       </nav>
