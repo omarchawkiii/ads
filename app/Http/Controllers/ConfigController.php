@@ -12,7 +12,7 @@ class ConfigController extends Controller
     public function edit()
     {
         $config = Config::all()->first() ;
-        return view('config.index' , compact('config'));
+        return view('admin.configs.index' , compact('config'));
 
     }
 
@@ -20,10 +20,20 @@ class ConfigController extends Controller
     public function update(Request $request)
     {
         $config = Config::all()->first();
+        if($request->use_noc == true)
+        {
+            $use_noc = 1 ;
+        }
+        else
+        {
+            $use_noc = 0 ;
+        }
+
 
         //dd($request->timeStart) ;
         $new_config = $config->update([
             'link' => $request->link,
+            'use_noc' => $use_noc,
             'user' => $request->user,
             'password' => $request->password,
         ]);

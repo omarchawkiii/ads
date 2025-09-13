@@ -12,11 +12,7 @@
                         <h4 class="mb-4 mb-sm-0 card-title">Invoices</h4>
                         <nav aria-label="breadcrumb" class="ms-auto">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item" aria-current="page">
-                                    <button class="btn bg-success  text-white " id="create_invoice">
-                                        + New invoice
-                                    </button>
-                                </li>
+
                             </ol>
                         </nav>
                     </div>
@@ -137,7 +133,7 @@
         <div class="modal-dialog modal-xxl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white d-flex align-items-center">
-                    <h5 class="modal-title">Invoice: <span id="v_number">–</span></h5>
+                    <h5 class="modal-title text-white">Invoice: <span id="v_number">–</span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">

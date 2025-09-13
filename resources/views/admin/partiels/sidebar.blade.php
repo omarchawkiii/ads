@@ -144,6 +144,13 @@
               <span class="hide-menu">Billing</span>
             </a>
           </li>
+          <li class="sidebar-item">
+            <a class="sidebar-link" href="{{ route('invoices.edit') }}" id="get-url" aria-expanded="false">
+              <i class=" mdi mdi-settings" > </i>
+
+              <span class="hide-menu">Settings</span>
+            </a>
+          </li>
 
         </ul>
       </nav>

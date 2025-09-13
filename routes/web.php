@@ -42,6 +42,8 @@ Route::post('/locations', [App\Http\Controllers\LocationController::class, 'stor
 Route::put('/locations/{location}', [App\Http\Controllers\LocationController::class, 'update'])->name('locations.update')->middleware(['auth','admin']);
 Route::delete('/locations/{location}', [App\Http\Controllers\LocationController::class, 'destroy'])->name('locations.destroy')->middleware(['auth','admin']);
 Route::get('/locations/{id}/show', [App\Http\Controllers\LocationController::class, 'show'])->name('locations.show')->middleware(['auth','admin']);
+Route::get('/locations/refresh_locations', [App\Http\Controllers\LocationController::class, 'refresh_locations'])->name('locations.refresh_locations')->middleware(['auth','admin']);
+
 
 
 //Route::resource('target-types', App\Http\Controllers\SlotController::class)->only('index', 'show')->middleware(['auth','admin']);
@@ -166,6 +168,12 @@ Route::put('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class
 Route::delete('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoices.destroy')->middleware(['auth','admin']);
 Route::get('/invoices/{id}/show', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoices.show')->middleware(['auth','admin']);
 Route::get('/invoices/{id}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoices.download')->middleware(['auth','admin']);
+
+
+
+Route::get('configs', [App\Http\Controllers\ConfigController::class, 'edit'])->name('invoices.edit')->middleware(['auth','admin']);
+Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update'])->name('configs.store')->middleware(['auth','admin']);
+
 
 
 /* ************ End Admin route ********** */

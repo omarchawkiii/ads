@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Config;
 use App\Models\Location;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -85,5 +89,78 @@ class LocationController extends Controller
                 'message' => 'Operation failed.',
             ], 500);
         }
+    }
+
+    public function refresh_locations()
+    {
+        $config = Config::first() ;
+        $url = rtrim($config->link, '/') . '/api/adsmart/locations';
+
+        try {
+            $client = new Client();
+            $response = $client->request('GET', $url,[
+                'connect_timeout' => 5,
+                'query' => [
+                    'username' => $config->user,
+                    'password' =>$config->password,
+                ],
+            ]);
+
+            $contents = json_decode($response->getBody(), true);
+
+            if($contents)
+            {
+                if( $contents['status'])
+                {
+                    foreach($contents['data'] as $data)
+                    {
+                        Location::updateOrCreate([
+                            'name' => $data['name']
+                         ],
+                         [
+                            'name' => $data['name'],
+                         ]);
+                    }
+                    return response()->json([
+                        'status' =>1,
+                        'message' => 'Content Retrieved Successfully.',
+                    ], 200);
+                }
+                else
+                {
+                    return response()->json([
+                        'status' =>0,
+                        'message' => $contents['message'],
+                    ], 200);
+
+                }
+
+            }
+            else
+            {
+                return response()->json([
+                    'status' =>0,
+                    'message' => "No Data",
+                ], 200);
+            }
+
+        }
+        catch (RequestException $e) {
+            // Log de l'erreur ou traitement spécifique
+            return response()->json([
+                'status' =>0,
+                'message' => $e->getMessage(),
+            ], 500);
+
+        }
+        catch (\Exception $e) {
+            // Capture d'autres exceptions générales
+            return response()->json([
+                'status' =>0,
+                'message' => $e->getMessage(),
+            ], 500);
+
+        }
+
     }
 }

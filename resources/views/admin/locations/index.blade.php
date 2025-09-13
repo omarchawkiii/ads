@@ -7,22 +7,27 @@
 
         <div class="card card-body py-3">
             <div class="row align-items-center">
-              <div class="col-12">
-                <div class="d-sm-flex align-items-center justify-space-between">
-                  <h4 class="mb-4 mb-sm-0 card-title">Locations</h4>
-                  <nav aria-label="breadcrumb" class="ms-auto">
-                    <ol class="breadcrumb">
-                      <li class="breadcrumb-item" aria-current="page">
-                        <button class="btn bg-success  text-white " id="create_location">
-                            + New Location
-                        </button>
-                      </li>
-                    </ol>
-                  </nav>
+                <div class="col-12">
+                    <div class="d-sm-flex align-items-center justify-space-between">
+                        <h4 class="mb-4 mb-sm-0 card-title">Locations</h4>
+                        <nav aria-label="breadcrumb" class="ms-auto">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item" aria-current="page">
+                                    <button class="btn bg-success  text-white " id="create_location">
+                                        + New Location
+                                    </button>
+                                </li>
+                                <li class="breadcrumb-item" aria-current="page">
+                                    <button class="btn bg-primary  text-white " id="refresh">
+                                        <i class="mdi mdi-refresh"> </i> Refresh
+                                    </button>
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
                 </div>
-              </div>
             </div>
-          </div>
+        </div>
 
 
         <div class="card">
@@ -33,7 +38,7 @@
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
                             <th class="text-center">CPM</th>
-                            <th  class="text-center" style="width:160px;">Actions</th>
+                            <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,7 +50,8 @@
 
     {{-- Create Modal --}}
 
-    <div class="modal  " id="create_location_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true" role="dialog">
+    <div class="modal  " id="create_location_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true"
+        role="dialog">
         <div class="modal-dialog modal-md  modal-dialog-centered">
             <div class="modal-content">
                 <form method="post" id="create_location_form">
@@ -86,7 +92,8 @@
     </div>
 
 
-    <div class="modal " id="edit_location_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true" role="dialog">
+    <div class="modal " id="edit_location_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true"
+        role="dialog">
         <div class="modal-dialog modal-md modal-dialog-centered">
             <div class="modal-content">
                 <form method="post" id="edit_location_form">
@@ -124,18 +131,17 @@
         </div>
 
     </div>
-
 @endsection
 
 
 @section('custom_script')
-    <script src="{{ asset('assets/js/helper.js')}}"></script>
+    <script src="{{ asset('assets/js/helper.js') }}"></script>
     <script>
-
         $(function() {
             $(document).on('click', '#create_location', function() {
                 $('#create_location_modal').modal('show');
             })
+
             function get_locations() {
                 $('#wait-modal').modal('show');
 
@@ -301,13 +307,13 @@
 
             $(document).on('click', '.edit', function() {
                 var location = $(this).attr('id');
-                var url = '{{ url('') }}' + '/locations/' + location+ '/show/';
+                var url = '{{ url('') }}' + '/locations/' + location + '/show/';
 
                 $.ajax({
                     url: url,
                     type: 'GET',
                     method: 'GET',
-                    beforeSend: function () {
+                    beforeSend: function() {
                         $("#wait-modal").modal('show');
                     },
                     headers: {
@@ -329,36 +335,36 @@
                 })
             })
 
-            $(document).on("submit","#edit_location_form" , function(event) {
+            $(document).on("submit", "#edit_location_form", function(event) {
                 event.preventDefault();
                 var name = $('#edit_location_form #name').val();
                 var cpm = $('#edit_location_form #cpm').val();
                 var id = $('#edit_location_form #id').val();
-                var url = '{{ url('') }}' + '/locations/'+ id;
+                var url = '{{ url('') }}' + '/locations/' + id;
 
                 $.ajax({
-                    url: url,
-                    type: 'PUT',
-                    method: 'PUT',
-                    data: {
-                        name: name,
-                        cpm: cpm,
-                        "_token": "{{ csrf_token() }}",
-                    },
-                    beforeSend: function () {
-                        $("#wait-modal").modal('show');
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                        "_token": "{{ csrf_token() }}",
-                    },
+                        url: url,
+                        type: 'PUT',
+                        method: 'PUT',
+                        data: {
+                            name: name,
+                            cpm: cpm,
+                            "_token": "{{ csrf_token() }}",
+                        },
+                        beforeSend: function() {
+                            $("#wait-modal").modal('show');
+                        },
+                        headers: {
+                            'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            "_token": "{{ csrf_token() }}",
+                        },
 
-                })
-                .done(function(response) {
+                    })
+                    .done(function(response) {
 
-                    $("#wait-modal").modal('hide');
-                    $('#edit_location_modal').modal('hide');
-                    get_locations()
+                        $("#wait-modal").modal('hide');
+                        $('#edit_location_modal').modal('hide');
+                        get_locations()
                         swal.fire({
                             title: 'Done!',
                             text: 'Location Updated Successfully ',
@@ -370,15 +376,95 @@
                                 className: "btn btn-primary"
                             }
                         })
-                        $('#edit_user_modal').modal('hide') ;
-                }).fail(function(xhr) {
-                    $('#edit_location_modal').modal('hide');
-                    $("#wait-modal").modal('hide');
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'Operation failed.',
-                        icon: 'error'
-                    });
+                        $('#edit_user_modal').modal('hide');
+                    }).fail(function(xhr) {
+                        $('#edit_location_modal').modal('hide');
+                        $("#wait-modal").modal('hide');
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Operation failed.',
+                            icon: 'error'
+                        });
+                    })
+            })
+
+
+            $(document).on('click', '#refresh', function() {
+                var location = $(this).attr('id');
+                var url = '{{ url('') }}' + '/locations/refresh_locations';
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    method: 'GET',
+                    beforeSend: function() {
+                        $("#wait-modal").modal('show');
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        "_token": "{{ csrf_token() }}",
+                    },
+                    success: function(response) {
+                        $("#wait-modal").modal('hide');
+                        if (response && typeof response.status !== 'undefined') {
+                            if (Number(response.status) === 1) {
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Succès',
+                                    text: response.message ||
+                                        'Locations rafraîchies avec succès.',
+                                    showConfirmButton: false,
+                                });
+                                get_locations();
+                            } else {
+                                // Erreur métier renvoyée par le backend
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erreur',
+                                    text: response.message ||
+                                        'Une erreur est survenue lors du rafraîchissement.',
+                                });
+                            }
+                        } else {
+                            // Format inattendu
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Attention',
+                                text: 'Réponse inattendue du serveur.',
+                            });
+                        }
+
+
+
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        $("#wait-modal").modal('hide');
+
+                        // Essayer d'extraire le message envoyé par le backend
+                        let msg = 'Erreur réseau. Réessaye plus tard.';
+                        if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                            msg = jqXHR.responseJSON.message;
+                        } else if (jqXHR && jqXHR.responseText) {
+                            // parfois responseText contient du JSON stringifié
+                            try {
+                                const parsed = JSON.parse(jqXHR.responseText);
+                                if (parsed && parsed.message) msg = parsed.message;
+                            } catch (e) {
+                                // ignore parse error
+                            }
+                        } else if (errorThrown) {
+                            msg = errorThrown;
+                        }
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: msg
+                        });
+
+                        console.error('AJAX error:', textStatus, errorThrown, jqXHR);
+                    }
                 })
             })
 
