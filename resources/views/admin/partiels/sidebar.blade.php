@@ -141,7 +141,7 @@
             <a class="sidebar-link" href="{{ route('invoices.index') }}" id="get-url" aria-expanded="false">
               <i class=" mdi mdi-file-document" > </i>
 
-              <span class="hide-menu">Biiling</span>
+              <span class="hide-menu">Billing</span>
             </a>
           </li>
 
