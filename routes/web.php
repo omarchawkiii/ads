@@ -159,6 +159,7 @@ Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController:
 Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show')->middleware(['auth','admin']);
 Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
 Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.approuve')->middleware(['auth','admin']);
+Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.approuve')->middleware(['auth','admin']);
 
 
 Route::get('invoices', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index')->middleware(['auth','admin']);

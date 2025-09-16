@@ -16,7 +16,8 @@ class LocationController extends Controller
 {
     public function index(Request $request)
     {
-        return view('admin.locations.index');
+        $config  = Config::first() ;
+        return view('admin.locations.index',compact('config'));
     }
 
     public function show(Request $request)

@@ -20,7 +20,7 @@ class ConfigController extends Controller
     public function update(Request $request)
     {
         $config = Config::all()->first();
-        if($request->use_noc == true)
+        if($request->use_noc == 'true')
         {
             $use_noc = 1 ;
         }
@@ -28,15 +28,13 @@ class ConfigController extends Controller
         {
             $use_noc = 0 ;
         }
-
-
-        //dd($request->timeStart) ;
         $new_config = $config->update([
             'link' => $request->link,
             'use_noc' => $use_noc,
             'user' => $request->user,
             'password' => $request->password,
         ]);
+
         if($new_config)
         {
             return true ;

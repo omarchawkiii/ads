@@ -835,8 +835,6 @@
                 if (step4Visible) updateReview();
             });
 
-
-
             function get_compaigns() {
                 $('#wait-modal').modal('show');
 
@@ -880,6 +878,8 @@
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
                                     '<i class="mdi mdi-delete"></i>' +
                                     '</button>' +
+
+
 
 
                                     '</td>' +
@@ -1228,7 +1228,7 @@
                 console.log(url)
                 // SweetAlert2 confirm
                 Swal.fire({
-                    title: 'Delete compaign?',
+                    title: 'Approuve compaign?',
                     text: 'Are you sure you want to approuve this compaign?',
                     icon: 'warning',
                     showCancelButton: true,
@@ -1267,7 +1267,7 @@
                         .fail(function(xhr) {
                             Swal.fire({
                                 title: 'Error',
-                                text: 'Deletion failed.',
+                                text: 'Opiration failed.',
                                 icon: 'error'
                             });
                         })
@@ -1286,7 +1286,7 @@
                 console.log(url)
                 // SweetAlert2 confirm
                 Swal.fire({
-                    title: 'Delete compaign?',
+                    title: 'Reject compaign?',
                     text: 'Are you sure you want to reject this compaign?',
                     icon: 'warning',
                     showCancelButton: true,
@@ -1325,7 +1325,7 @@
                         .fail(function(xhr) {
                             Swal.fire({
                                 title: 'Error',
-                                text: 'Deletion failed.',
+                                text: 'Opiration failed.',
                                 icon: 'error'
                             });
                         })
@@ -1333,6 +1333,52 @@
                             $('#wait-modal').modal('hide'); //
                         });
                 });
+            });
+
+            $(document).on('click', '.billing', function() {
+                var id = $(this).attr('id');
+                console.log(id)
+
+                const url = '{{ url('') }}' + '/compaigns/billing/' + encodeURIComponent(id);
+                const csrf = '{{ csrf_token() }}';
+
+
+                    $('#wait-modal').modal('show');
+
+
+                    $.ajax({
+                            url: url,
+                            method: 'put', // compat Laravel
+                            data: {
+                                _method: 'put',
+                                _token: csrf
+                            },
+                            headers: {
+                                'X-CSRF-TOKEN': csrf
+                            }
+                        })
+                        .done(function(response) {
+
+                            get_compaigns();
+                            Swal.fire({
+                                title: 'Done!',
+                                text: 'compaign deleted successfully.',
+                                icon: 'success',
+                                confirmButtonText: 'Continue'
+                            });
+
+                        })
+                        .fail(function(xhr) {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Opiration failed.',
+                                icon: 'error'
+                            });
+                        })
+                        .always(function() {
+                            $('#wait-modal').modal('hide');
+                        });
+
             });
 
 

@@ -17,11 +17,13 @@
                                         + New Location
                                     </button>
                                 </li>
+                                @if($config->use_noc ==1)
                                 <li class="breadcrumb-item" aria-current="page">
                                     <button class="btn bg-primary  text-white " id="refresh">
                                         <i class="mdi mdi-refresh"> </i> Refresh
                                     </button>
                                 </li>
+                                @endif
                             </ol>
                         </nav>
                     </div>

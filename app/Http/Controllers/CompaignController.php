@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Compaign;
 use App\Models\CompaignCategory;
 use App\Models\CompaignObjective;
+use App\Models\Config;
 use App\Models\DcpCreative;
 use App\Models\Gender;
 use App\Models\HallType;
@@ -16,11 +17,14 @@ use App\Models\Movie;
 use App\Models\MovieGenre;
 use App\Models\Slot;
 use App\Models\TargetType;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use GuzzleHttp\Exception\RequestException;
+
 
 class CompaignController extends Controller
 {
@@ -235,5 +239,84 @@ class CompaignController extends Controller
                 'message' => 'Operation failed.',
             ], 500);
         }
+    }
+
+    public function billing(Compaign $compaign)
+    {
+        $config = Config::first() ;
+        $url = rtrim($config->link, '/') . '/api/adsmart/proof_of_play';
+        $dcpCreatives = $compaign->dcpCreatives;
+
+        $uuids = $dcpCreatives->pluck('uuid')->toArray();
+        try {
+
+            $client = new Client();
+            $response = $client->request('GET', $url,[
+                'connect_timeout' => 5,
+                'query' => [
+                    'username' => $config->user,
+                    'password' =>$config->password,
+                    'uuid' =>  $uuids,
+                    'from_date' => $compaign->start_date->toDateString(),
+                    'to_date' =>  $compaign->end_date->toDateString()
+                ],
+            ]);
+
+            $contents = json_decode($response->getBody(), true);
+
+            if($contents)
+            {
+                if( $contents['status'])
+                {
+
+                    dd($contents['data']);
+                    foreach($contents['data'] as $data)
+                    {
+
+                    }
+                    return response()->json([
+                        'status' =>1,
+                        'message' => 'Content Retrieved Successfully.',
+                    ], 200);
+                }
+                else
+                {
+                    return response()->json([
+                        'status' =>0,
+                        'message' => $contents['message'],
+                    ], 200);
+
+                }
+
+            }
+            else
+            {
+                return response()->json([
+                    'status' =>0,
+                    'message' => "No Data",
+                ], 200);
+            }
+
+        }
+        catch (RequestException $e) {
+            // Log de l'erreur ou traitement spécifique
+            return response()->json([
+                'status' =>0,
+                'message' => $e->getMessage(),
+            ], 500);
+
+        }
+        catch (\Exception $e) {
+            // Capture d'autres exceptions générales
+            return response()->json([
+                'status' =>0,
+                'message' => $e->getMessage(),
+            ], 500);
+
+        }
+
+
+
+
     }
 }
