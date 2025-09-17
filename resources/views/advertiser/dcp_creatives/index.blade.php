@@ -67,7 +67,7 @@
                             <label for="xml_file" class="form-label">Fichier XML</label>
                             <input type="file" class="form-control" id="xml_file" name="xml_file" accept=".xml"
                                 required>
-                            <div class="form-text">Formats acceptés : .xml — max 5MB</div>
+
                         </div>
 
                     </div>
@@ -91,19 +91,19 @@
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Sélectionner un fichier ZIP</h5>
+                    <h5 class="modal-title">Select a ZIP file</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
                     <form id="uploadForm">
                         <div class="mb-3">
-                            <label class="form-label">Fichier ZIP</label>
+                            <label class="form-label"> ZIP File</label>
                             <input type="file" class="form-control" id="fileInput" accept=".zip,.tar,.7z" required>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" id="startBtn" class="btn btn-success">Démarrer l’upload</button>
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+                            <button type="submit" id="startBtn" class="btn btn-success">Start uploading</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </form>
                 </div>
@@ -119,7 +119,7 @@
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Upload en cours…</h5>
+                    <h5 class="modal-title"> Uploading…</h5>
                     <button type="button" class="btn-close" id="xCloseProgress" disabled aria-label="Close"></button>
                 </div>
 
@@ -128,10 +128,10 @@
                         <div class="progress">
                             <div id="progressBar" class="progress-bar" role="progressbar" style="width:0%">0%</div>
                         </div>
-                        <div class="small text-muted mt-1" id="progressText">Initialisation…</div>
+                        <div class="small text-muted mt-1" id="progressText">Initialization...</div>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button type="button" id="cancelBtn" class="btn btn-outline-danger">Annuler</button>
+                        <button type="button" id="cancelBtn" class="btn btn-outline-danger">Cancel</button>
                     </div>
                 </div>
 

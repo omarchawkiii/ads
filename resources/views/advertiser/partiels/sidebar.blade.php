@@ -43,7 +43,7 @@
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('advertiser.compaigns.index') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-chart-bar"> </i>
-              <span class="hide-menu">Compaigns</span>
+              <span class="hide-menu">Campaigns</span>
             </a>
           </li>
 

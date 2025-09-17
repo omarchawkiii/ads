@@ -82,9 +82,12 @@
                       <a href="../main/page-account-settings.html" class="p-2 dropdown-item h6 rounded-1">
                         Account Settings
                       </a>
-                      <a href="../main/authentication-login2.html" class="p-2 dropdown-item h6 rounded-1">
+                      <a onclick="event.preventDefault(); document.getElementById('logout-form').submit();" href="{{ route('logout') }} " role="button" class="p-2 dropdown-item h6 rounded-1">
                         Sign Out
                       </a>
+                      <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                        </form>
                     </div>
                   </div>
                 </div>

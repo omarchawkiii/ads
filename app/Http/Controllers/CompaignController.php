@@ -319,4 +319,31 @@ class CompaignController extends Controller
 
 
     }
+
+
+
+    public function advertiser_destory_company(Compaign $compaign)
+    {
+        try
+        {
+            if($compaign->user_id == Auth::user()->id)
+            {
+                $compaign->delete();
+                return response()->json([
+                    'message' => 'Compaign deleted successfully.',
+                ]);
+            }
+            else
+            {
+                return response()->json([
+                    'message' => 'operation refused.',
+                ], 500);
+            }
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Operation failed.',
+            ], 500);
+        }
+    }
+
 }

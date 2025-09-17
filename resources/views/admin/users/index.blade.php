@@ -221,6 +221,7 @@
                                     <label for="confirm_password" class="">Confirm Password </label>
                                     <input type="password" class="form-control" id="confirm_password"
                                         placeholder="Confirm Password" required>
+                                    <div class="invalid-feedback" id="confirm-password-feedback"></div>
                                 </div>
                             </div>
                         </div>
@@ -586,9 +587,20 @@
             $(document).on("submit", "#edit_password_form", function(event) {
                 event.preventDefault();
                 var id = $('#edit_password_form #id').val();
+                var password = $('#edit_password_form #password').val();
+                var confirm_password = $('#edit_password_form #confirm_password').val();
+
+                if (password && confirm_password && password !== confirm_password) {
+                    $('#edit_password_form  #confirm_password').addClass('is-invalid');
+                    $(' #edit_password_form  #confirm-password-feedback').text('Password and confirmation do not match.');
+
+                    return ;
+                }
+
                 const $form = $(this);
                 const payload = {
-                    password: $form.find('#password').val(),
+                    password: password,
+                    confirm_password : confirm_password,
                     _token: "{{ csrf_token() }}",
                 };
                 var url = '{{ url('') }}' + '/users/' + id + '/update_password/';

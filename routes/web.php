@@ -142,6 +142,7 @@ Route::post('/users', [App\Http\Controllers\UserController::class, 'store'])->na
 Route::delete('/users/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('users.destroy')->middleware(['auth','admin']);
 Route::get('/users/{id}/show', [App\Http\Controllers\UserController::class, 'show'])->name('users.show')->middleware(['auth','admin']);
 Route::put('/users/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('users.update')->middleware(['auth','admin']);
+Route::put('/users/{user}/update_password ', [App\Http\Controllers\UserController::class, 'update_password'])->name('users.update')->middleware(['auth','admin']);
 Route::post('users/check_username', [App\Http\Controllers\UserController::class , 'check_username'])->name('users.check_username')->middleware(['auth','admin']);
 
 
@@ -159,7 +160,7 @@ Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController:
 Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show')->middleware(['auth','admin']);
 Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
 Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.approuve')->middleware(['auth','admin']);
-Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.approuve')->middleware(['auth','admin']);
+Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.billing')->middleware(['auth','admin']);
 
 
 Route::get('invoices', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index')->middleware(['auth','admin']);
@@ -185,6 +186,7 @@ Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update']
     Route::get('compaigns/list', [App\Http\Controllers\CompaignController::class, 'my_compaigns'])->name('compaigns.my_compaigns');
     Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show');
     Route::post('/compaigns', [App\Http\Controllers\CompaignController::class, 'store'])->name('compaigns.store');
+    Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'advertiser_destory_company'])->name('compaigns.destroy');
 
 
 

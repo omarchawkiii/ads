@@ -39,7 +39,7 @@
             <a class="sidebar-link" href="{{ route('compaigns.index') }}" id="get-url" aria-expanded="false">
 
               <i class="mdi mdi-chart-bar"> </i>
-              <span class="hide-menu">Compaigns </span>
+              <span class="hide-menu">Campaign </span>
             </a>
           </li>
           <li>
@@ -126,7 +126,7 @@
             <a class="sidebar-link" href="{{ route('compaign_categories.index') }}" id="get-url" aria-expanded="false">
 
               <i class=" mdi mdi-chart-bubble" > </i>
-              <span class="hide-menu">Compaign Categories</span>
+              <span class="hide-menu">Campaign Categories</span>
             </a>
           </li>
 
@@ -134,7 +134,7 @@
             <a class="sidebar-link" href="{{ route('compaign_objectives.index') }}" id="get-url" aria-expanded="false">
               <i class=" mdi mdi-chart-line" > </i>
 
-              <span class="hide-menu">Compaign Objectives</span>
+              <span class="hide-menu">Campaign Objectives</span>
             </a>
           </li>
           <li class="sidebar-item">

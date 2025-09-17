@@ -95,6 +95,7 @@ class UserController extends Controller
 
             $validated = $request->validate([
                 'password'  => ['required', 'min:0','max:255'],
+                'confirm_password' => ['required'],
             ]);
             $user->update([
                 'password' => Hash::make($request->password)  ,
@@ -117,6 +118,7 @@ class UserController extends Controller
         $exists =  $user->where('username', $request->username)->exists();
         return response()->json(['exists' => $exists]);
     }
+
     public function user_update_password(Request $request)
     {
         $user = Auth::user();

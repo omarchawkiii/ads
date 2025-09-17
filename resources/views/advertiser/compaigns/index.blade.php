@@ -1,6 +1,6 @@
 @extends('advertiser.layouts.app')
 @section('title')
-    compaign
+    Campaign
 @endsection
 @section('content')
     <div class="container py-4">
@@ -9,12 +9,12 @@
             <div class="row align-items-center">
                 <div class="col-12">
                     <div class="d-sm-flex align-items-center justify-space-between">
-                        <h4 class="mb-4 mb-sm-0 card-title"> compaign </h4>
+                        <h4 class="mb-4 mb-sm-0 card-title"> Campaign </h4>
                         <nav aria-label="breadcrumb" class="ms-auto">
                             <ol class="breadcrumb">
                                 <li class="breadcrumb-item" aria-current="page">
                                     <button class="btn bg-success  text-white " id="create_compaign">
-                                        + New compaign
+                                        + New Campaign
                                     </button>
                                 </li>
                             </ol>
@@ -51,7 +51,7 @@
 
                 <div class="modal-header d-flex align-items-center  bg-primary ">
                     <h4 class="modal-title text-white " id="myLargeModalLabel ">
-                        Create compaign
+                        Create Campaign
                     </h4>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -383,7 +383,7 @@
             <div class="modal-content">
 
                 <div class="modal-header bg-primary">
-                    <h5 class="modal-title text-white">Edit compaign</h5>
+                    <h5 class="modal-title text-white">Edit Campaign</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -581,7 +581,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-primary">
-                    <h5 class="modal-title text-white">Compaign details</h5>
+                    <h5 class="modal-title text-white">Campaign details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -729,7 +729,7 @@
                                 get_compaigns();
                                 Swal.fire({
                                     title: 'Done!',
-                                    text: 'Compaign created successfully.',
+                                    text: 'Campaign created successfully.',
                                     icon: 'success',
                                     confirmButtonText: 'Continue'
                                 });
@@ -969,7 +969,7 @@
                         get_compaigns();
                         Swal.fire({
                             title: 'Done!',
-                            text: 'compaign Created successfully.',
+                            text: 'Campaign Created successfully.',
                             icon: 'success',
                             confirmButtonText: 'Continue'
                         });
@@ -998,8 +998,8 @@
                 console.log(url)
                 // SweetAlert2 confirm
                 Swal.fire({
-                    title: 'Delete compaign?',
-                    text: 'Are you sure you want to delete this compaign?',
+                    title: 'Delete Campaign?',
+                    text: 'Are you sure you want to delete this Campaign?',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: 'Yes, delete it',
@@ -1028,13 +1028,14 @@
                             get_compaigns();
                             Swal.fire({
                                 title: 'Done!',
-                                text: 'compaign deleted successfully.',
+                                text: 'Campaign deleted successfully.',
                                 icon: 'success',
                                 confirmButtonText: 'Continue'
                             });
 
                         })
                         .fail(function(xhr) {
+                            console.log(xhr)
                             Swal.fire({
                                 title: 'Error',
                                 text: 'Deletion failed.',
@@ -1170,7 +1171,7 @@
                     data: data
                 })
                 .done(function(){
-                    Swal.fire({icon:'success',title:'Saved',text:'Compaign updated successfully.'});
+                    Swal.fire({icon:'success',title:'Saved',text:'Campaign updated successfully.'});
                     $('#edit_compaign_modal').modal('hide');
                     if (typeof get_compaigns === 'function') get_compaigns();
                 })

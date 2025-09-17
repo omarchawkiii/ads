@@ -219,7 +219,7 @@
                         get_movies();
                         Swal.fire({
                             title: 'Done!',
-                            text: 'movie deleted successfully.',
+                            text: 'movie created successfully.',
                             icon: 'success',
                             confirmButtonText: 'Continue'
                         });
