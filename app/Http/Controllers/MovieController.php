@@ -55,8 +55,7 @@ class MovieController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
             ]);
-             $uuid = (string) Str::uuid();
-            $validated['uuid']  = 'urn:uuid:' . $uuid;
+
             $movie->update($validated);
 
             return response()->json([
