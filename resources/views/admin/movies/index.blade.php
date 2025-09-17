@@ -62,10 +62,7 @@
                                 <label for="name" class="">Name:</label>
                                 <input type="text" class="form-control" id="name" placeholder="Name" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="uuid" class="">UUID:</label>
-                                <input type="text" class="form-control" id="uuid" placeholder="UUID" required>
-                            </div>
+
                         </div>
 
                     </div>
@@ -102,10 +99,7 @@
                                 <label for="name" class="">Name:</label>
                                 <input type="text" class="form-control" id="name" placeholder="Name" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="uuid" class="">UUID:</label>
-                                <input type="text" class="form-control" id="uuid"  placeholder="UUID" required>
-                            </div>
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -210,7 +204,6 @@
                         method: 'POST',
                         data: {
                             name: name,
-                            uuid: uuid,
                             "_token": "{{ csrf_token() }}",
                         },
                     })
@@ -317,7 +310,6 @@
                         $("#wait-modal").modal('hide');
                         $('#edit_movie_modal').modal('show');
                         $('#edit_movie_modal #name').val(response.movie.name)
-                        $('#edit_movie_modal #uuid').val(response.movie.uuid)
                         $('#edit_movie_modal #id').val(movie)
 
                     },
@@ -330,7 +322,7 @@
             $(document).on("submit","#edit_movie_form" , function(event) {
                 event.preventDefault();
                 var name = $('#edit_movie_form #name').val();
-                var uuid = $('#edit_movie_form #uuid').val();
+
                 var id = $('#edit_movie_form #id').val();
                 var url = '{{ url('') }}' + '/movies/'+ id;
 
@@ -340,7 +332,6 @@
                     method: 'PUT',
                     data: {
                         name: name,
-                        uuid: uuid,
                         "_token": "{{ csrf_token() }}",
                     },
                     beforeSend: function () {

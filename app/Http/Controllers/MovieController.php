@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Movie;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-
+use Illuminate\Support\Str;
 class MovieController extends Controller
 {
     public function index(Request $request)
@@ -32,8 +32,9 @@ class MovieController extends Controller
 
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'uuid'  => ['required', 'string', 'max:255'],
             ]);
+             $uuid = (string) Str::uuid();
+            $validated['uuid'] =  'urn:uuid:' . $uuid;
             $movie = Movie::create($validated);
 
             return response()->json([
@@ -53,9 +54,9 @@ class MovieController extends Controller
         {
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'uuid'  => ['required', 'string', 'max:255'],
             ]);
-
+             $uuid = (string) Str::uuid();
+            $validated['uuid']  = 'urn:uuid:' . $uuid;
             $movie->update($validated);
 
             return response()->json([

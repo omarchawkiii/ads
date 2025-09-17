@@ -55,7 +55,9 @@ class CompaignController extends Controller
             'compaignObjective:id,name',
             'compaignCategory:id,name',
             'langue:id,name',
-            'movie:id,name',
+            'movie' => function ($q) {
+                $q->withTrashed()->select('id', 'name');
+            },
             'gender:id,name',
             'slot:id,name',
             'brands:id,name',
