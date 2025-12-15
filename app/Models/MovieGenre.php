@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MovieGenre extends Model
@@ -32,5 +33,9 @@ class MovieGenre extends Model
     public function compaigns(): BelongsToMany
     {
         return $this->belongsToMany(Compaign::class);
+    }
+    public function movies(): HasMany
+    {
+        return $this->hasMany(Movie::class, 'movie_genre_id');
     }
 }

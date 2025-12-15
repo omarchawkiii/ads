@@ -32,7 +32,8 @@
                         <tr class="text-center">
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
-                            <th class="text-center">UUID</th>
+                            <th class="text-center">Genre</th>
+                            <th class="text-center">Movie Code </th>
                             <th  class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -61,6 +62,15 @@
                             <div class="mb-3">
                                 <label for="name" class="">Name:</label>
                                 <input type="text" class="form-control" id="name" placeholder="Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="movie_genre" class="">Genre:</label>
+                                <select class="form-control" id="movie_genre" required>
+                                    <option value="">-- Select Genre --</option>
+                                    @foreach($genres ?? [] as $genre)
+                                        <option value="{{ $genre->id }}">{{ $genre->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                         </div>
@@ -98,6 +108,15 @@
                             <div class="mb-3">
                                 <label for="name" class="">Name:</label>
                                 <input type="text" class="form-control" id="name" placeholder="Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="movie_genre" class="">Genre:</label>
+                                <select class="form-control" id="movie_genre" required>
+                                    <option value="">-- Select Genre --</option>
+                                    @foreach($genres ?? [] as $genre)
+                                        <option value="{{ $genre->id }}">{{ $genre->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                         </div>
@@ -150,9 +169,9 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     value
                                     .name + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.genre ? value.genre.name : '-') + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value
-                                    .uuid + ' </td>' +
+                                    value.uuid + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
                                     '" type="button" class="edit ustify-content-center btn mb-1 btn-rounded btn-warning m-1" >' +
@@ -194,7 +213,7 @@
 
                 event.preventDefault();
                 var name = $('#create_movie_modal #name ').val();
-                var uuid = $('#create_movie_modal #uuid').val();
+                var movie_genre_id = $('#create_movie_modal #movie_genre').val();
 
                 var url = '{{ url('') }}' + '/movies';
 
@@ -204,6 +223,7 @@
                         method: 'POST',
                         data: {
                             name: name,
+                            movie_genre_id:movie_genre_id,
                             "_token": "{{ csrf_token() }}",
                         },
                     })
@@ -292,6 +312,7 @@
 
             $(document).on('click', '.edit', function() {
                 var movie = $(this).attr('id');
+
                 var url = '{{ url('') }}' + '/movies/' + movie+ '/show/';
 
                 $.ajax({
@@ -310,6 +331,7 @@
                         $("#wait-modal").modal('hide');
                         $('#edit_movie_modal').modal('show');
                         $('#edit_movie_modal #name').val(response.movie.name)
+                        $('#edit_movie_modal #movie_genre').val(response.movie.genre_id);
                         $('#edit_movie_modal #id').val(movie)
 
                     },
@@ -322,7 +344,7 @@
             $(document).on("submit","#edit_movie_form" , function(event) {
                 event.preventDefault();
                 var name = $('#edit_movie_form #name').val();
-
+                var movie_genre_id = $('#edit_movie_form #movie_genre').val();
                 var id = $('#edit_movie_form #id').val();
                 var url = '{{ url('') }}' + '/movies/'+ id;
 
@@ -332,6 +354,7 @@
                     method: 'PUT',
                     data: {
                         name: name,
+                        movie_genre_id: movie_genre_id,
                         "_token": "{{ csrf_token() }}",
                     },
                     beforeSend: function () {

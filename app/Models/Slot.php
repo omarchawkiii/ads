@@ -19,6 +19,7 @@ class Slot extends Model
     protected $fillable = [
         'name',
         'cpm',
+        'max_duration',
     ];
 
     /**

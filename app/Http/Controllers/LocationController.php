@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CinemaChain;
 use App\Models\Config;
 use App\Models\Location;
 use GuzzleHttp\Client;
@@ -15,11 +16,10 @@ use Yajra\DataTables\Facades\DataTables;
 class LocationController extends Controller
 {
 
-
-
     public function campaign_definitions()
     {
         $config  = Config::first() ;
+
         return view('admin.campaign_definitions.index',compact('config'));
     }
 
@@ -27,7 +27,9 @@ class LocationController extends Controller
     public function index(Request $request)
     {
         $config  = Config::first() ;
-        return view('admin.locations.index',compact('config'));
+        $cinemaChains = CinemaChain::orderBy('name')->get();
+
+        return view('admin.locations.index',compact('config','cinemaChains'));
     }
 
     public function show(Request $request)
@@ -38,7 +40,10 @@ class LocationController extends Controller
 
     public function get()
     {
-        $locations = Location::orderBy('name', 'asc')->get();
+        //$locations = Location::orderBy('name', 'asc')->get();
+        $locations = Location::with('cinemaChain')
+                        ->orderBy('name', 'asc')
+                        ->get();
         return Response()->json(compact('locations'));
     }
 
@@ -71,6 +76,7 @@ class LocationController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'cpm'  => ['required', 'integer', 'min:0'],
+                'cinema_chain_id' => ['nullable', 'exists:cinema_chains,id'],
             ]);
 
             $location->update($validated);

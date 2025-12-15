@@ -32,6 +32,7 @@
                         <tr class="text-center">
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
+                            <th class="text-center">Max Duration</th>
                             <th class="text-center">CPM</th>
                             <th  class="text-center" style="width:160px;">Actions</th>
                         </tr>
@@ -61,6 +62,14 @@
                             <div class="mb-3">
                                 <label for="name" class="">Name:</label>
                                 <input type="text" class="form-control" id="name" placeholder="Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="max_duration" class="">Max Duration (seconds):</label>
+                                <input type="number"
+                                       class="form-control"
+                                       id="max_duration"
+                                       min="1"
+                                       required>
                             </div>
                             <div class="mb-3">
                                 <label for="cpm" class="">Base CPM (RM):</label>
@@ -102,6 +111,14 @@
                             <div class="mb-3">
                                 <label for="name" class="">Name:</label>
                                 <input type="text" class="form-control" id="name" placeholder="Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="max_duration" class="">Max Duration (seconds):</label>
+                                <input type="number"
+                                       class="form-control"
+                                       id="max_duration"
+                                       min="1"
+                                       required>
                             </div>
                             <div class="mb-3">
                                 <label for="cpm" class="">Base CPM (RM):</label>
@@ -156,8 +173,10 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     index + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value
-                                    .name + ' </td>' +
+                                    value.name + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                        (value.max_duration ? value.max_duration : '0')+
+                                    ' seconds </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     value
                                     .cpm + ' </td>' +
@@ -203,7 +222,7 @@
                 event.preventDefault();
                 var name = $('#create_slot_modal #name ').val();
                 var cpm = $('#create_slot_modal #cpm').val();
-
+                var max_duration = $('#create_slot_modal #max_duration').val();
                 var url = '{{ url('') }}' + '/slots';
 
                 $.ajax({
@@ -213,6 +232,7 @@
                         data: {
                             name: name,
                             cpm: cpm,
+                            max_duration:max_duration,
                             "_token": "{{ csrf_token() }}",
                         },
                     })
@@ -320,6 +340,7 @@
                         $('#edit_slot_modal').modal('show');
                         $('#edit_slot_modal #name').val(response.slot.name)
                         $('#edit_slot_modal #cpm').val(response.slot.cpm)
+                        $('#edit_slot_modal #max_duration').val(response.slot.max_duration);
                         $('#edit_slot_modal #id').val(slot)
 
                     },
@@ -334,6 +355,7 @@
                 var name = $('#edit_slot_form #name').val();
                 var cpm = $('#edit_slot_form #cpm').val();
                 var id = $('#edit_slot_form #id').val();
+                var max_duration = $('#edit_slot_form #max_duration').val();
                 var url = '{{ url('') }}' + '/slots/'+ id;
 
                 $.ajax({
@@ -343,6 +365,7 @@
                     data: {
                         name: name,
                         cpm: cpm,
+                        max_duration:max_duration,
                         "_token": "{{ csrf_token() }}",
                     },
                     beforeSend: function () {

@@ -19,6 +19,7 @@ class Location extends Model
     protected $fillable = [
         'name',
         'cpm',
+        'cinema_chain_id',
     ];
 
     /**
@@ -33,5 +34,9 @@ class Location extends Model
     public function compaigns()
     {
         return $this->belongsToMany(Compaign::class, 'compaign_location')->withTimestamps();
+    }
+    public function cinemaChain()
+    {
+        return $this->belongsTo(CinemaChain::class);
     }
 }

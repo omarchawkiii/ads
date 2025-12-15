@@ -38,6 +38,17 @@ Route::get('campaign_definitions', [App\Http\Controllers\LocationController::cla
 
 
 /* ************ Admin route ********** */
+
+
+Route::get('cinema-chains', [App\Http\Controllers\CinemaChainController::class, 'index'])->name('cinema-chains.index')->middleware(['auth','admin']);
+Route::get('/cinema-chains/list', [App\Http\Controllers\CinemaChainController::class, 'get'])->name('cinema-chains.list')->middleware(['auth','admin']);
+Route::post('/cinema-chains', [App\Http\Controllers\CinemaChainController::class, 'store'])->name('cinema-chains.store')->middleware(['auth','admin']);
+Route::put('/cinema-chains/{cinemaChain}', [App\Http\Controllers\CinemaChainController::class, 'update'])->name('cinema-chains.update')->middleware(['auth','admin']);
+Route::delete('/cinema-chains/{cinemaChain}', [App\Http\Controllers\CinemaChainController::class, 'destroy'])->name('cinema-chains.destroy')->middleware(['auth','admin']);
+Route::get('/cinema-chains/{id}/show', [App\Http\Controllers\CinemaChainController::class, 'show'])->name('cinema-chains.show')->middleware(['auth','admin']);
+Route::get('/cinema-chains/refresh_cinema-chains', [App\Http\Controllers\CinemaChainController::class, 'refresh_cinema-chains'])->name('cinema-chains.refresh_cinema-chains')->middleware(['auth','admin']);
+
+
 Route::get('locations', [App\Http\Controllers\LocationController::class, 'index'])->name('locations.index')->middleware(['auth','admin']);
 Route::get('/locations/list', [App\Http\Controllers\LocationController::class, 'get'])->name('locations.list')->middleware(['auth','admin']);
 Route::post('/locations', [App\Http\Controllers\LocationController::class, 'store'])->name('locations.store')->middleware(['auth','admin']);

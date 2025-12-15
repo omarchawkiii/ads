@@ -2,43 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Slot;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
-class SlotController extends Controller
+use App\Models\CinemaChain;
+use App\Models\Config;
+
+class CinemaChainController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('admin.slots.index');
+        $config = Config::first();
+        return view('admin.cinema_chains.index', compact('config'));
     }
 
     public function show(Request $request)
     {
-        $slot = Slot::findOrFail($request->id) ;
-        return Response()->json(compact('slot'));
+        $cinemaChain = CinemaChain::findOrFail($request->id);
+        return response()->json(compact('cinemaChain'));
     }
 
     public function get()
     {
-        $slots = Slot::orderBy('name', 'asc')->get();
-        return Response()->json(compact('slots'));
+        $cinemaChains = CinemaChain::orderBy('name', 'asc')->get();
+        return response()->json(compact('cinemaChains'));
     }
 
     public function store(Request $request)
     {
-        try
-        {
+        try {
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'cpm'  => ['required', 'integer', 'min:0'],
-                'max_duration' => ['required', 'integer', 'min:1'],
             ]);
-            $slot = Slot::create($validated);
+
+            $cinemaChain = CinemaChain::create($validated);
+
             return response()->json([
-                'message' => 'Slot created successfully.',
-                'data' => $slot,
+                'message' => 'Cinema chain created successfully.',
+                'data' => $cinemaChain,
             ], 201);
+
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Operation failed.',
@@ -46,21 +48,20 @@ class SlotController extends Controller
         }
     }
 
-    public function update(Request $request, Slot $slot)
+    public function update(Request $request, CinemaChain $cinemaChain)
     {
-        try
-        {
+        try {
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'cpm'  => ['required', 'integer', 'min:0'],
-                'max_duration' => ['required', 'integer', 'min:1'],
             ]);
 
-            $slot->update($validated);
+            $cinemaChain->update($validated);
+
             return response()->json([
-                'message' => 'Slot updated successfully.',
-                'data' => $slot,
+                'message' => 'Cinema chain updated successfully.',
+                'data' => $cinemaChain,
             ]);
+
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Operation failed.',
@@ -68,14 +69,15 @@ class SlotController extends Controller
         }
     }
 
-    public function destroy(Slot $slot)
+    public function destroy(CinemaChain $cinemaChain)
     {
-        try
-        {
-            $slot->delete();
+        try {
+            $cinemaChain->delete();
+
             return response()->json([
-                'message' => 'Slot deleted successfully.',
+                'message' => 'Cinema chain deleted successfully.',
             ]);
+
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Operation failed.',
