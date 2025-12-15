@@ -80,7 +80,6 @@
         <!-- /.modal-dialog -->
     </div>
 
-
     <div class="modal " id="edit_interest_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true" role="dialog">
         <div class="modal-dialog modal-md modal-dialog-centered">
             <div class="modal-content">

@@ -42,14 +42,8 @@
               <span class="hide-menu">Campaign </span>
             </a>
           </li>
-          <li>
-            <span class="sidebar-divider lg"></span>
-          </li>
 
-          <li class="nav-small-cap">
-            <iconify-icon icon="solar:menu-dots-linear" class="mini-icon"></iconify-icon>
-            <span class="hide-menu">Settings</span>
-          </li>
+
 
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('locations.index') }}" id="get-url" aria-expanded="false">
@@ -58,7 +52,13 @@
               <span class="hide-menu">Locations Management</span>
             </a>
           </li>
+          <li class="sidebar-item">
+            <a class="sidebar-link" href="{{ route('movies.index') }}" id="get-url" aria-expanded="false">
 
+              <i class="mdi mdi-filmstrip" > </i>
+              <span class="hide-menu">Movies  Management</span>
+            </a>
+          </li>
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('slots.index') }}" id="get-url" aria-expanded="false">
               <iconify-icon icon="solar:widget-add-line-duotone" class=""></iconify-icon>
@@ -66,13 +66,6 @@
             </a>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('targets.index') }}" id="get-url" aria-expanded="false">
-
-              <i class="mdi mdi-magnet-on" > </i>
-              <span class="hide-menu">Targets Management</span>
-            </a>
-          </li>
 
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('brands.index') }}" id="get-url" aria-expanded="false">
@@ -82,37 +75,19 @@
             </a>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('halls.index') }}" id="get-url" aria-expanded="false">
 
-              <i class="mdi mdi-monitor" > </i>
-              <span class="hide-menu">Halls Type Management</span>
+          <li class="sidebar-item">
+            <a class="sidebar-link" href="{{ route('campaign_definitions.index') }}" id="get-url" aria-expanded="false">
+                <i class=" mdi mdi-chart-line" > </i>
+                <span class="hide-menu">Campaign Definitions</span>
             </a>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('movies.index') }}" id="get-url" aria-expanded="false">
 
-              <i class="mdi mdi-filmstrip" > </i>
-              <span class="hide-menu">Movies  Management</span>
-            </a>
-          </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('movies_genres.index') }}" id="get-url" aria-expanded="false">
 
-              <i class=" mdi mdi-filmstrip" > </i>
-              <span class="hide-menu">Movies Genres </span>
-            </a>
-          </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('interests.index') }}" id="get-url" aria-expanded="false">
 
-              <i class=" mdi mdi-nature-people" > </i>
-              <span class="hide-menu">Interests Management</span>
-            </a>
-          </li>
 
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('users.index') }}" id="get-url" aria-expanded="false">
@@ -122,21 +97,9 @@
             </a>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('compaign_categories.index') }}" id="get-url" aria-expanded="false">
 
-              <i class=" mdi mdi-chart-bubble" > </i>
-              <span class="hide-menu">Campaign Categories</span>
-            </a>
-          </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('compaign_objectives.index') }}" id="get-url" aria-expanded="false">
-              <i class=" mdi mdi-chart-line" > </i>
 
-              <span class="hide-menu">Campaign Objectives</span>
-            </a>
-          </li>
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('invoices.index') }}" id="get-url" aria-expanded="false">
               <i class=" mdi mdi-file-document" > </i>

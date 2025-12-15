@@ -34,6 +34,8 @@ require __DIR__.'/auth.php';
 
 Auth::routes(['verify' => true,'register' => true, 'reset' => true]);
 
+Route::get('campaign_definitions', [App\Http\Controllers\LocationController::class, 'campaign_definitions'])->name('campaign_definitions.index')->middleware(['auth','admin']);
+
 
 /* ************ Admin route ********** */
 Route::get('locations', [App\Http\Controllers\LocationController::class, 'index'])->name('locations.index')->middleware(['auth','admin']);

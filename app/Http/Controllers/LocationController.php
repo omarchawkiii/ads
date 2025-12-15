@@ -14,6 +14,16 @@ use Yajra\DataTables\Facades\DataTables;
 
 class LocationController extends Controller
 {
+
+
+
+    public function campaign_definitions()
+    {
+        $config  = Config::first() ;
+        return view('admin.campaign_definitions.index',compact('config'));
+    }
+
+
     public function index(Request $request)
     {
         $config  = Config::first() ;

@@ -1,45 +1,100 @@
 @extends('admin.layouts.app')
 @section('title')
-    Compaign Categories
+    Campaign Definitions
 @endsection
 @section('content')
-    <div class="container py-4">
+    <div class="py-4">
+
+
 
         <div class="card card-body py-3">
-            <div class="row align-items-center">
-              <div class="col-12">
-                <div class="d-sm-flex align-items-center justify-space-between">
-                  <h4 class="mb-4 mb-sm-0 card-title"> Compaign Categories</h4>
-                  <nav aria-label="breadcrumb" class="ms-auto">
-                    <ol class="breadcrumb">
-                      <li class="breadcrumb-item" aria-current="page">
-                        <button class="btn bg-success  text-white " id="create_compaign_category">
-                            + New Compaign Category
-                        </button>
-                      </li>
-                    </ol>
-                  </nav>
+            <div>
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#genre" role="tab">
+                            <span>Genre Definitions  </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " data-bs-toggle="tab" href="#interest" role="tab">
+                            <span>Interest Definitions  </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " data-bs-toggle="tab" href="#objective" role="tab">
+                            <span>Objective Definitions  </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " data-bs-toggle="tab" href="#categories" role="tab">
+                            <span>Categories </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " data-bs-toggle="tab" href="#targets" role="tab">
+                            <span>Targets Definitions </span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div class="tab-pane active" id="genre" role="tabpanel">
+                        <h1>Genre</h1>
+                    </div>
+                    <div class="tab-pane " id="interest" role="tabpanel">
+                        <h1>interest</h1>
+                    </div>
+                    <div class="tab-pane " id="objective" role="tabpanel">
+                        <h1>Objective</h1>
+                    </div>
+
+
+                    <div class="tab-pane " id="categories" role="tabpanel">
+                        <div class="">
+                            <div class="row align-items-center">
+                              <div class="col-12">
+                                <div class="d-sm-flex align-items-center justify-space-between">
+
+                                  <nav aria-label="breadcrumb" class="ms-auto">
+                                    <ol class="breadcrumb">
+                                      <li class="breadcrumb-item" aria-current="page">
+                                        <button class="btn bg-success  text-white " id="create_compaign_category">
+                                            + New Compaign Category
+                                        </button>
+                                      </li>
+                                    </ol>
+                                  </nav>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body table-responsive">
+                                <table id="compaign_categories-table" class="table table-striped table-bordered display text-nowrap dataTable">
+                                    <thead>
+                                        <tr class="text-center">
+                                            <th class="text-center" style="width:160px;">ID</th>
+                                            <th class="text-center">Name</th>
+                                            <th  class="text-center" style="width:160px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane " id="targets" role="tabpanel">
+                        <h1>targets</h1>
+                    </div>
+
                 </div>
-              </div>
-            </div>
-          </div>
-
-
-        <div class="card">
-            <div class="card-body table-responsive">
-                <table id="compaign_categories-table" class="table table-striped table-bordered display text-nowrap dataTable">
-                    <thead>
-                        <tr class="text-center">
-                            <th class="text-center" style="width:160px;">ID</th>
-                            <th class="text-center">Name</th>
-                            <th  class="text-center" style="width:160px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
             </div>
         </div>
+
+
+
     </div>
 
     {{-- Create Modal --}}

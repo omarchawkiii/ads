@@ -88,3 +88,9 @@ table.dataTable thead>tr>th.sorting:after, table.dataTable thead>tr>th.sorting_a
       padding: 0 0.5rem;
     }
   }
+
+
+  .dataTables_length
+  {
+    float: left;
+  }

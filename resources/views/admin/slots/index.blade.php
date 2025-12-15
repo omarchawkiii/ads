@@ -3,7 +3,7 @@
     Slots
 @endsection
 @section('content')
-    <div class="container py-4">
+    <div class="">
 
         <div class="card card-body py-3">
             <div class="row align-items-center">
