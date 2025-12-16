@@ -659,11 +659,12 @@
         </div>
     </div>
 
-    <div class="modal fade" id="availableSlotsModal" tabindex="-1" aria-labelledby="availableSlotsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal fade" id="availableSlotsModal" tabindex="-1" aria-labelledby="availableSlotsModalLabel" aria-hidden="true"  data-backdrop="static" backdrop="static"  >
+        <div class="modal-dialog modal-xl modal-dialog-centered">
           <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="availableSlotsModalLabel">Available Slots for Next Month</h5>
+            <div class="modal-header bg-primary">
+              <h5 class="modal-title text-white">Available Slots for Next Month</h5>
+
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -696,7 +697,11 @@
     <script>
         $(function() {
 
-
+            const today = new Date().toISOString().split('T')[0];
+            $('#start_date').attr('min', today);
+            $(document).on('change', '#start_date', function() {
+                $('#end_date').attr('min', $(this).val());
+            });
             $(document).on('click', '#btn-available-slots', function() {
                 $('#availableSlotsModal').modal('show');
                 const $tbody = $('#available-slots-table tbody');
