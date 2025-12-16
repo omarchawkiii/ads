@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Models\CinemaChain;
 use App\Models\Config;
+use App\Models\Location;
 
 class CinemaChainController extends Controller
 {
@@ -83,5 +84,10 @@ class CinemaChainController extends Controller
                 'message' => 'Operation failed.',
             ], 500);
         }
+    }
+    public function getLocations($id)
+    {
+        $locations = Location::where('cinema_chain_id', $id)->get(['id','name']);
+        return response()->json(['locations' => $locations]);
     }
 }

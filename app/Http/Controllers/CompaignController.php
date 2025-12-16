@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
+use App\Models\CinemaChain;
 use App\Models\Compaign;
 use App\Models\CompaignCategory;
 use App\Models\CompaignObjective;
@@ -17,6 +18,7 @@ use App\Models\Movie;
 use App\Models\MovieGenre;
 use App\Models\Slot;
 use App\Models\TargetType;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -208,9 +210,10 @@ class CompaignController extends Controller
         $interests = Interest::orderBy('name', 'asc')->get() ;
         $slots = Slot::orderBy('name', 'asc')->get() ;
         $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
+        $cinema_chains  = CinemaChain::orderBy('name', 'asc')->get() ;
 
 
-        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives'));
+        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains'));
     }
 
 
@@ -347,5 +350,60 @@ class CompaignController extends Controller
             ], 500);
         }
     }
+
+    public function getAvailableSlotsMonth(Request $request)
+    {
+        $startDate = now()->format('Y-m-d'); // today
+        $endDate = now()->addMonth()->format('Y-m-d'); // one month from today
+
+        $slots = Slot::all();
+        $result = [];
+
+        foreach ($slots as $slot) {
+            // Calculate total used duration for this slot in the next month
+            $usedDuration = Compaign::where('slot_id', $slot->id)
+                ->where(function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate]);
+                })
+                ->with('dcpCreatives', 'movie') // eager load
+                ->get()
+                ->sum(function($compaign) {
+                    return $compaign->dcpCreatives->sum('duration');
+                });
+
+            $remainingDuration = max($slot->max_duration - $usedDuration, 0);
+
+            // get targets info
+            $targets = Compaign::where('slot_id', $slot->id)
+                ->where(function($q) use ($startDate, $endDate) {
+                    $q->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate]);
+                })
+                ->with('movie', 'movie.genre')
+                ->get()
+                ->map(function($c) {
+                    return [
+                        'movie' => $c->movie->name ?? '-',
+                        'genre' => $c->movie->genre->name ?? '-',
+                    ];
+                });
+
+            $result[] = [
+                'slot' => $slot->name,
+                'max_duration' => $slot->max_duration,
+                'used_duration' => $usedDuration,
+                'remaining_duration' => $remainingDuration,
+                'targets' => $targets,
+            ];
+        }
+
+        return response()->json([
+            'available_slots' => $result
+        ]);
+    }
+
+
+
 
 }

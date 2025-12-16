@@ -3,7 +3,7 @@
     Campaign
 @endsection
 @section('content')
-    <div class="container py-4">
+    <div class="">
 
         <div class="card card-body py-3">
             <div class="row align-items-center">
@@ -16,6 +16,10 @@
                                     <button class="btn bg-success  text-white " id="create_compaign">
                                         + New Campaign
                                     </button>
+                                    <button class="btn btn-info   " id="btn-available-slots">
+                                        <i class="mdi mdi-timer"></i> Available Slots
+                                    </button>
+
                                 </li>
                             </ol>
                         </nav>
@@ -93,8 +97,7 @@
                                         <label class="form-label" for="compaign_category"> Ad Category : <span
                                                 class="danger">*</span>
                                         </label>
-                                        <select class="form-select required" id="compaign_category"
-                                            name="compaign_category">
+                                        <select class="form-select required" id="compaign_category" name="compaign_category">
                                             <option value="">Select...</option>
                                             @foreach ($compaign_categories as $compaign_category)
                                                 <option value="{{ $compaign_category->id }}">{{ $compaign_category->name }}
@@ -165,16 +168,25 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
+                                        <label class="form-label" for="cinema_chain"> Cinema Chain : <span class="danger">*</span></label>
+                                        <select class="form-select required" id="cinema_chain" name="cinema_chain">
+                                            <option value="">Select...</option>
+                                            @foreach ($cinema_chains as $chain)
+                                                <option value="{{ $chain->id }}">{{ $chain->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+
+                                    <div class="mb-3">
                                         <label class="form-label" for="location"> Select Cinemas : <span
                                                 class="danger">*</span>
                                         </label>
 
-                                        <select class="form-select required select2" multiple="" id="location"
-                                            name="location[]">
+                                        <select class="form-select required select2" multiple="" id="location" name="location[]">
                                             <option value="">Select...</option>
-                                            @foreach ($locations as $location)
-                                                <option value="{{ $location->id }}">{{ $location->name }}</option>
-                                            @endforeach
+                                            {{-- Les options seront remplies dynamiquement selon cinemaChain --}}
                                         </select>
                                     </div>
                                 </div>
@@ -236,7 +248,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label" for="target_type"> Target Type : <span
+                                        <label class="form-label" for="target_type"> Audience Targeting : <span
                                                 class="danger">*</span>
                                         </label>
                                         <select class="form-select select2 required" id="target_type"
@@ -271,10 +283,25 @@
                         <h6>Upload & Slot</h6>
                         <section>
                             <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <label class="form-label" for="dcp_creative"> DCP Creative : <span
+                                                class="danger">*</span>
+                                        </label>
+
+                                        <select class="form-select required select2" id="dcp_creative" multiple=""  name="dcp_creative[]">
+                                            <option value="">Select...</option>
+                                            @foreach ($dcp_creatives as $dcp_creative)
+                                                <option value="{{ $dcp_creative->id }}">{{ $dcp_creative->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label" for="slot"> Select Ad Slot Tier : <span
                                                 class="danger">*</span>
+                                                <i class="mdi mdi-timer" id="btn-available-slots" style="cursor: pointer"></i>
                                         </label>
 
                                         <select class="form-select required" id="slot" name="slot">
@@ -300,20 +327,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-12">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="dcp_creative"> DCP Creative : <span
-                                                class="danger">*</span>
-                                        </label>
 
-                                        <select class="form-select required select2" id="dcp_creative" multiple=""  name="dcp_creative[]">
-                                            <option value="">Select...</option>
-                                            @foreach ($dcp_creatives as $dcp_creative)
-                                                <option value="{{ $dcp_creative->id }}">{{ $dcp_creative->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
                             </div>
                         </section>
                         <!-- Step 4 -->
@@ -644,6 +658,31 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="availableSlotsModal" tabindex="-1" aria-labelledby="availableSlotsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="availableSlotsModalLabel">Available Slots for Next Month</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table table-bordered" id="available-slots-table">
+                <thead>
+                  <tr>
+                    <th>Slot</th>
+                    <th>Max Duration (s)</th>
+                    <th>Used Duration (s)</th>
+                    <th>Remaining Duration (s)</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+    </div>
+
 @endsection
 
 
@@ -656,6 +695,80 @@
     <script src="{{ asset('assets/js/helper.js') }}"></script>
     <script>
         $(function() {
+
+
+            $(document).on('click', '#btn-available-slots', function() {
+                $('#availableSlotsModal').modal('show');
+                const $tbody = $('#available-slots-table tbody');
+                $tbody.html('<tr><td colspan="5" class="text-center">Loading...</td></tr>');
+                var url= '{{ url('') }}/advertiser/available-slots-month';
+                $.ajax({
+                    url:url,
+                    method: 'GET',
+                })
+                .done(function(response) {
+                    $tbody.empty();
+                    response.available_slots.forEach(slot => {
+                        const targets = slot.targets.map(t => t.movie + ' (' + t.genre + ')').join(', ');
+                        $tbody.append(`
+                            <tr>
+                                <td>${slot.slot}</td>
+                                <td>${slot.max_duration}</td>
+                                <td>${slot.used_duration}</td>
+                                <td>${slot.remaining_duration}</td>
+                            </tr>
+                        `);
+                    });
+                    if(response.available_slots.length === 0){
+                        $tbody.html('<tr><td colspan="5" class="text-center">No available slots found.</td></tr>');
+                    }
+                })
+                .fail(function() {
+                    $tbody.html('<tr><td colspan="5" class="text-center text-danger">Failed to load available slots.</td></tr>');
+                });
+            });
+
+            function loadAvailableSlots() {
+                var cinemaChain = $('#cinema_chain').val();
+                var location = $('#location').val();
+                var startDate = $('#start_date').val();
+                var endDate = $('#end_date').val();
+                var movie = $('#movie').val();
+                var dcp_creative = $('#dcp_creative').val();
+
+                if (!cinemaChain || !location || !startDate || !endDate || !movie) return;
+
+                var $slot = $('#slot');
+                $slot.empty().append('<option value="">Loading...</option>');
+
+                $.ajax({
+                    url: '{{ url('') }}/advertiser/slots/available',
+                    method: 'GET',
+                    data: {
+                        cinema_chain_id: cinemaChain,
+                        location_id: location,
+                        start_date: startDate,
+                        end_date: endDate,
+                        movie_id: movie,
+                        dcp_creative:dcp_creative,
+                        "_token": "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        $slot.empty().append('<option value="">Select...</option>');
+                        $.each(response.slots, function(i, s) {
+                            $slot.append('<option value="'+s.id+'">'+s.name+' (Max Duration: '+s.max_duration+'s)</option>');
+                        });
+                        $slot.select2({
+                            placeholder: "Select...",
+                            dropdownParent: $('#create_compaign_modal'),
+                            width: '100%'
+                        });
+                    },
+                    error: function() {
+
+                    }
+                });
+            }
 
             $(document).on('click', '#create_compaign', function() {
                 $('#create_compaign_modal').modal('show');
@@ -680,6 +793,44 @@
                         tags: $sel.is('#brand')
                     });
                 });
+
+                $('#cinema_chain').on('change', function() {
+                    var chainId = $(this).val();
+                    var $location = $('#location');
+
+                    $location.empty(); // Vide l'ancienne liste
+                    if (!chainId) return;
+
+                    $.ajax({
+                        url: '{{ url('') }}/advertiser/cinema-chain/' + chainId + '/locations',
+                        type: 'GET',
+                        success: function(response) {
+                            // response.locations attendu sous forme [{id:1,name:'...'},...]
+                            $location.append('<option value="">Select...</option>');
+                            $.each(response.locations, function(i, loc) {
+                                $location.append('<option value="' + loc.id + '">' + loc.name + '</option>');
+                            });
+
+                            $location.select2({
+                                placeholder: "Select...",
+                                dropdownParent: $modal,
+                                width: '100%'
+                            });
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Failed to load locations.',
+                                icon: 'error'
+                            });
+                        }
+                    });
+                });
+                $('#dcp_creative').on('change', loadAvailableSlots);
+                $('#cinema_chain, #location, #start_date, #end_date').on('change', function() {
+                   $('#slot').val();
+                });
+
             });
 
             $(document).on('hidden.bs.modal', '#create_compaign_modal', function() {
