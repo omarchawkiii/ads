@@ -113,6 +113,7 @@ class SlotController extends Controller
 
          // ✅ Check if movies exist for selected genres
         if (!empty($movieGenreIds)) {
+
             $movieExists = Movie::whereIn('movie_genre_id', $movieGenreIds)->exists();
 
             if (!$movieExists) {
@@ -123,14 +124,14 @@ class SlotController extends Controller
             }
         }
 
-
-
-
-
-
         foreach ($slots as $slot) {
             $totalDcpDuration = $dcpCreatives->sum('duration');
-            if ($slot->max_duration <= $totalDcpDuration) {
+            //$totalDcpDuration = intval( $totalDcpDuration);
+
+
+            if ($slot->max_duration < $totalDcpDuration) {
+
+
                 continue; // skip ce slot
             }
             // Calculer la durée déjà utilisée sur ce slot
@@ -154,6 +155,13 @@ class SlotController extends Controller
             if ($slot->max_duration >= $usedDuration && ($slot->max_duration - $usedDuration ) >=  $totalDcpDuration ) {
                 $availableSlots[] = $slot;
             }
+
+            /*echo $slot->max_duration . " | ";
+            echo $usedDuration . " | ";
+            echo $usedDuration . " | ";
+            echo $totalDcpDuration . " | ";
+
+            echo "________";*/
         }
 
         return response()->json([
