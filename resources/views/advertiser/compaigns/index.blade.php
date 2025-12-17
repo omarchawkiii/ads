@@ -741,6 +741,7 @@
                 var startDate = $('#start_date').val();
                 var endDate = $('#end_date').val();
                 var movie = $('#movie').val();
+                var movie_genre_id = $('#movie_genre').val();
                 var dcp_creative = $('#dcp_creative').val();
 
                 if (!cinemaChain || !location || !startDate || !endDate || !movie) return;
@@ -757,6 +758,7 @@
                         start_date: startDate,
                         end_date: endDate,
                         movie_id: movie,
+                        movie_genre_id:movie_genre_id,
                         dcp_creative:dcp_creative,
                         "_token": "{{ csrf_token() }}"
                     },

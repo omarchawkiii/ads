@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Compaign;
 use App\Models\DcpCreative;
+use App\Models\Movie;
 
 class SlotController extends Controller
 {
@@ -108,6 +109,21 @@ class SlotController extends Controller
         $availableSlots = [];
 
         $dcpCreatives = DcpCreative::whereIn('id', $request->dcp_creative)->get();
+
+
+         // ✅ Check if movies exist for selected genres
+        if (!empty($movieGenreIds)) {
+            $movieExists = Movie::whereIn('movie_genre_id', $movieGenreIds)->exists();
+
+            if (!$movieExists) {
+                return response()->json([
+                    'slots' => [],
+                    'message' => 'No movies found for the selected genre(s).'
+                ]);
+            }
+        }
+
+
 
         foreach ($slots as $slot) {
             $totalDcpDuration = $dcpCreatives->sum('duration');
