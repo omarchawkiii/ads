@@ -125,9 +125,12 @@ class SlotController extends Controller
 
 
 
+
+
+
         foreach ($slots as $slot) {
             $totalDcpDuration = $dcpCreatives->sum('duration');
-            if ($slot->max_duration < $totalDcpDuration) {
+            if ($slot->max_duration <= $totalDcpDuration) {
                 continue; // skip ce slot
             }
             // Calculer la durée déjà utilisée sur ce slot
