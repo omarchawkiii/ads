@@ -796,6 +796,7 @@
                 }
                 $(document).on('click', '#location-tab', function() {
                     get_locations();
+                    refresh_cinema_chain();
                 })
 
 
@@ -1066,6 +1067,26 @@
                         }
                     })
                 })
+
+                function refresh_cinema_chain()
+                {
+                    var cinema_chain = $('#cinema_chain_id');
+                    var url = "{{ url('') }}" + '/cinema-chains/list';
+                    $.ajax({
+                        url: url,
+                        type: "GET",
+                        success: function (response) {
+                            cinema_chain.empty();
+                            cinema_chain.append('<option value="">Cinema Chain</option>');
+
+                            $.each(response.cinemaChains, function (index, chain) {
+                                cinema_chain.append(
+                                    `<option value="${chain.id}">${chain.name}</option>`
+                                );
+                            });
+                        },
+                    });
+                }
 
             });
         </script>

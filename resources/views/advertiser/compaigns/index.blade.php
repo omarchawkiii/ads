@@ -699,8 +699,10 @@
 
             const today = new Date().toISOString().split('T')[0];
             $('#start_date').attr('min', today);
+            $('#end_date').attr('min', today);
             $(document).on('change', '#start_date', function() {
                 $('#end_date').attr('min', $(this).val());
+                $('#end_date').val();
             });
             $(document).on('click', '#btn-available-slots', function() {
                 $('#availableSlotsModal').modal('show');
