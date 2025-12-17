@@ -151,7 +151,7 @@ class SlotController extends Controller
                 });
 
 
-            if ($slot->max_duration > $usedDuration && ($slot->max_duration - $usedDuration ) >  $totalDcpDuration ) {
+            if ($slot->max_duration >= $usedDuration && ($slot->max_duration - $usedDuration ) >=  $totalDcpDuration ) {
                 $availableSlots[] = $slot;
             }
         }
