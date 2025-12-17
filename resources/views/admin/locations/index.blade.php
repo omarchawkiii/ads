@@ -903,6 +903,8 @@
                 });
 
                 $(document).on('click', '#location .edit', function() {
+
+                    refresh_cinema_chain()
                     var location = $(this).attr('id');
                     var url = '{{ url('') }}' + '/locations/' + location + '/show/';
 
@@ -935,6 +937,7 @@
 
                 $(document).on("submit", "#edit_location_form", function(event) {
                     event.preventDefault();
+
                     var name = $('#edit_location_form #name').val();
                     var cpm = $('#edit_location_form #cpm').val();
                     var id = $('#edit_location_form #id').val();
@@ -1070,17 +1073,23 @@
 
                 function refresh_cinema_chain()
                 {
-                    var cinema_chain = $('#cinema_chain_id');
+                    var cinema_chain_create= $('#create_location_form #cinema_chain_id');
+                    var cinema_chain_edit= $('#edit_location_form #cinema_chain_id');
                     var url = "{{ url('') }}" + '/cinema-chains/list';
                     $.ajax({
                         url: url,
                         type: "GET",
                         success: function (response) {
-                            cinema_chain.empty();
-                            cinema_chain.append('<option value="">Cinema Chain</option>');
+                            cinema_chain_create.empty();
+                            cinema_chain_edit.empty();
+                            cinema_chain_create.append('<option value="">Cinema Chain</option>');
+                            cinema_chain_edit.append('<option value="">Cinema Chain</option>');
 
                             $.each(response.cinemaChains, function (index, chain) {
-                                cinema_chain.append(
+                                cinema_chain_create.append(
+                                    `<option value="${chain.id}">${chain.name}</option>`
+                                );
+                                cinema_chain_edit.append(
                                     `<option value="${chain.id}">${chain.name}</option>`
                                 );
                             });
