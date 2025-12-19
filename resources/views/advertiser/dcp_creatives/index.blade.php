@@ -3,8 +3,7 @@
     DCP Creative
 @endsection
 @section('content')
-    <div class="container py-4">
-
+    <div class="">
         <div class="card card-body py-3">
             <div class="row align-items-center">
                 <div class="col-12">
@@ -28,7 +27,6 @@
             </div>
         </div>
 
-
         <div class="card">
             <div class="card-body table-responsive">
                 <table id="dcp_creatives-table" class="table table-striped table-bordered display text-nowrap dataTable">
@@ -38,6 +36,8 @@
                             <th class="text-center">Name</th>
                             <th class="text-center">UUID</th>
                             <th class="text-center">Duration</th>
+                            <th class="text-center">Category</th>
+                            <th class="text-center">Status</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -101,6 +101,15 @@
                             <label class="form-label"> ZIP File</label>
                             <input type="file" class="form-control" id="fileInput" accept=".zip,.tar,.7z" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" id="compaign_category_id" required>
+                                <option value="">-- Select Category --</option>
+                                @foreach($categories ?? [] as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="d-flex gap-2">
                             <button type="submit" id="startBtn" class="btn btn-success">Start uploading</button>
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -138,6 +147,7 @@
             </div>
         </div>
     </div>
+
 @endsection
 
 
@@ -177,7 +187,7 @@
 
             $('#uploadForm').on('submit', async function(e) {
                 e.preventDefault();
-
+                const compaign_category_id = $('#compaign_category_id').val();
                 const file = $('#fileInput')[0].files[0];
                 if (!file) return;
 
@@ -207,6 +217,7 @@
                         },
                         data: {
                             file_name: file.name,
+                            compaign_category_id:compaign_category_id,
                             file_size: file.size
                         }
                     });
@@ -277,7 +288,8 @@
                         data: {
                             upload_id: uploadId,
                             total: total,
-                            file_name: file.name
+                            file_name: file.name,
+                            compaign_category_id:compaign_category_id,
                         }
                     });
 
@@ -325,6 +337,7 @@
                     // Visual reset for next upload
                     resetProgressUI();
                     $('#fileInput').val('');
+                    $('#compaign_category_id').val('');
                     get_dcp_creatives();
                 }
             });
@@ -355,12 +368,18 @@
                                     value.uuid + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     formatHMS(value.duration) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.compaign_category ? value.compaign_category.name : '-') + '</td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (
+                                        value.status == 1 ? '<span class="badge bg-warning-subtle text-warning">Pending</span> ' :
+                                        value.status == 2 ? '<span class="badge bg-success-subtle text-success">Approved</span>' :
+                                        value.status == 3 ? '<span class="badge bg-danger-subtle text-danger">Rejected</span>': '-'
+                                    ) + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    '<button id="' + value.id +
-                                    '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
-                                    '<i class="mdi mdi-delete"></i>' +
-                                    '</button>' +
 
+                                        '<button id="' + value.id +
+                                        '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
+                                        '<i class="mdi mdi-delete"></i>' +
+                                        '</button>' +
                                     '</td>' +
                                     '</tr>';
                             });

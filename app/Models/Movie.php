@@ -21,6 +21,9 @@ class Movie extends Model
         'name',
         'uuid',
         'movie_genre_id',
+        'langue_id',
+        'runtime',
+        'status',
     ];
 
     /**
@@ -40,5 +43,9 @@ class Movie extends Model
     public function genre(): BelongsTo
     {
         return $this->belongsTo(MovieGenre::class, 'movie_genre_id');
+    }
+    public function langue()
+    {
+        return $this->belongsTo(Langue::class, 'langue_id');
     }
 }

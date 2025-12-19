@@ -34,6 +34,9 @@
                             <th class="text-center">Name</th>
                             <th class="text-center">Genre</th>
                             <th class="text-center">Movie Code </th>
+                            <th class="text-center">Language</th>
+                            <th class="text-center">Runtime</th>
+                            <th class="text-center">Status</th>
                             <th  class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -71,6 +74,20 @@
                                         <option value="{{ $genre->id }}">{{ $genre->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="">Language:</label>
+                                <select class="form-control" id="langue_id" required>
+                                    <option value="">-- Select Language --</option>
+                                    @foreach($langues ?? [] as $lang)
+                                        <option value="{{ $lang->id }}">{{ $lang->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="">Runtime (min):</label>
+                                <input type="number" class="form-control" id="runtime" placeholder="Runtime">
                             </div>
 
                         </div>
@@ -116,6 +133,29 @@
                                     @foreach($genres ?? [] as $genre)
                                         <option value="{{ $genre->id }}">{{ $genre->name }}</option>
                                     @endforeach
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="">Language:</label>
+                                <select class="form-control" id="langue_id" required>
+                                    <option value="">-- Select Language --</option>
+                                    @foreach($langues ?? [] as $lang)
+                                        <option value="{{ $lang->id }}">{{ $lang->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="">Runtime (min):</label>
+                                <input type="number" class="form-control" id="runtime">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="">Status:</label>
+                                <select class="form-control" id="status">
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
                                 </select>
                             </div>
 
@@ -172,6 +212,9 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.genre ? value.genre.name : '-') + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     value.uuid + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.langue ? value.langue.name : '-') + '</td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.runtime ?? '-') + ' min</td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.status ? '<span class="badge bg-success-subtle text-success">Active</span> ' : '<span class="badge bg-danger-subtle text-danger">Inactive</span>') + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
                                     '" type="button" class="edit ustify-content-center btn mb-1 btn-rounded btn-warning m-1" >' +
@@ -214,6 +257,9 @@
                 event.preventDefault();
                 var name = $('#create_movie_modal #name ').val();
                 var movie_genre_id = $('#create_movie_modal #movie_genre').val();
+                var langue_id = $('#create_movie_modal #langue_id').val();
+                var runtime = $('#create_movie_modal #runtime').val();
+                var status = $('#create_movie_modal #status').val();
 
                 var url = '{{ url('') }}' + '/movies';
 
@@ -224,6 +270,9 @@
                         data: {
                             name: name,
                             movie_genre_id:movie_genre_id,
+                            langue_id:langue_id,
+                            runtime:runtime,
+                            status:1,
                             "_token": "{{ csrf_token() }}",
                         },
                     })
@@ -313,6 +362,7 @@
             $(document).on('click', '.edit', function() {
                 var movie = $(this).attr('id');
 
+
                 var url = '{{ url('') }}' + '/movies/' + movie+ '/show/';
 
                 $.ajax({
@@ -327,12 +377,15 @@
                         "_token": "{{ csrf_token() }}",
                     },
                     success: function(response) {
-
+                        console.log(response)
                         $("#wait-modal").modal('hide');
                         $('#edit_movie_modal').modal('show');
                         $('#edit_movie_modal #name').val(response.movie.name)
-                        $('#edit_movie_modal #movie_genre').val(response.movie.genre_id);
+                        $('#edit_movie_modal #movie_genre').val(response.movie.movie_genre_id);
                         $('#edit_movie_modal #id').val(movie)
+                        $('#edit_movie_modal #langue_id').val(response.movie.langue_id);
+                        $('#edit_movie_modal #runtime').val(response.movie.runtime);
+                        $('#edit_movie_modal #status').val(response.movie.status);
 
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
@@ -345,6 +398,10 @@
                 event.preventDefault();
                 var name = $('#edit_movie_form #name').val();
                 var movie_genre_id = $('#edit_movie_form #movie_genre').val();
+                var langue_id = $('#edit_movie_form #langue_id').val();
+                var runtime = $('#edit_movie_form #runtime').val();
+                var status = $('#edit_movie_form #status').val();
+
                 var id = $('#edit_movie_form #id').val();
                 var url = '{{ url('') }}' + '/movies/'+ id;
 
@@ -355,6 +412,9 @@
                     data: {
                         name: name,
                         movie_genre_id: movie_genre_id,
+                        langue_id: langue_id,
+                        runtime: runtime,
+                        status:status,
                         "_token": "{{ csrf_token() }}",
                     },
                     beforeSend: function () {

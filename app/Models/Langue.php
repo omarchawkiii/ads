@@ -32,4 +32,8 @@ class Langue extends Model
     {
         return $this->hasMany(Compaign::class);
     }
+    public function movies()
+    {
+        return $this->hasMany(Movie::class, 'langue_id');
+    }
 }

@@ -145,6 +145,9 @@ class SlotController extends Controller
                     $q->whereBetween('start_date', [$startDate, $endDate])
                       ->orWhereBetween('end_date', [$startDate, $endDate]);
                 })
+                ->whereHas('locations', function ($q) use ($locationIds) {
+                    $q->whereIn('locations.id', $locationIds);
+                })
                 ->with('dcpCreatives') // on charge le dcp_creative lié
                 ->get()
                 ->sum(function($compaign) {

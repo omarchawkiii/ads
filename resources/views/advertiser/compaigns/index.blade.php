@@ -111,7 +111,8 @@
                                         <label class="form-label" for="brand">Ad Brand</label>
                                         <select class="form-select required select2" multiple="" id="brand"
                                             name="brand[]">
-                                            <option value="">Select...</option>
+
+                                            <option value="__all__">Select All</option>
                                             @foreach ($brands as $brand)
                                                 <option value="{{ $brand->id }}">{{ $brand->name }}</option>
                                             @endforeach
@@ -185,7 +186,7 @@
                                         </label>
 
                                         <select class="form-select required select2" multiple="" id="location" name="location[]">
-                                            <option value="">Select...</option>
+                                            <option value="__all__">Select All</option>
                                             {{-- Les options seront remplies dynamiquement selon cinemaChain --}}
                                         </select>
                                     </div>
@@ -198,7 +199,7 @@
                                         </label>
                                         <select class="form-select required select2" id="hall_type" multiple=""
                                             name="hall_type[]">
-                                            <option value="">Select...</option>
+                                            <option value="__all__">Select All</option>
                                             @foreach ($hall_types as $hall_type)
                                                 <option value="{{ $hall_type->id }}">{{ $hall_type->name }}</option>
                                             @endforeach
@@ -212,7 +213,6 @@
                                                 class="danger">*</span>
                                         </label>
                                         <select class="form-select required" id="movie" name="movie">
-                                            <option value="">Select...</option>
                                             @foreach ($movies as $movie)
                                                 <option value="{{ $movie->id }}">{{ $movie->name }}</option>
                                             @endforeach
@@ -227,7 +227,7 @@
                                         <select class="form-select required select2" multiple="" id="movie_genre"
                                             name="movie_genre[]">
 
-                                            <option value="">Select...</option>
+                                            <option value="__all__">Select All</option>
                                             @foreach ($movie_genres as $movie_genre)
                                                 <option value="{{ $movie_genre->id }}">{{ $movie_genre->name }}</option>
                                             @endforeach
@@ -253,7 +253,8 @@
                                         </label>
                                         <select class="form-select select2 required" id="target_type"
                                             name="target_type[]">
-                                            <option value="">Select...</option>
+
+
                                             @foreach ($target_types as $target_type)
                                                 <option value="{{ $target_type->id }}">{{ $target_type->name }}
                                                     ({{ $target_type->detail }})
@@ -269,7 +270,8 @@
                                         </label>
                                         <select class="form-select required select2" multiple="" id="interest"
                                             name="interest[]">
-                                            <option value="">Select...</option>
+
+                                            <option value="__all__">Select All</option>
                                             @foreach ($interests as $interest)
                                                 <option value="{{ $interest->id }}">{{ $interest->name }}</option>
                                             @endforeach
@@ -291,6 +293,7 @@
 
                                         <select class="form-select required select2" id="dcp_creative" multiple=""  name="dcp_creative[]">
                                             <option value="">Select...</option>
+                                            <option value="__all__">Select All</option>
                                             @foreach ($dcp_creatives as $dcp_creative)
                                                 <option value="{{ $dcp_creative->id }}">{{ $dcp_creative->name }}</option>
                                             @endforeach
@@ -697,6 +700,47 @@
     <script>
         $(function() {
 
+
+            function initSelect2WithSelectAll(selector) {
+                $(selector).select2({
+                    width: '100%',
+                    closeOnSelect: false
+                });
+
+                $(selector).on('select2:select select2:unselect', function (e) {
+
+                    const ALL_VALUE = '__all__';
+                    const $select = $(this);
+                    const values = $select.val() || [];
+
+                    // Si on clique sur "Select All"
+                    if (e.params?.data?.id === ALL_VALUE) {
+                        if (values.includes(ALL_VALUE)) {
+                            // sélectionner tout sauf __all__
+                            const allValues = $select.find('option')
+                                .map(function () { return this.value; })
+                                .get()
+                                .filter(v => v !== ALL_VALUE);
+
+                            $select.val(allValues).trigger('change.select2');
+                        } else {
+                            // désélectionner tout
+                            $select.val(null).trigger('change.select2');
+                        }
+                    }
+                });
+            }
+            $(document).ready(function () {
+                initSelect2WithSelectAll('#brand');
+                initSelect2WithSelectAll('#location');
+                initSelect2WithSelectAll('#hall_type');
+                initSelect2WithSelectAll('#movie_genre');
+                initSelect2WithSelectAll('#interest');
+                initSelect2WithSelectAll('#dcp_creative');
+                initSelect2WithSelectAll('#target_type');
+            });
+
+
             const today = new Date().toISOString().split('T')[0];
             $('#start_date').attr('min', today);
             $('#end_date').attr('min', today);
@@ -796,6 +840,7 @@
 
                     $sel.select2({
                         placeholder: "Select...",
+                        allowClear: true,
                         dropdownParent: $modal, // évite le menu derrière le modal
                         width: '100%',
                         // active "tags" seulement pour #brand
@@ -815,7 +860,7 @@
                         type: 'GET',
                         success: function(response) {
                             // response.locations attendu sous forme [{id:1,name:'...'},...]
-                            $location.append('<option value="">Select...</option>');
+                            $location.append(' <option value="__all__">Select All</option>');
                             $.each(response.locations, function(i, loc) {
                                 $location.append('<option value="' + loc.id + '">' + loc.name + '</option>');
                             });
@@ -835,12 +880,14 @@
                         }
                     });
                 });
-                $('#dcp_creative').on('change', loadAvailableSlots);
-                $('#cinema_chain, #location, #start_date, #end_date').on('change', function() {
-                   $('#slot').val();
-                });
+
 
             });
+            $(document).on('change', '#dcp_creative, #location, #start_date, #end_date', function() {
+                loadAvailableSlots()
+                $('#slot').val();
+            });
+
 
             $(document).on('hidden.bs.modal', '#create_compaign_modal', function() {
                 $(this).find('.select2.select2-hidden-accessible').select2('destroy');

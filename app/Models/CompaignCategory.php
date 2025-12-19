@@ -32,4 +32,8 @@ class CompaignCategory extends Model
     {
         return $this->hasMany(Compaign::class);
     }
+    public function dcpCreatives(): HasMany
+    {
+        return $this->hasMany(DcpCreative::class, 'compaign_category_id');
+    }
 }

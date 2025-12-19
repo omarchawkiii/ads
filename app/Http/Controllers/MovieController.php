@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Langue;
 use App\Models\Movie;
 use App\Models\MovieGenre;
 use Illuminate\Http\Request;
@@ -12,19 +13,20 @@ class MovieController extends Controller
     public function index()
     {
         $genres = MovieGenre::orderBy('name')->get();
-        return view('admin.movies.index',compact('genres'));
+        $langues = Langue::orderBy('name')->get();
+        return view('admin.movies.index',compact('genres','langues'));
     }
 
     public function show(Request $request)
     {
         //$movie = Movie::findOrFail($request->id) ;
-        $movie = Movie::with('genre')->findOrFail($request->id);
+        $movie = Movie::with('genre','langue')->findOrFail($request->id);
         return Response()->json(compact('movie'));
     }
 
     public function get()
     {
-        $movies = Movie::with('genre')->orderBy('name', 'asc')->get();
+        $movies = Movie::with('genre','langue')->orderBy('name', 'asc')->get();
 
         return Response()->json(compact('movies'));
     }
@@ -37,6 +39,9 @@ class MovieController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'movie_genre_id' => ['required', 'exists:movie_genres,id'],
+                'langue_id' => ['required', 'exists:langues,id'],
+                'runtime' => ['nullable', 'integer', 'min:1'],
+                'status' => ['required', 'boolean'],
             ]);
              $uuid = (string) Str::uuid();
             $validated['uuid'] =  'urn:uuid:' . $uuid;
@@ -60,6 +65,9 @@ class MovieController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'movie_genre_id' => ['required', 'exists:movie_genres,id'],
+                'langue_id' => ['required', 'exists:langues,id'],
+                'runtime' => ['nullable', 'integer', 'min:1'],
+                'status' => ['required', 'boolean'],
             ]);
 
             $movie->update($validated);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompaignCategory;
 use App\Models\DcpCreative;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -19,7 +20,8 @@ class DcpCreativeController extends Controller
 
     public function index()
     {
-        return view('advertiser.dcp_creatives.index');
+        $categories = CompaignCategory::orderBy('name')->get();
+        return view('advertiser.dcp_creatives.index',compact('categories'));
     }
 
     public function show(Request $request)
@@ -30,7 +32,7 @@ class DcpCreativeController extends Controller
 
     public function get()
     {
-        $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get();
+        $dcp_creatives = DcpCreative::with('compaignCategory')->orderBy('name', 'asc')->get();
         return Response()->json(compact('dcp_creatives'));
     }
 
@@ -207,6 +209,7 @@ class DcpCreativeController extends Controller
             'upload_id'  => 'required|string',
             'total'      => 'required|integer|min:1',
             'file_name'  => 'required|string',
+            'compaign_category_id' => ['required', 'exists:compaign_categories,id'],
         ]);
 
         $uploadId  = $request->input('upload_id');
@@ -335,10 +338,11 @@ class DcpCreativeController extends Controller
         $creative = DcpCreative::updateOrCreate([
             'uuid' => $meta['uuid']
         ], [
-            'uuid'     => $meta['uuid'],
-            'name'     => $meta['name'],
-            'duration' => $meta['total_duration'],
-            'path'     => $finalPath,
+            'uuid'                => $meta['uuid'],
+            'name'                => $meta['name'],
+            'duration'            => $meta['total_duration'],
+            'path'                => $finalPath,
+            'compaign_category_id' => $request->compaign_category_id,
         ]);
 
         return response()->json([
