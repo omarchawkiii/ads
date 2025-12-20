@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 @section('title')
-    Slots
+Playlist Template Builder
 @endsection
 @section('content')
     <div class="">
@@ -9,12 +9,12 @@
             <div class="row align-items-center">
               <div class="col-12">
                 <div class="d-sm-flex align-items-center justify-space-between">
-                  <h4 class="mb-4 mb-sm-0 card-title">Slots</h4>
+                  <h4 class="mb-4 mb-sm-0 card-title"> Playlist Template Builder</h4>
                   <nav aria-label="breadcrumb" class="ms-auto">
                     <ol class="breadcrumb">
                       <li class="breadcrumb-item" aria-current="page">
                         <button class="btn bg-success  text-white " id="create_slot">
-                            + New Slots
+                            + New
                         </button>
                       </li>
                     </ol>
@@ -32,8 +32,8 @@
                         <tr class="text-center">
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
-                            <th class="text-center">Max Duration</th>
-                            <th class="text-center">CPM</th>
+                            <th class="text-center">Segments</th>
+
                             <th  class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -47,12 +47,12 @@
     {{-- Create Modal --}}
 
     <div class="modal  " id="create_slot_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-md  modal-dialog-centered">
+        <div class="modal-dialog modal-xl  modal-dialog-centered">
             <div class="modal-content">
                 <form method="post" id="create_slot_form">
                     <div class="modal-header d-flex align-items-center  bg-primary ">
                         <h4 class="modal-title text-white " id="myLargeModalLabel ">
-                            Create Slots
+                            Create New  Playlist Template
                         </h4>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -60,22 +60,23 @@
 
                         <div class="row">
                             <div class="mb-3">
-                                <label for="name" class="">Name:</label>
-                                <input type="text" class="form-control" id="name" placeholder="Name" required>
+                                <label class="">Template Name:</label>
+                                <input type="text" class="form-control" id="template_name" placeholder="Template name" required>
+                                <hr>
                             </div>
-                            <div class="mb-3">
-                                <label for="max_duration" class="">Max Duration (seconds):</label>
-                                <input type="number"
-                                       class="form-control"
-                                       id="max_duration"
-                                       min="1"
-                                       required>
+
+
+
+                            <div class="d-flex align-items-center mb-2 justify-content-between">
+
+                                <h5 class="mb-0">Slots</h5>
+                                <button type="button" class="btn btn-sm btn-primary me-2" id="add_slot_row">
+                                    + Add Slot
+                                </button>
                             </div>
-                            <div class="mb-3">
-                                <label for="cpm" class="">Base CPM (RM):</label>
-                                <input type="number" class="form-control" id="cpm" value="0" min="0"
-                                    required>
-                            </div>
+
+                            <div id="slots_container"></div>
+
                         </div>
 
                     </div>
@@ -96,35 +97,35 @@
 
 
     <div class="modal " id="edit_slot_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <form method="post" id="edit_slot_form">
                     <div class="modal-header d-flex align-items-center  bg-primary ">
                         <h4 class="modal-title text-white " id="myLargeModalLabel ">
-                            Edit Slot
+                            Edit  Playlist Template
                         </h4>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <input type="hidden" value="" id="id">
+                        <input type="hidden" value="" id="edit_template_id">
                         <div class="row">
                             <div class="mb-3">
-                                <label for="name" class="">Name:</label>
-                                <input type="text" class="form-control" id="name" placeholder="Name" required>
+                                <label class="">Template Name:</label>
+                                <input type="text" class="form-control" id="edit_template_name" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="max_duration" class="">Max Duration (seconds):</label>
-                                <input type="number"
-                                       class="form-control"
-                                       id="max_duration"
-                                       min="1"
-                                       required>
+                            <hr>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">Slots</h5>
+                                <button type="button" class="btn btn-sm btn-primary me-2" id="add_slot_row">
+                                    + Add Slot
+                                </button>
+
                             </div>
-                            <div class="mb-3">
-                                <label for="cpm" class="">Base CPM (RM):</label>
-                                <input type="number" class="form-control" id="cpm" value="0" min="0"
-                                    required>
-                            </div>
+                            <div id="edit_slots_container"></div>
+
+
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -151,6 +152,9 @@
 
         $(function() {
             $(document).on('click', '#create_slot', function() {
+
+                $('#slots_container').html(slotRow());
+                $('#template_name').val('');
                 $('#create_slot_modal').modal('show');
             })
             function get_slots() {
@@ -158,71 +162,123 @@
 
                 $("#slots-table").dataTable().fnDestroy();
                 var url = "{{ url('') }}" + '/slots/list';
-                var result = " ";
+                var result = "";
+
                 $.ajax({
-                        url: url,
-                        method: 'GET',
-                        processData: false,
-                        contentType: false,
-                        success: function(response) {
-                            $.each(response.slots, function(index, value) {
-                                var user_slots = "";
-                                index++;
-                                result = result +
-                                    '<tr class="odd text-center">' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    index + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value.name + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                        (value.max_duration ? value.max_duration : '0')+
-                                    ' seconds </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value
-                                    .cpm + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    '<button id="' + value.id +
-                                    '" type="button" class="edit ustify-content-center btn mb-1 btn-rounded btn-warning m-1" >' +
-                                    '<i class="mdi mdi-tooltip-edit "></i>' +
-                                    '</button>' +
-                                    '<button id="' + value.id +
-                                    '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
-                                    '<i class="mdi mdi-delete"></i>' +
-                                    '</button>' +
+                    url: url,
+                    method: 'GET',
+                    success: function(response) {
+                        $.each(response.templateSlots, function(index, value) {
+                            index++;
 
+                            var segments = '';
+                            if (value.slots && value.slots.length > 0) {
+                                $.each(value.slots, function(i, slot) {
+                                    segments +=  slot.name  + ' ( ' +
+                                                (slot.max_duration ? slot.max_duration : 0) + 's' +
+                                                ' / ' + (slot.max_ad_slot ?? 1) +
+                                                ' ), ';
+                                });
+                                segments = segments.slice(0, -2); // enlever la dernière virgule
+                            } else {
+                                segments = '-';
+                            }
+
+                            result +=
+                                '<tr class="odd text-center">' +
+                                    '<td class="text-body align-middle fw-medium">' + index + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' + value.name + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' + segments + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' +
+                                        '<button id="' + value.id + '" type="button" class="edit btn btn-rounded btn-warning m-1">' +
+                                            '<i class="mdi mdi-tooltip-edit"></i>' +
+                                        '</button>' +
+                                        '<button id="' + value.id + '" type="button" class="delete btn btn-rounded btn-danger m-1">' +
+                                            '<i class="mdi mdi-delete"></i>' +
+                                        '</button>' +
                                     '</td>' +
-                                    '</tr>';
-                            });
-                            $('#slots-table tbody').html(result)
-                            $('#wait-modal').modal('hide');
-                            // $('#loader-modal').css('display','none')
-                            /***** refresh datatable **** **/
+                                '</tr>';
+                        });
 
-                            var slots = $('#slots-table').DataTable({
-                                "iDisplayLength": 10,
-                                destroy: true,
-                                "bDestroy": true,
-                                "language": {
-                                    search: "_INPUT_",
-                                    searchPlaceholder: "Search..."
-                                }
-                            });
-                        },
-                        error: function(response) {}
-                    })
-                    .always(function() {
+
+                        $('#slots-table tbody').html(result);
                         $('#wait-modal').modal('hide');
-                    });
 
+                        $('#slots-table').DataTable({
+                            "iDisplayLength": 10,
+                            destroy: true,
+                            "language": {
+                                search: "_INPUT_",
+                                searchPlaceholder: "Search..."
+                            }
+                        });
+                    },
+                    error: function() {
+                        $('#wait-modal').modal('hide');
+                    }
+                }).always(function() {
+                    $('#wait-modal').modal('hide');
+                });
             }
+
             get_slots();
+
+
+            function slotRow(slot = {}) {
+                return `
+                <div class="row g-2 slot-row mb-2 align-items-stretch mb-1">
+                    <div class="col-md-4">
+                        <label>Segment Name:</label>
+                        <input type="text" class="form-control segment_name" placeholder="Segment" value="${slot.segment_name ?? ''}">
+                    </div>
+                    <div class="col-md-4">
+                        <label>Slot Name:</label>
+                        <input type="text" class="form-control slot_name" placeholder="Slot Name" value="${slot.name ?? ''}" required>
+                    </div>
+                    <div class="col-md">
+                        <label>Max Duration (sec):</label>
+                        <input type="number" min="1" class="form-control max_duration" placeholder="Duration" value="${slot.max_duration ?? ''}" required>
+                    </div>
+                    <div class="col-md">
+                        <label>Max Ad Slots:</label>
+                        <input type="number" min="1" class="form-control max_ad_slot" placeholder="Max Ads Slots" value="${slot.max_ad_slot ?? 1}" required>
+                    </div>
+                    <div class="col-md-1 d-flex justify-content-center align-items-center">
+                        <button type="button" class="btn btn-danger btn-sm remove_slot_row mt-3">✕</button>
+                    </div>
+                </div>`;
+            }
+
+            $(document).on('click', '#add_slot_row', function() {
+                $('#slots_container').append(slotRow());
+            });
+
+            // Supprimer une ligne
+            $(document).on('click', '.remove_slot_row', function() {
+                $(this).closest('.slot-row').remove();
+            });
+
 
             $(document).on("submit", "#create_slot_modal", function(event) {
 
                 event.preventDefault();
-                var name = $('#create_slot_modal #name ').val();
+                var template_name = $('#template_name').val();
+                var slots = [];
+
+                $('#slots_container .slot-row').each(function() {
+                    slots.push({
+                        segment_name: $(this).find('.segment_name').val(),
+                        name: $(this).find('.slot_name').val(),
+                        max_duration: $(this).find('.max_duration').val(),
+                        max_ad_slot: $(this).find('.max_ad_slot').val(),
+                    });
+                });
+
+
+               /* var name = $('#create_slot_modal #name ').val();
                 var cpm = $('#create_slot_modal #cpm').val();
-                var max_duration = $('#create_slot_modal #max_duration').val();
+                var max_duration = $('#create_slot_modal #max_duration').val();*/
+
                 var url = '{{ url('') }}' + '/slots';
 
                 $.ajax({
@@ -230,9 +286,11 @@
                         type: 'POST',
                         method: 'POST',
                         data: {
-                            name: name,
+                            template_name: template_name,
+                            slots: slots,
+                            /*name: name,
                             cpm: cpm,
-                            max_duration:max_duration,
+                            max_duration:max_duration,*/
                             "_token": "{{ csrf_token() }}",
                         },
                     })
@@ -241,7 +299,7 @@
                         get_slots();
                         Swal.fire({
                             title: 'Done!',
-                            text: 'Slot Created successfully.',
+                            text: 'Template & Slots created successfully.',
                             icon: 'success',
                             confirmButtonText: 'Continue'
                         });
@@ -300,7 +358,7 @@
                             get_slots();
                             Swal.fire({
                                 title: 'Done!',
-                                text: 'Slot deleted successfully.',
+                                text: 'Template and Slots deleted successfully.',
                                 icon: 'success',
                                 confirmButtonText: 'Continue'
                             });
@@ -337,11 +395,47 @@
                     success: function(response) {
 
                         $("#wait-modal").modal('hide');
+
+                        var template = response.template;
+
+                        $('#edit_template_id').val(template.id);
+                        $('#edit_template_name').val(template.name);
+                        $('#edit_slots_container').html('');
+
+                        if (template.slots.length > 0) {
+                            $.each(template.slots, function(i, slot) {
+                                $('#edit_slots_container').append(`
+                                    <div class="row g-2 slot-row mb-2 align-items-stretch mb-1">
+                                        <input type="hidden" class="slot_id" value="${slot.id}">
+                                        <div class="col-md-4">
+                                            <label>Segment Name:</label>
+                                            <input type="text" class="form-control segment_name" value="${slot.segment_name ?? ''}" placeholder="Segment">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label>Slot Name:</label>
+                                            <input type="text" class="form-control slot_name" value="${slot.name}" placeholder="Slot Name" required>
+                                        </div>
+                                        <div class="col-md">
+                                            <label>Max Duration (sec):</label>
+                                            <input type="number" min="1" class="form-control max_duration" value="${slot.max_duration}" placeholder="Duration" required>
+                                        </div>
+                                        <div class="col-md">
+                                            <label>Max Ad Slots:</label>
+                                            <input type="number" min="1" class="form-control max_ad_slot" value="${slot.max_ad_slot ?? 1}" placeholder="Max Ads" required>
+                                        </div>
+                                        <div class="col-md-1 d-flex justify-content-center align-items-center">
+                                            <button type="button" class="btn btn-danger btn-sm remove_slot_row">✕</button>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+
+                        } else {
+                            $('#edit_slots_container').append(slotRow());
+                        }
+
                         $('#edit_slot_modal').modal('show');
-                        $('#edit_slot_modal #name').val(response.slot.name)
-                        $('#edit_slot_modal #cpm').val(response.slot.cpm)
-                        $('#edit_slot_modal #max_duration').val(response.slot.max_duration);
-                        $('#edit_slot_modal #id').val(slot)
+
 
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
@@ -352,10 +446,24 @@
 
             $(document).on("submit","#edit_slot_form" , function(event) {
                 event.preventDefault();
-                var name = $('#edit_slot_form #name').val();
+                var id = $('#edit_template_id').val();
+                var template_name = $('#edit_template_name').val();
+                var slots = [];
+
+                $('#edit_slots_container .slot-row').each(function() {
+                    slots.push({
+                        id: $(this).find('.slot_id').val(), // peut être vide
+                        segment_name: $(this).find('.segment_name').val(),
+                        name: $(this).find('.slot_name').val(),
+                        max_duration: $(this).find('.max_duration').val(),
+                        max_ad_slot: $(this).find('.max_ad_slot').val(),
+                    });
+                });
+
+                /*var name = $('#edit_slot_form #name').val();
                 var cpm = $('#edit_slot_form #cpm').val();
                 var id = $('#edit_slot_form #id').val();
-                var max_duration = $('#edit_slot_form #max_duration').val();
+                var max_duration = $('#edit_slot_form #max_duration').val();*/
                 var url = '{{ url('') }}' + '/slots/'+ id;
 
                 $.ajax({
@@ -363,9 +471,11 @@
                     type: 'PUT',
                     method: 'PUT',
                     data: {
-                        name: name,
+                        template_name: template_name,
+                        slots: slots,
+                        /*name: name,
                         cpm: cpm,
-                        max_duration:max_duration,
+                        max_duration:max_duration,*/
                         "_token": "{{ csrf_token() }}",
                     },
                     beforeSend: function () {
@@ -378,13 +488,13 @@
 
                 })
                 .done(function(response) {
-
-                    $("#wait-modal").modal('hide');
                     $('#edit_slot_modal').modal('hide');
+                    $("#wait-modal").modal('hide');
+
                     get_slots()
                         swal.fire({
                             title: 'Done!',
-                            text: 'Slot Updated Successfully ',
+                            text: 'Template & Slots updated successfully ',
                             icon: 'success',
                             button: {
                                 text: "Continue",
@@ -403,6 +513,14 @@
                     });
                 })
             })
+
+            $(document).on('click', '#edit_add_slot_row', function() {
+                $('#edit_slots_container').append(slotRow());
+            });
+
+            $(document).on('click', '.remove_slot_row', function() {
+                $(this).closest('.slot-row').remove();
+            });
 
         });
     </script>

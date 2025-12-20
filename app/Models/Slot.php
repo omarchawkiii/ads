@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -20,6 +21,9 @@ class Slot extends Model
         'name',
         'cpm',
         'max_duration',
+        'segment_name',
+        'template_slot_id',
+        'max_ad_slot',
     ];
 
     /**
@@ -34,5 +38,9 @@ class Slot extends Model
     public function compaigns(): HasMany
     {
         return $this->hasMany(Compaign::class);
+    }
+    public function templateSlot(): BelongsTo
+    {
+        return $this->belongsTo(TemplateSlot::class);
     }
 }

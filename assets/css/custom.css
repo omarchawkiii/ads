@@ -102,3 +102,8 @@ table.dataTable thead>tr>th.sorting:after, table.dataTable thead>tr>th.sorting_a
 .modal-backdrop.show:nth-of-type(even) {
     z-index: 1051 !important;
 }
+
+#wait-modal
+{
+    z-index: 9999999999999 !important;
+}

@@ -62,7 +62,7 @@
           <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('slots.index') }}" id="get-url" aria-expanded="false">
               <iconify-icon icon="solar:widget-add-line-duotone" class=""></iconify-icon>
-              <span class="hide-menu">Slots Management</span>
+              <span class="hide-menu"> Playlist Template </span>
             </a>
           </li>
 

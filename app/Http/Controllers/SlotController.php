@@ -8,6 +8,7 @@ use Illuminate\View\View;
 use App\Models\Compaign;
 use App\Models\DcpCreative;
 use App\Models\Movie;
+use App\Models\TemplateSlot;
 
 class SlotController extends Controller
 {
@@ -18,17 +19,26 @@ class SlotController extends Controller
 
     public function show(Request $request)
     {
-        $slot = Slot::findOrFail($request->id) ;
-        return Response()->json(compact('slot'));
+        $template = TemplateSlot::with('slots')->findOrFail($request->id);
+        return response()->json(compact('template'));
+
+        /*$slot = Slot::findOrFail($request->id) ;
+        return Response()->json(compact('slot'));*/
     }
 
     public function get()
     {
-        $slots = Slot::orderBy('name', 'asc')->get();
-        return Response()->json(compact('slots'));
+
+        $templateSlots = TemplateSlot::with('slots')
+        ->orderBy('name', 'asc')
+        ->get();
+
+        return response()->json(compact('templateSlots'));
+        /*$slots = Slot::orderBy('name', 'asc')->get();
+        return Response()->json(compact('slots'));*/
     }
 
-    public function store(Request $request)
+    /*public function store(Request $request)
     {
         try
         {
@@ -47,9 +57,46 @@ class SlotController extends Controller
                 'message' => 'Operation failed.',
             ], 500);
         }
+    }*/
+
+    public function store(Request $request)
+    {
+        try
+        {
+            $request->validate([
+                'template_name' => 'required|string|max:255',
+                'slots' => 'required|array|min:1',
+                'slots.*.name' => 'required|string|max:255',
+                'slots.*.max_duration' => 'required|integer|min:1',
+            ]);
+
+            $template = TemplateSlot::create([
+                'name' => $request->template_name,
+            ]);
+
+            foreach ($request->slots as $slot) {
+                Slot::create([
+                    'template_slot_id' => $template->id,
+                    'segment_name' => $slot['segment_name'] ?? null,
+                    'name' => $slot['name'],
+                    'max_duration' => $slot['max_duration'],
+                    'cpm' => 0,
+                    'max_ad_slot' => $slot['max_ad_slot'] ?? 1,
+                ]);
+            }
+            return response()->json([
+                'message' => 'Slot created successfully.',
+                'data' => $slot,
+            ], 201);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Operation failed.',
+            ], 500);
+        }
     }
 
-    public function update(Request $request, Slot $slot)
+    /*public function update(Request $request, Slot $slot)
     {
         try
         {
@@ -69,15 +116,84 @@ class SlotController extends Controller
                 'message' => 'Operation failed.',
             ], 500);
         }
+    }*/
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'template_name' => 'required|string|max:255',
+            'slots' => 'required|array|min:1',
+            'slots.*.name' => 'required|string|max:255',
+            'slots.*.max_duration' => 'required|integer|min:1',
+        ]);
+
+        $template = TemplateSlot::findOrFail($id);
+
+        // Update template name
+        $template->update([
+            'name' => $request->template_name,
+        ]);
+
+        $sentSlotIds = [];
+
+        foreach ($request->slots as $slotData) {
+
+            // ✅ Cas 1 : slot existant → update
+            if (!empty($slotData['id'])) {
+                $slot = Slot::where('id', $slotData['id'])
+                            ->where('template_slot_id', $template->id)
+                            ->first();
+
+                if ($slot) {
+                    $slot->update([
+                        'segment_name' => $slotData['segment_name'] ?? null,
+                        'name' => $slotData['name'],
+                        'max_duration' => $slotData['max_duration'],
+                        'max_ad_slot' => $slotData['max_ad_slot'] ?? 1,
+                    ]);
+
+                    $sentSlotIds[] = $slot->id;
+                }
+
+            } else {
+                // ✅ Cas 2 : nouveau slot → create
+                $newSlot = Slot::create([
+                    'template_slot_id' => $template->id,
+                    'segment_name' => $slotData['segment_name'] ?? null,
+                    'name' => $slotData['name'],
+                    'max_duration' => $slotData['max_duration'],
+                    'cpm' => 0,
+                    'max_ad_slot' => $slotData['max_ad_slot'] ?? 1,
+                ]);
+
+                $sentSlotIds[] = $newSlot->id;
+            }
+        }
+
+        // ✅ Cas 3 : slots supprimés côté front → delete en base
+        Slot::where('template_slot_id', $template->id)
+            ->whereNotIn('id', $sentSlotIds)
+            ->delete();
+
+        return response()->json(['success' => true]);
     }
 
-    public function destroy(Slot $slot)
+
+    public function destroy($id)
     {
-        try
-        {
-            $slot->delete();
+        try {
+            $template = TemplateSlot::with('slots')->findOrFail($id);
+
+            // Supprimer les slots liés
+            foreach ($template->slots as $slot) {
+                $slot->delete();
+            }
+
+            // Supprimer le template
+            $template->delete();
+
             return response()->json([
-                'message' => 'Slot deleted successfully.',
+                'message' => 'Template and Slots deleted successfully.',
             ]);
         } catch (\Throwable $e) {
             return response()->json([
