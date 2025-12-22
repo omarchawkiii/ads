@@ -55,6 +55,7 @@ return new class extends Migration
 
             $table->foreignId('slot_id')
                   ->constrained('slots')
+                  ->nullable()
                   ->cascadeOnUpdate()
                   ->restrictOnDelete();
 

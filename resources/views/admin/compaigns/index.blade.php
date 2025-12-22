@@ -541,7 +541,17 @@ Campaign
                 const step4Visible = $('#review-summary').is(':visible');
                 if (step4Visible) updateReview();
             });
-
+            function formatDateLocalISO(dateStr) {
+                if (!dateStr) return '–';
+                // Crée un objet Date à partir du string ISO
+                const dateObj = new Date(dateStr);
+                // Récupère uniquement la partie YYYY-MM-DD en local
+                const year = dateObj.getFullYear();
+                const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+                const day = dateObj.getDate().toString().padStart(2, '0');
+                const localDate = new Date(`${year}-${month}-${day}`);
+                return formatDateEN(localDate, { variant: 'short' });
+            }
             function get_compaigns() {
                 $('#wait-modal').modal('show');
 
@@ -554,6 +564,7 @@ Campaign
                         processData: false,
                         contentType: false,
                         success: function(response) {
+                            console.log(response)
                             $.each(response.compaigns, function(index, value) {
 
 
@@ -568,10 +579,10 @@ Campaign
                                         (value.user ? value.user.name + ' ' + value.user.last_name : '') +
                                     ' </td>' +
                                     '<td class="text-center align-middle fw-medium text-decoration-none">' +
-                                        formatDateEN(value.start_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
+                                        value.start_date + ' </td>' +
                                     '<td class="text-center align-middle fw-medium text-decoration-none">' +
-                                        formatDateEN(value.end_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
-                                        '<td class="text-center align-middle fw-medium text-decoration-none">' +
+                                        value.end_date + ' </td>' +
+                                    '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                             getStatusText(value.status) + ' </td>' +
                                     '<td class=" align-middle fw-medium text-decoration-none">' +
                                         getStatusAction(value.status, value.id )+
@@ -616,7 +627,7 @@ Campaign
             }
             get_compaigns();
 
-        
+
             $(document).on("submit", "#create_compaign_modal", function(event) {
 
                 event.preventDefault();
@@ -658,7 +669,7 @@ Campaign
 
             })
 
-         
+
 
 
         });

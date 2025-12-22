@@ -328,7 +328,6 @@ class CompaignController extends Controller
         return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains'));
     }
 
-
     public function approuve(Compaign $compaign)
     {
         try

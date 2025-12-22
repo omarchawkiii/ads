@@ -841,9 +841,9 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     value.name + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                        formatDateEN(value.start_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
+                                        value.start_date + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                        formatDateEN(value.end_date, { locale: 'en-US', variant: 'short' }) + ' </td>' +
+                                        value.end_date + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
                                     '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +

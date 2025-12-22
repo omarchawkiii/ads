@@ -35,8 +35,7 @@ class Compaign extends Model
     ];
 
     protected $casts = [
-        'start_date'  => 'date',
-        'end_date'    => 'date',
+
         'budget'      => 'integer',
         'ad_duration' => 'integer',
     ];

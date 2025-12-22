@@ -340,12 +340,19 @@
                         let remaining = parseInt($slot.data('remaining'));
                         let max = parseInt($slot.data('max'));
 
+                        // ❗ Vérifier si le DCP est déjà assigné dans CE slot
+                        let alreadyAssigned = $slot.find(`.assigned[data-dcp="${dcpId}"]`).length > 0;
+
+                        if (alreadyAssigned) {
+                            showError("This creative has already been assigned to this slot.");
+                            return;
+                        }
+
                         // ❗ 1) Check max duration
                         if(dcpDuration > max){
                             showError(
                                 "This creative cannot be assigned to this slot because its duration is greater than the maximum allowed duration of the slot."
                             );
-
                             return;
                         }
 
@@ -353,8 +360,7 @@
                         if(dcpDuration > remaining){
                             showError(
                                 "This creative cannot be assigned to this slot because there is not enough remaining time available."
-                                );
-
+                            );
                             return;
                         }
 
