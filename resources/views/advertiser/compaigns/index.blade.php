@@ -13,12 +13,10 @@
                         <nav aria-label="breadcrumb" class="ms-auto">
                             <ol class="breadcrumb">
                                 <li class="breadcrumb-item" aria-current="page">
-                                    <button class="btn bg-success  text-white " id="create_compaign">
+                                    <a href="{{ route('advertiser.compaigns.index_builder') }}" class="btn bg-success  text-white " >
                                         + New Campaign
-                                    </button>
-                                    <button class="btn btn-info   " id="btn-available-slots">
-                                        <i class="mdi mdi-timer"></i> Available Slots
-                                    </button>
+                                    </a>
+
 
                                 </li>
                             </ol>
@@ -395,207 +393,10 @@
         <!-- /.modal-content -->
     </div>
 
-    <div class="modal fade" id="edit_compaign_modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
 
-                <div class="modal-header bg-primary">
-                    <h5 class="modal-title text-white">Edit Campaign</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body wizard-content">
-                    <form id="edit_compaign_form" class="validation-wizard wizard-circle mt-3">
-                        <input type="hidden" id="e_id" name="id">
-
-                        <!-- STEP 1 -->
-                        <h6>Basics</h6>
-                        <section>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">Campaign Name <span class="danger">*</span></label>
-                                    <input type="text" class="form-control required" id="e_name" name="name" />
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Campaign Objective <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_compaign_objective"
-                                        name="compaign_objective">
-                                        <option value="">Select...</option>
-                                        @foreach ($compaign_objectives as $co)
-                                            <option value="{{ $co->id }}">{{ $co->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Ad Category <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_compaign_category"
-                                        name="compaign_category">
-                                        <option value="">Select...</option>
-                                        @foreach ($compaign_categories as $cc)
-                                            <option value="{{ $cc->id }}">{{ $cc->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Brands</label>
-                                    <select class="form-select select2" id="e_brand" name="brand[]" multiple>
-                                        @foreach ($brands as $b)
-                                            <option value="{{ $b->id }}">{{ $b->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Start Date</label>
-                                    <input type="date" class="form-control" id="e_start_date" name="start_date" />
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">End Date</label>
-                                    <input type="date" class="form-control" id="e_end_date" name="end_date" />
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Budget (RM)</label>
-                                    <input type="number" class="form-control" id="e_budget" name="budget" />
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Language <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_langue" name="langue">
-                                        <option value="">Select...</option>
-                                        @foreach ($langues as $l)
-                                            <option value="{{ $l->id }}">{{ $l->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label">Notes</label>
-                                    <textarea class="form-control" id="e_note" name="note" rows="3"></textarea>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- STEP 2 -->
-                        <h6>Targeting</h6>
-                        <section>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">Cinemas <span class="danger">*</span></label>
-                                    <select class="form-select select2 required" id="e_location" name="location[]"
-                                        multiple>
-                                        @foreach ($locations as $loc)
-                                            <option value="{{ $loc->id }}">{{ $loc->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Hall Types <span class="danger">*</span></label>
-                                    <select class="form-select select2 required" id="e_hall_type" name="hall_type[]"
-                                        multiple>
-                                        @foreach ($hall_types as $ht)
-                                            <option value="{{ $ht->id }}">{{ $ht->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Movie <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_movie" name="movie">
-                                        @foreach ($movies as $m)
-                                            <option value="{{ $m->id }}">{{ $m->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Genres <span class="danger">*</span></label>
-                                    <select class="form-select select2 required" id="e_movie_genre" name="movie_genre[]"
-                                        multiple>
-                                        @foreach ($movie_genres as $mg)
-                                            <option value="{{ $mg->id }}">{{ $mg->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Gender <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_gender" name="gender">
-                                        @foreach ($genders as $g)
-                                            <option value="{{ $g->id }}">{{ $g->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Target Types <span class="danger">*</span></label>
-                                    <select class="form-select select2 required" id="e_target_type" name="target_type[]"
-                                        multiple>
-                                        @foreach ($target_types as $tt)
-                                            <option value="{{ $tt->id }}">{{ $tt->name }}
-                                                ({{ $tt->detail }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Interests <span class="danger">*</span></label>
-                                    <select class="form-select select2 required" id="e_interest" name="interest[]"
-                                        multiple>
-                                        @foreach ($interests as $it)
-                                            <option value="{{ $it->id }}">{{ $it->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- STEP 3 -->
-                        <h6>Upload & Slot</h6>
-                        <section>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">Ad Slot Tier <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_slot" name="slot">
-                                        @foreach ($slots as $s)
-                                            <option value="{{ $s->id }}">{{ $s->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Ad Duration <span class="danger">*</span></label>
-                                    <select class="form-select required" id="e_duration" name="duration">
-                                        <option value="15">15 seconds</option>
-                                        <option value="30">30 seconds</option>
-                                        <option value="45">45 seconds</option>
-                                        <option value="60">60 seconds</option>
-                                    </select>
-                                </div>
-
-                                <!-- (optionnel) fichier -->
-                                <div class="col-md-6 d-none">
-                                    <label class="form-label">DCP Creative</label>
-                                    <input type="file" class="form-control" id="e_dcp_file" name="dcp_file">
-                                </div>
-                            </div>
-                        </section>
-
-
-                    </form>
-                </div>
-
-            </div>
-        </div>
-    </div>
 
     <div class="modal fade" id="view_compaign_modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-primary">
                     <h5 class="modal-title text-white">Campaign details</h5>
@@ -610,7 +411,7 @@
 
                     <div id="cmpg_content">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <h6 class="mb-3">Basics</h6>
                                 <dl class="row">
                                     <dt class="col-5">Name</dt>
@@ -634,7 +435,7 @@
                                 </dl>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <h6 class="mb-3">Targeting & Slot</h6>
                                 <dl class="row">
                                     <dt class="col-5">Cinemas</dt>
@@ -649,10 +450,18 @@
                                     <dd class="col-7" id="v_gender">–</dd>
                                     <dt class="col-5">Target Type</dt>
                                     <dd class="col-7" id="v_target_types">–</dd>
-                                    <dt class="col-5">Slot</dt>
-                                    <dd class="col-7" id="v_slot">–</dd>
+
                                     <dt class="col-5">Ad Duration</dt>
                                     <dd class="col-7" id="v_duration">–</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Template & Slots</h6>
+                                <dl class="row">
+                                    <div class="">
+                                        <div id="v_slots_details" class="mt-2"></div>
+                                    </div>
+
                                 </dl>
                             </div>
                         </div>
@@ -662,30 +471,6 @@
         </div>
     </div>
 
-    <div class="modal fade" id="availableSlotsModal" tabindex="-1" aria-labelledby="availableSlotsModalLabel" aria-hidden="true"  data-backdrop="static" backdrop="static"  >
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header bg-primary">
-              <h5 class="modal-title text-white">Available Slots for Next Month</h5>
-
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <table class="table table-bordered" id="available-slots-table">
-                <thead>
-                  <tr>
-                    <th>Slot</th>
-                    <th>Max Duration (s)</th>
-                    <th>Used Duration (s)</th>
-                    <th>Remaining Duration (s)</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-    </div>
 
 @endsection
 
@@ -888,7 +673,6 @@
                 $('#slot').val();
             });
 
-
             $(document).on('hidden.bs.modal', '#create_compaign_modal', function() {
                 $(this).find('.select2.select2-hidden-accessible').select2('destroy');
             });
@@ -1000,7 +784,6 @@
                 });
             }
 
-
             function updateReview() {
                 // Basics
                 $('#rv_name').text(getVal('#name'));
@@ -1037,8 +820,6 @@
                 if (step4Visible) updateReview();
             });
 
-
-
             function get_compaigns() {
                 $('#wait-modal').modal('show');
 
@@ -1068,6 +849,11 @@
                                     '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +
                                     '<i class="mdi mdi-magnify "></i>' +
                                     '</button>' +
+
+                                    /*'<a href="/adsamrt/advertiser/compaigns/3/edit" id="' + value.id +
+                                    '"  class=" ustify-content-center btn mb-1 btn-rounded btn-warning  m-1" >' +
+                                    '<i class="mdi mdi-tooltip-edit "></i>' +
+                                    '</a>' +*/
 
                                     '<button id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
@@ -1119,14 +905,13 @@
                         }
                     })
                     .done(function(data) {
-                        console.log(data.name)
-                        // data est l’objet compaign avec ses relations
+
                         $('#v_name').text(jv(data.name));
                         $('#v_objective').text(jn(data.compaign_objective));
                         $('#v_category').text(jn(data.compaign_category));
                         $('#v_brands').text(jn(data.brands));
-                        $('#v_start').text(jv(formatDateEN(data.start_date, { locale: 'en-US', variant: 'short' }) ));
-                        $('#v_end').text(jv(formatDateEN(data.end_date, { locale: 'en-US', variant: 'short' }) ));
+                        $('#v_start').text(jv(formatDateEN(data.start_date, { locale: 'en-US', variant: 'short' })));
+                        $('#v_end').text(jv(formatDateEN(data.end_date, { locale: 'en-US', variant: 'short' })));
                         $('#v_budget').text(data.budget ? Number(data.budget).toLocaleString() : '–');
                         $('#v_langue').text(jn(data.langue));
                         $('#v_note').text(jv(data.note));
@@ -1137,15 +922,52 @@
                         $('#v_movie_genres').text(jn(data.movie_genres));
                         $('#v_gender').text(jn(data.gender));
                         $('#v_target_types').text(jn(data.target_types));
-                        $('#v_slot').text(jn(data.slot));
+
+                        $('#v_slot').text(jn(data.slots));
                         $('#v_duration').text(data.ad_duration ? data.ad_duration + ' seconds' : '–');
+
+                        // ✅ Template Slot
+                        $('#v_template').text(data.template_slot ? data.template_slot.name : '–');
+
+                        // ✅ Slots + DCPs grouped by slot_id
+                        let html = '';
+                        if (data.slots && data.slots.length) {
+
+                            data.slots.forEach(slot => {
+                                html += `<div class="border rounded p-2 mb-2">
+                                            <strong>${slot.name}</strong>
+                                            <span class="text-muted"> (Max: ${slot.max_duration}s)</span>
+                                            <ul class="mt-2 mb-0">`;
+
+                                const dcps = (data.dcp_creatives || []).filter(dcp => {
+                                    return dcp.pivot && dcp.pivot.slot_id == slot.id;
+                                });
+
+                                if (dcps.length) {
+                                    dcps.forEach(dcp => {
+                                        html += `<li>${dcp.name} - ${dcp.duration}s</li>`;
+                                    });
+                                } else {
+                                    html += `<li class="text-muted">No DCP assigned</li>`;
+                                }
+
+                                html += `   </ul>
+                                        </div>`;
+                            });
+
+                        } else {
+                            html = '<div class="text-muted">No slots found.</div>';
+                        }
+
+                        $('#v_slots_details').html(html);
+
                         $("#wait-modal").modal('hide');
                     })
                     .fail(function(xhr) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'Impossible de charger la compaign.'
+                            text: 'Unable to load campaign details.'
                         });
                         $('#view_compaign_modal').modal('hide');
                         $("#wait-modal").modal('hide');
@@ -1327,7 +1149,6 @@
                 });
             });
 
-
             $(document).on('shown.bs.modal', '#edit_compaign_modal', function () {
                 const $m = $(this);
                 $m.find('.select2').each(function(){
@@ -1343,7 +1164,6 @@
                     $form.data('wizard-initialized', true);
                 }
             });
-
 
             function initEditWizard(){
             const $form = $("#edit_compaign_form").show();
@@ -1392,7 +1212,6 @@
                 }
             });
 
-
             $form.validate({
                 ignore: "input[type=hidden]",
                 errorClass: "text-danger",
@@ -1414,8 +1233,6 @@
             $(document).on('hidden.bs.modal', '#edit_compaign_modal', function(){
                 $(this).find('.select2.select2-hidden-accessible').select2('destroy');
             });
-
-
 
         });
     </script>

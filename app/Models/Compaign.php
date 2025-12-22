@@ -100,13 +100,36 @@ class Compaign extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function dcpCreatives()
-    {
-        return $this->belongsToMany(DcpCreative::class, 'compaign_dcp_creative');
-    }
+
 
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
+
+
+    public function templateSlot()
+    {
+        return $this->belongsTo(TemplateSlot::class);
+    }
+    public function slots()
+    {
+        return $this->belongsToMany(Slot::class, 'compaign_slot')
+                    ->withTimestamps();
+    }
+
+    public function dcpCreatives()
+    {
+        return $this->belongsToMany(
+            DcpCreative::class,
+            'compaign_slot_dcp',
+            'compaign_id',
+            'dcp_creative_id'
+        )->withPivot('slot_id')
+        ->withTimestamps();
+    }
+
+
+
+
 }

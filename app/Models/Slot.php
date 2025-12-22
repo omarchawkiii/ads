@@ -35,10 +35,29 @@ class Slot extends Model
         'id' => 'integer',
     ];
 
-    public function compaigns(): HasMany
+    /*public function compaigns(): HasMany
     {
         return $this->hasMany(Compaign::class);
+    }*/
+
+    public function compaigns()
+    {
+        return $this->belongsToMany(Compaign::class, 'compaign_slot')
+                    ->withTimestamps();
     }
+
+    public function dcps()
+    {
+        return $this->belongsToMany(
+            DcpCreative::class,
+            'compaign_slot_dcp',
+            'slot_id',
+            'dcp_creative_id'
+        )->withPivot('compaign_id')
+        ->withTimestamps();
+    }
+
+
     public function templateSlot(): BelongsTo
     {
         return $this->belongsTo(TemplateSlot::class);

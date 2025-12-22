@@ -48,6 +48,13 @@
           </li>
 
           <li class="sidebar-item">
+            <a class="sidebar-link" href="{{ route('advertiser.compaigns.index_builder') }}" id="get-url" aria-expanded="false">
+                <i class="mdi mdi-chart-bar"> </i>
+              <span class="hide-menu">Campaigns Builder</span>
+            </a>
+          </li>
+
+          <li class="sidebar-item">
             <a class="sidebar-link" href="{{ route('advertiser.dcp_creatives.index') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-bullhorn"> </i>
               <span class="hide-menu">DCP Creative</span>

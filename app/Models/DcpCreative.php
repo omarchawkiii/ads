@@ -27,5 +27,15 @@ class DcpCreative extends Model
         return $this->belongsTo(CompaignCategory::class, 'compaign_category_id');
     }
 
+    public function slots()
+    {
+        return $this->belongsToMany(
+            Slot::class,
+            'compaign_slot_dcp',
+            'dcp_creative_id',
+            'slot_id'
+        )->withPivot('compaign_id')
+         ->withTimestamps();
+    }
 
 }
