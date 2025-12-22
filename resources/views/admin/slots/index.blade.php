@@ -249,8 +249,11 @@ Playlist Template Builder
                 </div>`;
             }
 
-            $(document).on('click', '#add_slot_row', function() {
-                $('#slots_container').append(slotRow());
+            $(document).on('click', '#edit_slot_modal #add_slot_row', function() {
+                $('#edit_slot_modal #edit_slots_container').append(slotRow());
+            });
+            $(document).on('click', '#create_slot_modal #add_slot_row', function() {
+                $('#create_slot_modal #slots_container').append(slotRow());
             });
 
             // Supprimer une ligne
