@@ -28,7 +28,7 @@ class Compaign extends Model
         'note',
         'movie_id',
         'gender_id',
-        'slot_id',
+        //'slot_id',
         'ad_duration',
         'status', // 1-pendign 2-approve  3-drafts  4-rejected
         'user_id',

@@ -1,535 +1,270 @@
 @extends('advertiser.layouts.app')
 @section('title')
-    Campaign
+    Edit Campaign
 @endsection
 @section('content')
 
-    <div class="container-fluid">
-        <div class="row">
+<div class="container-fluid">
+    <div class="row">
 
-            <!-- LEFT : DCP creatives -->
-            <div class="col-md-3">
-                <div class="card h-100">
-                    <div class="card-header bg-primary text-white">
-                        DCP Creatives
+        <!-- LEFT : DCP creatives -->
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    DCP Creatives
+                </div>
+                <div class="card-body">
+
+                    <div class="mb-2">
+                        <select id="dcp-category-filter" class="form-select form-select-sm">
+                            <option value="">All categories</option>
+                            @foreach ($compaign_categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="card-body">
 
-                        <div class="mb-2">
-                            <select id="dcp-category-filter" class="form-select form-select-sm">
-                                <option value="">All categories</option>
-                                @foreach ($compaign_categories as $cat)
-                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                    <ul id="dcp-list" class="list-group">
+                        @foreach ($dcp_creatives as $dcp)
+                            <li class="list-group-item dcp-item mb-1"
+                                data-id="{{ $dcp->id }}"
+                                data-duration="{{ $dcp->duration }}"
+                                data-category="{{ $dcp->compaign_category_id }}">
+                                <div>
+                                    <p class="mb-1">{{ $dcp->name }}</p>
+                                    <span class="badge bg-secondary">
+                                        Duration: {{ $dcp->duration }}s
+                                    </span>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-md-9">
+
+            <!-- Filters -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    Filters
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+
+                        <div class="col-md-3">
+                            <label>Start Date</label>
+                            <input type="date" id="start_date" name="start_date" class="form-control" value="{{ $compaign->start_date }}">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>End Date</label>
+                            <input type="date" id="end_date" name="end_date" class="form-control" value="{{ $compaign->end_date }}">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label>Template Slot</label>
+                            <select id="template_slot" name="template_slot" class="form-select">
+                                <option value="">Select...</option>
+                                @foreach ($slot_templates as $tpl)
+                                    <option value="{{ $tpl->id }}" @if($compaign->templateSlot && $compaign->templateSlot->id == $tpl->id) selected @endif>{{ $tpl->name }}</option>
                                 @endforeach
                             </select>
                         </div>
 
+                        <div class="col-md-3">
+                            <label>Ad Category</label>
+                            <select id="compaign_category" name="compaign_category" class="form-select">
+                                <option value="">Select...</option>
+                                @foreach ($compaign_categories as $cat)
+                                    <option value="{{ $cat->id }}" @if($compaign->compaign_category_id == $cat->id) selected @endif>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                        <ul id="dcp-list" class="list-group">
-                            @foreach ($dcp_creatives as $dcp)
-                                <li class="list-group-item dcp-item mb-1"
-                                    data-id="{{ $dcp->id }}"
-                                    data-duration="{{ $dcp->duration }}"
-                                    data-category="{{ $dcp->compaign_category_id }}">
-                                    <div>
-                                        <p class="mb-1">{{ $dcp->name }}</p>
-                                        <span class="badge bg-secondary">
-                                            Duration: {{ $dcp->duration }}s
-                                        </span>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
+                        <div class="col-md-3">
+                            <label>Cinema Chain</label>
+                            <select id="cinema_chain" name="cinema_chain" class="form-select">
+                                <option value="">Select...</option>
+                                @foreach ($cinema_chains as $chain)
+                                    <option value="{{ $chain->id }}" @if($compaign->slots->first() && $compaign->slots->first()->cinema_chain_id == $chain->id) selected @endif>{{ $chain->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-5">
+                            <label>Location</label>
+                            <select id="location" name="location[]" multiple class="form-select select2">
+                                <option value="__all__">Select All</option>
+                                @foreach ($locations as $loc)
+                                    <option value="{{ $loc->id }}" @if($compaign->locations->pluck('id')->contains($loc->id)) selected @endif>{{ $loc->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Genre</label>
+                            <select id="movie_genre" name="movie_genre[]" multiple class="form-select select2">
+                                <option value="__all__">Select All</option>
+                                @foreach ($movie_genres as $g)
+                                    <option value="{{ $g->id }}" @if($compaign->movieGenres->pluck('id')->contains($g->id)) selected @endif>{{ $g->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button id="btn-load-slots" class="btn btn-primary w-100">
+                                Load Slots
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT -->
-            <div class="col-md-9">
-
-                <!-- Filters -->
-                <div class="card mb-3">
-                    <div class="card-header bg-info text-white">
-                        Filters
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2">
-
-                            <div class="col-md-3">
-                                <label>Start Date</label>
-                                <input type="date" id="start_date" name="start_date" class="form-control" value="{{ $compaign->start_date }}">
-                            </div>
-
-                            <div class="col-md-3">
-                                <label>End Date</label>
-                                <input type="date" id="end_date" name="end_date" class="form-control" value="{{ $compaign->end_date }}">
-                            </div>
-
-                            <div class="col-md-3">
-                                <label>Template Slot</label>
-                                <select id="template_slot" name="template_slot" class="form-select">
-                                    <option value="">Select...</option>
-                                    @foreach ($slot_templates as $tpl)
-                                        <option value="{{ $tpl->id }}" {{ $compaign->template_slot_id == $tpl->id ? 'selected' : '' }}>{{ $tpl->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-3">
-                                <label>Ad Category</label>
-                                <select id="compaign_category" name="compaign_category" class="form-select">
-                                    <option value="">Select...</option>
-                                    @foreach ($compaign_categories as $cat)
-                                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-3">
-                                <label>Cinema Chain</label>
-                                <select id="cinema_chain" name="cinema_chain" class="form-select">
-                                    <option value="">Select...</option>
-                                    @foreach ($cinema_chains as $chain)
-                                        <option value="{{ $chain->id }}">{{ $chain->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label>Location</label>
-                                <select id="location" name="location[]" multiple class="form-select select2">
-                                    <option value="__all__">Select All</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-3">
-                                <label>Genre</label>
-                                <select id="movie_genre" name="movie_genre[]" multiple class="form-select select2">
-                                    <option value="__all__">Select All</option>
-                                    @foreach ($movie_genres as $g)
-                                        <option value="{{ $g->id }}">{{ $g->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button id="btn-load-slots" class="btn btn-primary w-100">
-                                    Load Slots
-                                </button>
-                            </div>
-
-                        </div>
-                    </div>
+            <!-- Slots -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    Assigned Slots
                 </div>
+                <div class="card-body">
+                    <div id="slots-container" class="row g-3">
 
-                <!-- Slots -->
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        Available Slots
-                    </div>
-                    <div class="card-body">
-                        <div id="slots-container" class="row g-3">
-                            <div class="text-center text-muted">
-                                Please select filters and load slots
-                            </div>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col text-end">
-                                <button id="btn-save-campaign" class="btn btn-success">
-                                    💾 Save Campaign
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="saveCampaignModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Save Campaign</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label>Campaign Name</label>
-                        <input type="text" id="compaign_name" class="form-control"
-                               placeholder="Enter campaign name" value="{{ $compaign->name }}" >
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button id="confirm-save-campaign" class="btn btn-primary">
-                        Confirm
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-@endsection
-
-
-@section('custom_script')
-    <script src="{{ asset('assets/libs/jquery-steps/build/jquery.steps.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>>
-    <script src="{{ asset('assets/libs/select2/dist/js/select2.full.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
-    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <script src="{{ asset('assets/js/helper.js') }}"></script>
-    <script>
-        $(function() {
-
-            $('.select2').select2({
-                width: '100%'
-            });
-
-            const today = new Date().toISOString().split('T')[0];
-            $('#start_date').attr('min', today);
-            $('#end_date').attr('min', today);
-
-            $('#start_date').on('change', function() {
-                $('#end_date').attr('min', $(this).val()).val('');
-            });
-
-            // load locations
-            $('#cinema_chain').on('change', function() {
-                let chainId = $(this).val();
-                let $location = $('#location');
-                $location.empty().append('<option value="__all__">Select All</option>');
-
-                if (!chainId) return;
-
-                $.get("{{ url('') }}/advertiser/cinema-chain/" + chainId + "/locations")
-                    .done(function(res) {
-                        res.locations.forEach(function(loc) {
-                            $location.append(`<option value="${loc.id}">${loc.name}</option>`);
-                        });
-                        $location.trigger('change');
-                    });
-            });
-
-            // draggable DCP
-            $(".dcp-item").draggable({
-                helper: "clone",
-                revert: "invalid"
-            });
-
-            $('#btn-load-slots').on('click', function() {
-                loadAvailableSlots();
-            });
-
-            function loadAvailableSlots() {
-
-                const startDate = $('#start_date').val();
-                const endDate   = $('#end_date').val();
-                const locations = $('#location').val();
-                const genres    = $('#movie_genre').val();
-
-                // 🔍 Front validation
-                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Missing information',
-                        text: 'Please select start date, end date, location and movie genre before loading slots.'
-                    });
-                    return;
-                }
-
-                $('#slots-container').html('<div class="text-center">Loading...</div>');
-
-                $.ajax({
-                    url: "{{ url('') }}/advertiser/slots/available",
-                    method: "GET",
-                    data: {
-                        start_date: startDate,
-                        end_date: endDate,
-                        cinema_chain_id: $('#cinema_chain').val(),
-                        location_id: locations,
-                        movie_genre_id: genres,
-                        compaign_category_id: $('#compaign_category').val(),
-                        template_slot_id: $('#template_slot').val(),
-                        _token: "{{ csrf_token() }}"
-                    }
-                }).done(function(res) {
-
-                    $('#slots-container').empty();
-
-                    if (!res.slots || res.slots.length === 0) {
-                        $('#slots-container').html(
-                            '<div class="text-center text-muted">No slots available</div>');
-                        return;
-                    }
-
-                    res.slots.forEach(function(slot) {
-                        $('#slots-container').append(`
+                        @forelse ($compaign->slots as $slot)
                             <div class="col-md-4">
                                 <div class="slot-box droppable"
-                                    data-id="${slot.id}"
-                                    data-remaining="${slot.remaining}"
-                                    data-max="${slot.max_duration}">
-                                    <strong>${slot.name}</strong><br>
+                                    data-id="{{ $slot->id }}"
+                                    data-remaining="{{ $slot->max_duration - $slot->dcpCreatives->sum('duration') }}"
+                                    data-max="{{ $slot->max_duration }}">
+                                    <strong>{{ $slot->name }}</strong><br>
                                     <small>
-                                        Remaining: <span class="remaining">${slot.remaining}</span>s /
-                                        Max: <span class="max">${slot.max_duration}</span>s
+                                        Remaining: <span class="remaining">{{ $slot->max_duration - $slot->dcpCreatives->sum('duration') }}</span>s /
+                                        Max: <span class="max">{{ $slot->max_duration }}</span>s
                                     </small>
-                                    <div class="assigned-list mt-2"></div>
+                                    <div class="assigned-list mt-2">
+                                        @foreach ($slot->dcpCreatives as $dcp)
+                                            <div class="assigned" data-dcp="{{ $dcp->id }}" data-duration="{{ $dcp->duration }}">
+                                                <span>{{ $dcp->name }} ({{ $dcp->duration }}s)</span>
+                                                <span class="remove">×</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
-                        `);
-                    });
+                        @empty
+                            <div class="text-center text-muted">Please select filters and load slots</div>
+                        @endforelse
 
-                    initDroppable();
-                });
-            }
-            function initDroppable(){
-                $('.droppable').droppable({
-                    accept: '.dcp-item',
-                    hoverClass: 'active',
-                    drop: function(e, ui){
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col text-end">
+                            <button id="btn-save-campaign" class="btn btn-success">
+                                💾 Update Campaign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        let dcpId = ui.draggable.data('id');
-                        let dcpName = ui.draggable.find('span:first').text();
-                        let dcpDuration = parseInt(ui.draggable.data('duration'));
+        </div>
+    </div>
+</div>
 
-                        let $slot = $(this);
-                        let remaining = parseInt($slot.data('remaining'));
-                        let max = parseInt($slot.data('max'));
-
-                        // ❗ 1) Check max duration
-                        if(dcpDuration > max){
-                            showError(
-                                "This creative cannot be assigned to this slot because its duration is greater than the maximum allowed duration of the slot."
-                            );
-
-                            return;
-                        }
-
-                        // ❗ 2) Check remaining duration
-                        if(dcpDuration > remaining){
-                            showError(
-                                "This creative cannot be assigned to this slot because there is not enough remaining time available."
-                                );
-
-                            return;
-                        }
-
-                        // ✅ 3) Update remaining
-                        let newRemaining = remaining - dcpDuration;
-                        $slot.data('remaining', newRemaining);
-                        $slot.find('.remaining').text(newRemaining);
-
-                        // ✅ 4) Append assigned DCP with remove button
-                        let $item = $(`
-                            <div class="assigned" data-dcp="${dcpId}" data-duration="${dcpDuration}">
-                                <span>${dcpName} (${dcpDuration}s)</span>
-                                <span class="remove">×</span>
-                            </div>
-                        `);
-
-                        $slot.find('.assigned-list').append($item);
-
-                        // ✅ 5) Notify backend
-                        $.post("{{ url('') }}/advertiser/slots/assign-dcp", {
-                            _token: "{{ csrf_token() }}",
-                            slot_id: $slot.data('id'),
-                            dcp_id: dcpId
-                        });
-                    }
-                });
-            }
-            function showError(message){
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Not allowed',
-                    text: message,
-                    confirmButtonColor: '#d33'
-                });
-            }
-            // remove assigned DCP
-            $(document).on('click', '.assigned .remove', function(){
-                let $item = $(this).closest('.assigned');
-
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Remove creative?',
-                    text: 'Do you really want to remove this creative from the slot?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, remove',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-
-                    if(!result.isConfirmed) return;
-
-                    let duration = parseInt($item.data('duration'));
-                    let dcpId = $item.data('dcp');
-                    let $slot = $item.closest('.slot-box');
-
-                    let remaining = parseInt($slot.data('remaining')) + duration;
-                    $slot.data('remaining', remaining);
-                    $slot.find('.remaining').text(remaining);
-
-                    $item.remove();
-
-                    $.post("{{ url('') }}/advertiser/slots/remove-dcp", {
-                        _token: "{{ csrf_token() }}",
-                        slot_id: $slot.data('id'),
-                        dcp_id: dcpId
-                    });
-                });
-            });
-            $('#btn-save-campaign').on('click', function(){
-
-                $('#saveCampaignModal').modal('show');
-            });
-
-            $('#confirm-save-campaign').on('click', function(){
-
-                let campaignName = $('#compaign_name').val().trim();
-                if(!campaignName){
-                    showError(
-                        "Please enter a campaign name."
-                    );
-
-                    return;
-                }
-
-                let slotsData = [];
-
-                $('.slot-box').each(function(){
-                    let $slot = $(this);
-                    let slotId = $slot.data('id');
-
-                    let dcps = [];
-                    $slot.find('.assigned').each(function(){
-                        dcps.push({
-                            dcp_id: $(this).data('dcp'),
-                            duration: $(this).data('duration')
-                        });
-                    });
-
-                    if(dcps.length > 0){
-                        slotsData.push({
-                            slot_id: slotId,
-                            dcps: dcps
-                        });
-                    }
-                });
-
-                let payload = {
-                    _token: "{{ csrf_token() }}",
-
-                    compaign_name: campaignName,
-
-                    // filters
-                    start_date: $('#start_date').val(),
-                    end_date: $('#end_date').val(),
-                    cinema_chain_id: $('#cinema_chain').val(),
-                    location_id: $('#location').val(),
-                    movie_genre_id: $('#movie_genre').val(),
-                    compaign_category_id: $('#compaign_category').val(),
-                    template_slot_id: $('#template_slot').val(),
-
-                    slots: slotsData
-                };
-
-                $.ajax({
-                    url: "{{ url('') }}/advertiser/compaigns",
-                    method: "POST",
-                    data: payload,
-                    beforeSend: function(){
-                        $('#confirm-save-campaign').prop('disabled', true);
-                    }
-                })
-                .done(function(res){
-                    Swal.fire({
-                            title: 'Done!',
-                            text: 'Campaign Created successfully.',
-                            icon: 'success',
-                            confirmButtonText: 'Continue'
-                        });
-                    $('#saveCampaignModal').modal('hide');
-                    $('#confirm-save-campaign').prop('disabled', false);
-                    // option: redirect
-                    // window.location.href = res.redirect;
-                })
-                .fail(function(){
-                    showError(
-                        "Error while saving campaign."
-                    );
-
-                    $('#confirm-save-campaign').prop('disabled', false);
-                });
-                });
-
-                $(document).on('change', '#dcp-category-filter', function () {
-                    const selected = $(this).val();
-
-                    $('#dcp-list .dcp-item').each(function () {
-                        const itemCat = $(this).data('category');
-
-                        if (!selected || itemCat == selected) {
-                            $(this).show();
-                        } else {
-                            $(this).hide();
-                        }
-                    });
-                });
-
-
-        });
-
-
-    </script>
 @endsection
 
-@section('custom_css')
-    <link rel="stylesheet" href="{{ asset('assets/libs/select2/dist/css/select2.min.css') }}">
+@section('custom_script')
+<script>
+$(function() {
 
-    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+    // Init Select2 with "Select All" logic
+    function initSelect2WithSelectAll(selector) {
+        $(selector).select2({ width: '100%', closeOnSelect: false });
+        $(selector).on('select2:select select2:unselect', function (e) {
+            const ALL_VALUE = '__all__';
+            const $select = $(this);
+            const values = $select.val() || [];
+            if (e.params?.data?.id === ALL_VALUE) {
+                if (values.includes(ALL_VALUE)) {
+                    const allValues = $select.find('option').map(function () { return this.value; }).get().filter(v => v !== ALL_VALUE);
+                    $select.val(allValues).trigger('change.select2');
+                } else {
+                    $select.val(null).trigger('change.select2');
+                }
+            }
+        });
+    }
 
-    <style>
-        .dcp-item {
-            cursor: grab;
-        }
+    initSelect2WithSelectAll('#location');
+    initSelect2WithSelectAll('#movie_genre');
 
-        .slot-box {
-            border: 2px dashed #ccc;
-            padding: 15px;
-            min-height: 120px;
-            border-radius: 6px;
-            background: #f9f9f9;
-        }
+    // DCP draggable
+    $(".dcp-item").draggable({ helper: "clone", revert: "invalid" });
 
-        .slot-box.active {
-            border-color: #0d6efd;
-            background: #eef5ff;
-        }
+    function initDroppable(){
+        $('.droppable').droppable({
+            accept: '.dcp-item',
+            hoverClass: 'active',
+            drop: function(e, ui){
+                let dcpId = ui.draggable.data('id');
+                let dcpName = ui.draggable.find('p').text();
+                let dcpDuration = parseInt(ui.draggable.data('duration'));
+                let $slot = $(this);
+                let remaining = parseInt($slot.data('remaining'));
+                let max = parseInt($slot.data('max'));
+                if ($slot.find(`.assigned[data-dcp="${dcpId}"]`).length > 0) { alert("Already assigned"); return; }
+                if(dcpDuration > max || dcpDuration > remaining){ alert("Not enough slot duration"); return; }
+                let newRemaining = remaining - dcpDuration;
+                $slot.data('remaining', newRemaining);
+                $slot.find('.remaining').text(newRemaining);
+                $slot.find('.assigned-list').append(`<div class="assigned" data-dcp="${dcpId}" data-duration="${dcpDuration}"><span>${dcpName} (${dcpDuration}s)</span><span class="remove">×</span></div>`);
+            }
+        });
+    }
+    initDroppable();
 
-        .assigned {
-            background: #d1e7dd;
-            border-radius: 4px;
-            padding: 4px 8px;
-            margin-bottom: 5px;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    // Remove assigned DCP
+    $(document).on('click', '.assigned .remove', function(){
+        let $item = $(this).closest('.assigned');
+        let duration = parseInt($item.data('duration'));
+        let $slot = $item.closest('.slot-box');
+        let remaining = parseInt($slot.data('remaining')) + duration;
+        $slot.data('remaining', remaining);
+        $slot.find('.remaining').text(remaining);
+        $item.remove();
+    });
 
-        .assigned .remove {
-            cursor: pointer;
-            color: #dc3545;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-    </style>
+    // Save/Update campaign
+    $('#btn-save-campaign').on('click', function(){
+        let campaignName = prompt("Enter campaign name:", "{{ $compaign->name }}");
+        if(!campaignName) return;
+        let slotsData = [];
+        $('.slot-box').each(function(){
+            let $slot = $(this);
+            let slotId = $slot.data('id');
+            let dcps = [];
+            $slot.find('.assigned').each(function(){
+                dcps.push({ dcp_id: $(this).data('dcp'), duration: $(this).data('duration') });
+            });
+            if(dcps.length>0) slotsData.push({ slot_id: slotId, dcps: dcps });
+        });
+        if(!slotsData.length){ alert("No DCP assigned"); return; }
+        $.post("{{ url('') }}/advertiser/compaigns/{{ $compaign->id }}", {
+            _method: 'PUT',
+            _token: "{{ csrf_token() }}",
+            name: campaignName,
+            start_date: $('#start_date').val(),
+            end_date: $('#end_date').val(),
+            template_slot_id: $('#template_slot').val(),
+            compaign_category_id: $('#compaign_category').val(),
+            slots: slotsData
+        }, function(res){
+            alert("Campaign updated successfully!");
+            location.reload();
+        });
+    });
+
+});
+</script>
 @endsection

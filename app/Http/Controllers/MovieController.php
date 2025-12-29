@@ -42,6 +42,7 @@ class MovieController extends Controller
                 'langue_id' => ['required', 'exists:langues,id'],
                 'runtime' => ['nullable', 'integer', 'min:1'],
                 'status' => ['required', 'boolean'],
+               // 'play_at' => ['nullable', 'date'],
             ]);
              $uuid = (string) Str::uuid();
             $validated['uuid'] =  'urn:uuid:' . $uuid;
@@ -60,14 +61,14 @@ class MovieController extends Controller
 
     public function update(Request $request, Movie $movie)
     {
-        try
-        {
+
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'movie_genre_id' => ['required', 'exists:movie_genres,id'],
                 'langue_id' => ['required', 'exists:langues,id'],
                 'runtime' => ['nullable', 'integer', 'min:1'],
                 'status' => ['required', 'boolean'],
+              //  'play_at' => ['nullable', 'date'],
             ]);
 
             $movie->update($validated);
@@ -76,11 +77,7 @@ class MovieController extends Controller
                 'message' => 'Movie updated successfully.',
                 'data' => $movie,
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Operation failed.',
-            ], 500);
-        }
+
     }
 
     public function destroy(Movie $movie)

@@ -176,6 +176,13 @@ Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignControl
 Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.billing')->middleware(['auth','admin']);
 
 
+Route::get('/planning/slots', [App\Http\Controllers\CompaignController::class, 'planningSlotsPage'])->name('planning.slots.page');
+Route::get('/planning/slots/list', [App\Http\Controllers\CompaignController::class, 'planningSlotsList'])->name('planning.slots.list');
+Route::get('/planning/slots/{compaign}/dcps', [App\Http\Controllers\CompaignController::class, 'planningSlotDcps'])->name('planning.slots.dcps');
+Route::get('/planning/slots/reserved', [App\Http\Controllers\CompaignController::class, 'getReservedSlots'])->name('planning.slots.getReservedSlots');
+Route::get('/planning/slots/reserved/all', [App\Http\Controllers\CompaignController::class, 'getAllReservedSlots'])->name('planning.slots.getAllReservedSlots');
+
+
 Route::get('invoices', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index')->middleware(['auth','admin']);
 Route::get('/invoices/list', [App\Http\Controllers\InvoiceController::class, 'get'])->name('invoices.list')->middleware(['auth','admin']);
 Route::post('/invoices', [App\Http\Controllers\InvoiceController::class, 'store'])->name('invoices.store')->middleware(['auth','admin']);

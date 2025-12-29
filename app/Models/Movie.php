@@ -24,6 +24,7 @@ class Movie extends Model
         'langue_id',
         'runtime',
         'status',
+        //'play_at',
     ];
 
     /**
@@ -33,6 +34,7 @@ class Movie extends Model
      */
     protected $casts = [
         'id' => 'integer',
+       // 'play_at' => 'datetime',
     ];
 
     public function compaigns(): HasMany

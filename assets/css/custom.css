@@ -107,3 +107,13 @@ table.dataTable thead>tr>th.sorting:after, table.dataTable thead>tr>th.sorting_a
 {
     z-index: 9999999999999 !important;
 }
+
+[data-bs-theme=dark] .slot-box
+{
+    background: #1f2a3d;
+}
+
+[data-bs-theme=dark] .assigned
+{
+    color: black;
+}

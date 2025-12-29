@@ -304,6 +304,20 @@ class SlotController extends Controller
         $start = Carbon::parse($v['start_date'])->startOfDay();
         $end   = Carbon::parse($v['end_date'])->endOfDay();
 
+        if (!empty($v['movie_genre_id'])) {
+            $hasMovies = Movie::whereIn('movie_genre_id', $v['movie_genre_id'])
+              //  ->whereNotNull('play_at')
+               // ->whereBetween('play_at', [$start, $end])
+                ->exists();
+
+            if (!$hasMovies) {
+                return response()->json([
+                    'slots' => []
+                ]);
+            }
+
+        }
+
         // 1️⃣ Tous les slots du template
         $slots = Slot::where('template_slot_id', $v['template_slot_id'])
             ->select('id', 'name', 'max_duration')

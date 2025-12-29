@@ -13,9 +13,13 @@ Campaign
                         <nav aria-label="breadcrumb" class="ms-auto">
                             <ol class="breadcrumb">
                                 <li class="breadcrumb-item" aria-current="page">
-                                    <button class="btn bg-success  text-white " id="create_compaign">
-                                        + New Campaign
+                                    <button id="btnReservedSlots" class="btn btn-info ">
+                                        View All Reserved Slots
                                     </button>
+                                    <!--<button class="btn bg-success  text-white " id="create_compaign">
+                                        + New Campaign
+                                    </button>-->
+
                                 </li>
                             </ol>
                         </nav>
@@ -383,6 +387,48 @@ Campaign
     </div>
 
 
+    <div class="modal" id="dcps_modal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-primary">
+              <h5 class="modal-title text-white">Slots & DCP Creatives</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="dcps_content"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="reservedSlotsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Slots réservés</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Slot</th>
+                                <th>DCP</th>
+                                <th>Campaign</th>
+                                <th>Movie</th>
+                                <th>Genre</th>
+                                <th>Duration (s)</th>
+                                <th>Location</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservedSlotsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 
@@ -591,6 +637,9 @@ Campaign
                                     '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-info  m-1" >' +
                                     '<i class="mdi mdi-magnify "></i>' +
                                     '</button>' +
+                                    '<button data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="View DCPs" title="View DCPs"  class="ustify-content-center btn mb-1 btn-rounded btn-warning  m-1 view-dcps" data-id="' + value.id +'">'+
+                                        '<i class="mdi mdi-bullhorn"></i>' +
+                                    '</button>'+
 
                                     '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Delete" title="Delete"  id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
@@ -626,7 +675,140 @@ Campaign
 
             }
             get_compaigns();
+            function formatDateTime(dt) {
+                if (!dt) return '-';
+                const d = new Date(dt);
+                const day = String(d.getDate()).padStart(2,'0');
+                const month = String(d.getMonth()+1).padStart(2,'0');
+                const year = d.getFullYear();
+                const h = String(d.getHours()).padStart(2,'0');
+                const m = String(d.getMinutes()).padStart(2,'0');
+                return `${day}/${month}/${year} ${h}:${m}`;
+            }
+            $('#btnReservedSlots').on('click', function () {
+                var url = "{{ url('') }}" + '/planning/slots/reserved/all';
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (res) {
+                        console.log(res)
 
+                        let html = '';
+
+                        res.data.forEach(function (row) {
+                            html += `
+                                <tr>
+                                    <td>${row.slot_name}</td>
+                                    <td>${row.dcp_name}</td>
+                                    <td>${row.compaign_name}</td>
+                                    <td>${row.movie_title}</td>
+                                    <td>${row.genre_name}</td>
+                                    <td>${row.duration}</td>
+                                    <td>${row.location_name}</td>
+                                </tr>
+                            `;
+                        });
+
+                        $('#reservedSlotsTable').html(html);
+                        $('#reservedSlotsModal').modal('show');
+                    }
+                });
+            });
+
+            /*$('#btnReservedSlots').on('click', function () {
+
+                let data = {
+                    start_date: $('#start_date').val(),
+                    end_date: $('#end_date').val(),
+                    template_slot_id: $('#template_slot_id').val(),
+                    location_id: $('#location').val(),
+                    movie_genre_id: $('#movie_genre').val(),
+                };
+                var url = "{{ url('') }}" + '/planning/slots/reserved';
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    data: data,
+                    success: function (res) {
+
+                        let html = '';
+
+                        res.data.forEach(function (row) {
+                            html += `
+                                <tr>
+                                    <td>${row.slot_name}</td>
+                                    <td>${row.dcp_name}</td>
+                                    <td>${row.compaign_name}</td>
+                                    <td>${row.movie_title}</td>
+                                    <td>${row.genre_name}</td>
+                                    <td>${row.play_date}</td>
+                                    <td>${row.duration}</td>
+                                    <td>${row.location_name}</td>
+                                </tr>
+                            `;
+                        });
+
+                        $('#reservedSlotsTable').html(html);
+                        $('#reservedSlotsModal').modal('show');
+                    }
+                });
+            });*/
+            $(document).on('click', '.view-dcps', function() {
+                const compaignId = $(this).data('id');
+                const url = "{{ url('planning/slots') }}/" + compaignId + "/dcps";
+
+                $('#dcps_content').html('Loading...');
+                $('#dcps_modal').modal('show');
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    success: function(res) {
+                        let html = '';
+
+                        if (!res.slots.length) {
+                            html = '<p class="text-center text-muted">No DCP creatives found.</p>';
+                        } else {
+                            res.slots.forEach(slot => {
+                                html += `
+                                    <table class="table table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>DCP</th>
+                                                <th>Duration (s)</th>
+                                                <th>Play At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+
+                                        slot.dcps.forEach(dcp => {
+                                            let dates = '-';
+                                            if (dcp.play_at && dcp.play_at.length) {
+                                                dates = dcp.play_at.map(dt => formatDateTime(dt)).join('<br>');
+                                            }
+
+                                            html += `
+                                                <tr>
+                                                    <td>${dcp.name}</td>
+                                                    <td class="text-center">${dcp.duration}</td>
+
+                                                </tr>`;
+                                        });
+
+                                html += `
+                                            </tbody>
+                                        </table>
+                                    </div>`;
+                            });
+                        }
+
+                        $('#dcps_content').html(html);
+                    },
+                    error: function() {
+                        $('#dcps_content').html('<p class="text-danger">Failed to load data.</p>');
+                    }
+                });
+            });
 
             $(document).on("submit", "#create_compaign_modal", function(event) {
 

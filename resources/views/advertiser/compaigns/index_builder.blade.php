@@ -4,7 +4,7 @@
 @endsection
 @section('content')
 
-    <div class="container-fluid">
+    <div class="">
         <div class="row">
 
             <!-- LEFT : DCP creatives -->
@@ -13,10 +13,10 @@
                     <div class="card-header bg-primary text-white">
                         DCP Creatives
                     </div>
-                    <div class="card-body">
+                    <div class="card-body" style="padding: 15px">
 
                         <div class="mb-2">
-                            <select id="dcp-category-filter" class="form-select form-select-sm">
+                            <select id="dcp-category-filter" class=" form-select">
                                 <option value="">All categories</option>
                                 @foreach ($compaign_categories as $cat)
                                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -34,7 +34,7 @@
                                     <div>
                                         <p class="mb-1">{{ $dcp->name }}</p>
                                         <span class="badge bg-secondary">
-                                            Duration: {{ $dcp->duration }}s
+                                            Duration: {{ (int) $dcp->duration }}s
                                         </span>
                                     </div>
                                 </li>
@@ -147,7 +147,7 @@
         </div>
     </div>
     <div class="modal fade" id="saveCampaignModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg  modal-dialog-centered">
             <div class="modal-content">
 
                 <div class="modal-header">
@@ -156,11 +156,93 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label>Campaign Name</label>
-                        <input type="text" id="compaign_name" class="form-control"
-                               placeholder="Enter campaign name" >
-                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label>Campaign Name</label>
+                                <input type="text" id="compaign_name" class="form-control"
+                                    placeholder="Enter campaign name" >
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="budget">Desired Budget</label> <span
+                                    class="danger">(RM)</span>
+                                <input type="number" class="form-control" id="budget" name="budget" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="langue"> Preferred Language : <span
+                                        class="danger">*</span>
+                                </label>
+                                <select class="form-select required" id="langue" name="langue">
+                                    <option value="">Select...</option>
+                                    @foreach ($langues as $langue)
+                                        <option value="{{ $langue->id }}">{{ $langue->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="hall_type"> Hall Types : <span
+                                        class="danger">*</span>
+                                </label>
+                                <select class="form-select required " id="hall_type"
+                                    name="hall_type">
+                                    <option value="">Select </option>
+                                    @foreach ($hall_types as $hall_type)
+                                        <option value="{{ $hall_type->id }}">{{ $hall_type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="gender"> Gender : <span class="danger">*</span>
+                                </label>
+                                <select class="form-select required" id="gender" name="gender">
+                                    <option value="">Select...</option>
+                                    @foreach ($genders as $gender)
+                                        <option value="{{ $gender->id }}">{{ $gender->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="target_type"> Audience Targeting : <span
+                                        class="danger">*</span>
+                                </label>
+                                <select class="form-select  required" id="target_type"
+                                    name="target_type">
+                                    <option value="">Select </option>
+                                    @foreach ($target_types as $target_type)
+                                        <option value="{{ $target_type->id }}">{{ $target_type->name }}
+                                            ({{ $target_type->detail }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="interest"> Interests : <span
+                                        class="danger">*</span>
+                                </label>
+                                <select class="form-select required select2"  id="interest"
+                                    name="interest">
+
+                                    <option value="__all__">Select All</option>
+                                    @foreach ($interests as $interest)
+                                        <option value="{{ $interest->id }}">{{ $interest->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
                 </div>
 
                 <div class="modal-footer">
@@ -179,7 +261,7 @@
 
 @section('custom_script')
     <script src="{{ asset('assets/libs/jquery-steps/build/jquery.steps.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>>
+    <script src="{{ asset('assets/libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
     <script src="{{ asset('assets/libs/select2/dist/js/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
@@ -221,11 +303,11 @@
             $(document).ready(function () {
                 initSelect2WithSelectAll('#brand');
                 initSelect2WithSelectAll('#location');
-                initSelect2WithSelectAll('#hall_type');
+               // initSelect2WithSelectAll('#hall_type');
                 initSelect2WithSelectAll('#movie_genre');
-                initSelect2WithSelectAll('#interest');
+                //initSelect2WithSelectAll('#interest');
                 initSelect2WithSelectAll('#dcp_creative');
-                initSelect2WithSelectAll('#target_type');
+                //initSelect2WithSelectAll('#target_type');
             });
 
             const today = new Date().toISOString().split('T')[0];
@@ -269,6 +351,7 @@
                 const endDate   = $('#end_date').val();
                 const locations = $('#location').val();
                 const genres    = $('#movie_genre').val();
+                const compaign_category = $('#compaign_category').val()
 
                 // 🔍 Front validation
                 if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
@@ -291,7 +374,7 @@
                         cinema_chain_id: $('#cinema_chain').val(),
                         location_id: locations,
                         movie_genre_id: genres,
-                        compaign_category_id: $('#compaign_category').val(),
+                        compaign_category_id: compaign_category,
                         template_slot_id: $('#template_slot').val(),
                         _token: "{{ csrf_token() }}"
                     }
@@ -333,7 +416,7 @@
                     drop: function(e, ui){
 
                         let dcpId = ui.draggable.data('id');
-                        let dcpName = ui.draggable.find('span:first').text();
+                        let dcpName = ui.draggable.find('p:first').text();
                         let dcpDuration = parseInt(ui.draggable.data('duration'));
 
                         let $slot = $(this);
@@ -430,10 +513,63 @@
             });
             $('#btn-save-campaign').on('click', function(){
                 $('#compaign_name').val('');
+                $('#compaign_category').val('');
+                $('#budget').val('');
+                $('#langue').val('');
+                $('#hall_type').val('');
+                $('#target_type').val('');
+                $('#interest').val('');
+
+
+                const startDate = $('#start_date').val();
+                const endDate   = $('#end_date').val();
+                const locations = $('#location').val();
+                const genres    = $('#movie_genre').val();
+
+                // 🔍 Front validation
+                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0 ) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing information',
+                        text: 'Please select start date, end date, location and movie genre before loading slots.'
+                    });
+                    return;
+                }
+
+                let slotsData = [];
+                $('.slot-box').each(function(){
+                    let $slot = $(this);
+                    let slotId = $slot.data('id');
+
+                    let dcps = [];
+                    $slot.find('.assigned').each(function(){
+                        dcps.push({
+                            dcp_id: $(this).data('dcp'),
+                            duration: $(this).data('duration')
+                        });
+                    });
+
+                    if(dcps.length > 0){
+                        slotsData.push({
+                            slot_id: slotId,
+                            dcps: dcps
+                        });
+                    }
+                });
+                if(!slotsData.length)
+                {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing DCP creative',
+                        text: 'No DCP creative has been assigned to any slot yet..'
+                    });
+                    return;
+                }
+
                 $('#saveCampaignModal').modal('show');
             });
 
-            $('#confirm-save-campaign').on('click', function(){
+            $(document).on('click', '#confirm-save-campaign', function(){
 
                 let campaignName = $('#compaign_name').val().trim();
                 if(!campaignName){
@@ -572,6 +708,13 @@
             color: #dc3545;
             font-weight: bold;
             margin-left: 8px;
+        }
+        .list-group-item
+        {
+            margin: 11px 0;
+            border-radius: 10px;
+            border: 1px solid #e0e6eb;
+            border-top-width: initial !important;
         }
     </style>
 @endsection

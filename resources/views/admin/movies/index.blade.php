@@ -90,6 +90,7 @@
                                 <input type="number" class="form-control" id="runtime" placeholder="Runtime">
                             </div>
 
+
                         </div>
 
                     </div>
@@ -186,7 +187,22 @@
         $(function() {
             $(document).on('click', '#create_movie', function() {
                 $('#create_movie_modal').modal('show');
-            })
+            });
+
+            function formatDateTime(dt) {
+                if (!dt) return '-';
+
+                const date = new Date(dt);
+
+                const day   = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year  = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const mins  = String(date.getMinutes()).padStart(2, '0');
+
+                return `${day}/${month}/${year} ${hours}:${mins}`;
+            }
+
             function get_movies() {
                 $('#wait-modal').modal('show');
 
@@ -214,6 +230,7 @@
                                     value.uuid + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.langue ? value.langue.name : '-') + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.runtime ?? '-') + ' min</td>' +
+
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.status ? '<span class="badge bg-success-subtle text-success">Active</span> ' : '<span class="badge bg-danger-subtle text-danger">Inactive</span>') + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
@@ -261,6 +278,7 @@
                 var runtime = $('#create_movie_modal #runtime').val();
                 var status = $('#create_movie_modal #status').val();
 
+
                 var url = '{{ url('') }}' + '/movies';
 
                 $.ajax({
@@ -299,7 +317,7 @@
                         $('#create_movie_modal').modal('hide');
                     });
 
-            })
+            });
 
             $(document).on('click', '.delete', function() {
                 var id = $(this).attr('id');
@@ -377,7 +395,7 @@
                         "_token": "{{ csrf_token() }}",
                     },
                     success: function(response) {
-                        console.log(response)
+
                         $("#wait-modal").modal('hide');
                         $('#edit_movie_modal').modal('show');
                         $('#edit_movie_modal #name').val(response.movie.name)
@@ -392,7 +410,7 @@
                         console.log(response);
                     }
                 })
-            })
+            });
 
             $(document).on("submit","#edit_movie_form" , function(event) {
                 event.preventDefault();
@@ -401,6 +419,7 @@
                 var langue_id = $('#edit_movie_form #langue_id').val();
                 var runtime = $('#edit_movie_form #runtime').val();
                 var status = $('#edit_movie_form #status').val();
+
 
                 var id = $('#edit_movie_form #id').val();
                 var url = '{{ url('') }}' + '/movies/'+ id;
@@ -452,7 +471,7 @@
                         icon: 'error'
                     });
                 })
-            })
+            });
 
         });
     </script>

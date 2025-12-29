@@ -218,7 +218,7 @@ class CompaignController extends Controller
                 'ad_duration'           => 30,
                 'start_date'       => $v['start_date'],
                 'end_date'         => $v['end_date'],
-                'compaign_category_id' => $v['compaign_category_id'] ?? null,
+                'compaign_category_id' => 1,
                 'cinema_chain_id'      => $v['cinema_chain_id'] ?? null,
                 'user_id'          => Auth::id(),
                 'status'           => 1,
@@ -547,7 +547,7 @@ class CompaignController extends Controller
             'slots:id',
             'templateSlot:id',
         ])->findOrFail($id);
-            dd($compaign);
+
 
         // mêmes données que create()
         $dcp_creatives = DcpCreative::where('status', 1)->get();
@@ -574,5 +574,174 @@ class CompaignController extends Controller
             'compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'
         ));
     }
+
+
+    public function planningSlotsPage()
+    {
+        $cinema_chains  = CinemaChain::all();
+        $slot_templates = TemplateSlot::all();
+
+        return view('admin.compaigns.calendar', compact('cinema_chains', 'slot_templates' ));
+    }
+    public function planningSlotsList(Request $request)
+    {
+        $data = Compaign::with(['slots', 'locations'])
+            ->select('id', 'name', 'start_date', 'end_date')
+            ->get()
+            ->flatMap(function ($compaign) {
+                return $compaign->slots->map(function ($slot) use ($compaign) {
+                    return [
+                        'compaign'   => $compaign->name,
+                        'slot'       => $slot->name,
+                        'start_date' => $compaign->start_date,
+                        'end_date'   => $compaign->end_date,
+                    ];
+                });
+            })
+            ->values();
+
+        return response()->json([
+            'data' => $data
+        ]);
+    }
+
+    public function planningSlotDcps(Compaign $compaign)
+    {
+        $compaign->load([
+            'slots:id,name',
+            'dcpCreatives:id,name,duration',
+            'movieGenres:id'
+        ]);
+
+        // 🎬 genres choisis dans la campagne
+        $genreIds = $compaign->movieGenres->pluck('id')->toArray();
+
+
+        $movies = Movie::whereIn('movie_genre_id', $genreIds)
+          /*  ->whereNotNull('play_at')
+            ->whereBetween('play_at', [
+                Carbon::parse($compaign->start_date)->startOfDay(),
+                Carbon::parse($compaign->end_date)->endOfDay(),
+            ])*/
+            //->orderBy('play_at')
+            ->get(['id', /*'play_at',*/ 'movie_genre_id']);
+
+        // dates de passage
+        //$playDates = $movies->pluck('play_at')->values();
+
+        // grouper les DCP par slot
+        $grouped = [];
+
+        foreach ($compaign->dcpCreatives as $dcp) {
+            $slotId = $dcp->pivot->slot_id;
+
+            if (!isset($grouped[$slotId])) {
+                $slot = $compaign->slots->firstWhere('id', $slotId);
+                $grouped[$slotId] = [
+                    'slot_id'   => $slotId,
+                    'slot_name' => $slot?->name ?? 'N/A',
+                    'dcps'      => []
+                ];
+            }
+
+            $grouped[$slotId]['dcps'][] = [
+                'id'        => $dcp->id,
+                'name'      => $dcp->name ?? ('DCP #' . $dcp->id),
+                'duration'  => $dcp->duration,
+               // 'play_at'   => $playDates, // 👈 toutes les dates possibles
+            ];
+        }
+
+        return response()->json([
+            'slots' => array_values($grouped)
+        ]);
+    }
+
+    public function getReservedSlots(Request $request)
+    {
+        $v = $request->validate([
+            'start_date'        => 'required|date',
+            'end_date'          => 'required|date|after_or_equal:start_date',
+            'template_slot_id' => 'required|exists:template_slots,id',
+            'location_id'      => 'nullable|array',
+            'location_id.*'    => 'integer|exists:locations,id',
+            'movie_genre_id'   => 'nullable|array',
+            'movie_genre_id.*' => 'integer|exists:movie_genres,id',
+        ]);
+
+        $start = Carbon::parse($v['start_date'])->startOfDay();
+        $end   = Carbon::parse($v['end_date'])->endOfDay();
+
+        $query = DB::table('compaign_slot_dcp as csd')
+            ->join('slots as s', 's.id', '=', 'csd.slot_id')
+            ->join('template_slots as ts', 'ts.id', '=', 's.template_slot_id')
+            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
+            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
+            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
+            ->join('locations as l', 'l.id', '=', 'cl.location_id')
+            ->join('movies as m', 'm.id', '=', 'c.movie_id')
+            ->join('movie_genres as mg', 'mg.id', '=', 'm.movie_genre_id')
+            ->where('s.template_slot_id', $v['template_slot_id'])
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('c.start_date', [$start, $end])
+                ->orWhereBetween('c.end_date', [$start, $end])
+                ->orWhere(function ($q2) use ($start, $end) {
+                    $q2->where('c.start_date', '<=', $start)
+                        ->where('c.end_date', '>=', $end);
+                });
+            });
+
+        if (!empty($v['location_id'])) {
+            $query->whereIn('cl.location_id', $v['location_id']);
+        }
+
+        if (!empty($v['movie_genre_id'])) {
+            $query->whereIn('m.movie_genre_id', $v['movie_genre_id']);
+        }
+
+        $rows = $query->select(
+                's.name as slot_name',
+                'd.name as dcp_name',
+                'd.duration',
+                'c.name as compaign_name',
+                'm.title as movie_title',
+                'mg.name as genre_name',
+                'm.play_date',
+                'l.name as location_name'
+            )
+         //   ->orderBy('m.play_date')
+            ->get();
+
+        return response()->json(['data' => $rows]);
+    }
+
+
+    public function getAllReservedSlots()
+    {
+        $rows = DB::table('compaign_slot_dcp as csd')
+            ->join('slots as s', 's.id', '=', 'csd.slot_id')
+            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
+            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
+            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
+            ->join('locations as l', 'l.id', '=', 'cl.location_id')
+            ->join('movies as m', 'm.id', '=', 'c.movie_id')
+            ->join('movie_genres as mg', 'mg.id', '=', 'm.movie_genre_id')
+            ->select(
+                's.name as slot_name',
+                'd.name as dcp_name',
+                'd.duration',
+                'c.name as compaign_name',
+                'm.name as movie_title',
+                'mg.name as genre_name',
+              //  'm.play_at',
+                'l.name as location_name'
+            )
+            ->orderBy('m.play_at', 'desc')
+            ->get();
+
+        return response()->json(['data' => $rows]);
+    }
+
+
 
 }
