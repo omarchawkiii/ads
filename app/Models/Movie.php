@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -37,11 +38,14 @@ class Movie extends Model
        // 'play_at' => 'datetime',
     ];
 
-    public function compaigns(): HasMany
-    {
-        return $this->hasMany(Compaign::class);
-    }
 
+    public function compaigns(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Compaign::class,
+            'compaign_movie'
+        )->withTimestamps();
+    }
     public function genre(): BelongsTo
     {
         return $this->belongsTo(MovieGenre::class, 'movie_genre_id');

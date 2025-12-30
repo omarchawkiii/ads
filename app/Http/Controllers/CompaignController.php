@@ -84,8 +84,9 @@ class CompaignController extends Controller
             'compaignObjective:id,name',
             'compaignCategory:id,name',
             'langue:id,name',
-            'movie' => function ($q) {
-                $q->withTrashed()->select('id', 'name');
+            'movies' => function ($q) {
+                $q->withTrashed()
+                  ->select('movies.id', 'movies.name');
             },
             'gender:id,name',
             'templateSlot:id,name',
@@ -196,6 +197,12 @@ class CompaignController extends Controller
             'movie_genre_id'      => 'array',
             'movie_genre_id.*'    => 'integer|exists:movie_genres,id',
 
+            'movie_id'             => 'required|array|min:1',
+            'movie_id.*'           => 'integer|exists:movies,id',
+
+            'hall_type_id'    => 'array',
+            'hall_type_id.*'  => 'integer|exists:hall_types,id',
+
             // slots + dcps
             'slots'                     => 'required|array|min:1',
             'slots.*.slot_id'           => 'required|integer|exists:slots,id',
@@ -224,10 +231,15 @@ class CompaignController extends Controller
                 'status'           => 1,
             ]);
 
+
+
+
             // helper pour arrays
             $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
+            $compaign->movies()->sync($ids('movie_id'));
 
-            // 2️⃣ sync filtres
+
+
             if ($request->has('location_id')) {
                 $compaign->locations()->sync($ids('location_id'));
             }
@@ -235,6 +247,13 @@ class CompaignController extends Controller
             if ($request->has('movie_genre_id')) {
                 $compaign->movieGenres()->sync($ids('movie_genre_id'));
             }
+
+
+            if ($request->has('hall_type_id')) {
+
+                $compaign->hallTypes()->sync($ids('hall_type_id'));
+            }
+
 
             // 3️⃣ attach slots (compaign_slot)
             $slotIds = collect($v['slots'])->pluck('slot_id')->unique()->toArray();
@@ -715,7 +734,6 @@ class CompaignController extends Controller
         return response()->json(['data' => $rows]);
     }
 
-
     public function getAllReservedSlots()
     {
         $rows = DB::table('compaign_slot_dcp as csd')
@@ -741,7 +759,5 @@ class CompaignController extends Controller
 
         return response()->json(['data' => $rows]);
     }
-
-
 
 }

@@ -26,7 +26,6 @@ class Compaign extends Model
         'budget',
         'langue_id',
         'note',
-        'movie_id',
         'gender_id',
         //'slot_id',
         'ad_duration',
@@ -54,9 +53,12 @@ class Compaign extends Model
     {
         return $this->belongsTo(Langue::class);
     }
-    public function movie()
+    public function movies()
     {
-        return $this->belongsTo(Movie::class);
+        return $this->belongsToMany(
+            Movie::class,
+            'compaign_movie'
+        )->withTimestamps();
     }
     public function gender()
     {

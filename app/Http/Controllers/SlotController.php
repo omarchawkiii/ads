@@ -204,94 +204,14 @@ class SlotController extends Controller
         }
     }
 
-      /*public function getAvailableSlots(Request $request)
-    {
-      $request->validate([
-            'location_id' => 'required|array',
-            'location_id.*' => 'integer',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-            'movie_id' => 'required|integer',
-            'movie_genre_id' => 'nullable|array',
-            'movie_genre_id.*' => 'integer',
-            'dcp_creative' => 'required|array',
-        ]);
-
-        $locationIds = $request->location_id;
-        $startDate = $request->start_date;
-        $endDate = $request->end_date;
-        $movieId = $request->movie_id;
-        $movieGenreIds = $request->movie_genre_id ?? [];
-
-        $slots = Slot::all();
-        $availableSlots = [];
-
-        $dcpCreatives = DcpCreative::whereIn('id', $request->dcp_creative)->get();
 
 
-         // ✅ Check if movies exist for selected genres
-        if (!empty($movieGenreIds)) {
 
-            $movieExists = Movie::whereIn('movie_genre_id', $movieGenreIds)->exists();
-
-            if (!$movieExists) {
-                return response()->json([
-                    'slots' => [],
-                    'message' => 'No movies found for the selected genre(s).'
-                ]);
-            }
-        }
-
-        foreach ($slots as $slot) {
-            $totalDcpDuration = $dcpCreatives->sum('duration');
-            //$totalDcpDuration = intval( $totalDcpDuration);
-
-
-            if ($slot->max_duration < $totalDcpDuration) {
-
-
-                continue; // skip ce slot
-            }
-            // Calculer la durée déjà utilisée sur ce slot
-            $usedDuration = Compaign::where('slot_id', $slot->id)
-                ->when(count($movieGenreIds), function($q) use ($movieGenreIds) {
-                    $q->whereHas('movie', function($mq) use ($movieGenreIds) {
-                        $mq->whereIn('movie_genre_id', $movieGenreIds);
-                    });
-                })
-                ->where(function($q) use ($startDate, $endDate) {
-                    $q->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate]);
-                })
-                ->whereHas('locations', function ($q) use ($locationIds) {
-                    $q->whereIn('locations.id', $locationIds);
-                })
-                ->with('dcpCreatives') // on charge le dcp_creative lié
-                ->get()
-                ->sum(function($compaign) {
-                    return $compaign->dcpCreatives->sum('duration');
-                });
-
-
-            if ($slot->max_duration >= $usedDuration && ($slot->max_duration - $usedDuration ) >=  $totalDcpDuration ) {
-                $availableSlots[] = $slot;
-            }
-
-
-        }
-
-        $availableSlots = Slot::where('template_slot_id',1)->get();
-        return response()->json([
-            'slots' => $availableSlots
-        ]);
-    }*/
-
-
-    public function getAvailableSlots(Request $request)
+    /*public function getAvailableSlots(Request $request)
     {
         $v = $request->validate([
-            'start_date'            => 'required|date',
-            'end_date'              => 'required|date|after_or_equal:start_date',
+            'start_date'           => 'required|date',
+            'end_date'             => 'required|date|after_or_equal:start_date',
             'template_slot_id'     => 'required|exists:template_slots,id',
             'cinema_chain_id'      => 'nullable|integer|exists:cinema_chains,id',
             'location_id'          => 'required|array',
@@ -299,6 +219,8 @@ class SlotController extends Controller
             'movie_genre_id'       => 'nullable|array',
             'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
             'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
+            'movie_id'             => 'nullable|array',
+            'movie_id.*'           => 'integer|exists:movies,id',
         ]);
 
         $start = Carbon::parse($v['start_date'])->startOfDay();
@@ -351,9 +273,9 @@ class SlotController extends Controller
                     ->where('l.cinema_chain_id', $v['cinema_chain_id']);
         }
 
-        if (!empty($v['compaign_category_id'])) {
+        /*if (!empty($v['compaign_category_id'])) {
             $usedQuery->where('c.compaign_category_id', $v['compaign_category_id']);
-        }
+        }//
 
         if (!empty($v['movie_genre_id'])) {
             $usedQuery->join('compaign_movie_genre as cmg', 'cmg.compaign_id', '=', 'c.id')
@@ -386,10 +308,111 @@ class SlotController extends Controller
         return response()->json([
             'slots' => $result
         ]);
+    }*/
+
+    public function getAvailableSlots(Request $request)
+    {
+        $v = $request->validate([
+            'start_date'            => 'required|date',
+            'end_date'              => 'required|date|after_or_equal:start_date',
+            'template_slot_id'      => 'required|exists:template_slots,id',
+            'cinema_chain_id'       => 'nullable|integer|exists:cinema_chains,id',
+            'location_id'           => 'required|array',
+            'location_id.*'         => 'integer|exists:locations,id',
+
+            'movie_id'              => 'nullable|array',
+            'movie_id.*'            => 'integer|exists:movies,id',
+
+            'movie_genre_id'        => 'nullable|array',
+            'movie_genre_id.*'      => 'integer|exists:movie_genres,id',
+
+            'hall_type_id'          => 'nullable|array',
+            'hall_type_id.*'        => 'integer|exists:hall_types,id',
+
+            'compaign_category_id'  => 'nullable|integer|exists:compaign_categories,id',
+        ]);
+
+        $start = Carbon::parse($v['start_date'])->startOfDay();
+        $end   = Carbon::parse($v['end_date'])->endOfDay();
+
+        $slots = Slot::where('template_slot_id', $v['template_slot_id'])
+            ->select('id', 'name', 'max_duration')
+            ->get();
+
+        if ($slots->isEmpty()) {
+            return response()->json(['slots' => []]);
+        }
+
+        $slotIds = $slots->pluck('id');
+
+        $usedQuery = DB::table('compaign_slot_dcp as csd')
+            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
+            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
+            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
+            ->whereIn('csd.slot_id', $slotIds)
+            ->whereIn('cl.location_id', $v['location_id'])
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('c.start_date', [$start, $end])
+                ->orWhereBetween('c.end_date', [$start, $end])
+                ->orWhere(function ($q2) use ($start, $end) {
+                    $q2->where('c.start_date', '<=', $start)
+                        ->where('c.end_date', '>=', $end);
+                });
+            });
+
+        if (!empty($v['cinema_chain_id'])) {
+            $usedQuery->join('locations as l', 'l.id', '=', 'cl.location_id')
+                    ->where('l.cinema_chain_id', $v['cinema_chain_id']);
+        }
+
+        if (!empty($v['compaign_category_id'])) {
+            $usedQuery->where('c.compaign_category_id', $v['compaign_category_id']);
+        }
+
+
+        if (!empty($v['movie_id'])) {
+
+            $usedQuery->join('compaign_movie as cm', 'cm.compaign_id', '=', 'c.id')
+                    ->whereIn('cm.movie_id', $v['movie_id']);
+
+        } elseif (!empty($v['movie_genre_id'])) {
+
+            $usedQuery->join('compaign_movie_genre as cmg', 'cmg.compaign_id', '=', 'c.id')
+                    ->whereIn('cmg.movie_genre_id', $v['movie_genre_id']);
+        }
+
+
+        if (!empty($v['hall_type_id'])) {
+            $usedQuery->join('compaign_hall_type as cht', 'cht.compaign_id', '=', 'c.id')
+                    ->whereIn('cht.hall_type_id', $v['hall_type_id']);
+        }
+
+
+        $usedBySlot = $usedQuery
+            ->distinct()
+            ->select('csd.slot_id', DB::raw('SUM(d.duration) as used'))
+            ->groupBy('csd.slot_id')
+            ->pluck('used', 'csd.slot_id');
+
+
+        $result = $slots->map(function ($slot) use ($usedBySlot) {
+            $used = (int) ($usedBySlot[$slot->id] ?? 0);
+            $remaining = max(0, $slot->max_duration - $used);
+
+            return [
+                'id'            => $slot->id,
+                'name'          => $slot->name,
+                'max_duration'  => (int) $slot->max_duration,
+                'used'          => $used,
+                'remaining'     => $remaining,
+            ];
+        })
+        ->filter(fn ($s) => $s['remaining'] > 0)
+        ->values();
+
+        return response()->json([
+            'slots' => $result
+        ]);
     }
-
-
-
-
 
 }

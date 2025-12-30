@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('movies', function (Blueprint $table) {
-            $table->dateTime('play_at')->nullable()->after('runtime');
+        Schema::table('compaigns', function (Blueprint $table) {
+            if (Schema::hasColumn('compaigns', 'movie_id')) {
+                $table->dropForeign(['movie_id']);
+                $table->dropColumn('movie_id');
+            }
         });
     }
 
@@ -21,8 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('movies', function (Blueprint $table) {
-            $table->dropColumn('play_tplay_atime');
+        Schema::table('compaigns', function (Blueprint $table) {
+            //
         });
     }
 };

@@ -75,12 +75,16 @@
                                 </select>
                             </div>
 
+
                             <div class="col-md-3">
-                                <label>Ad Category</label>
-                                <select id="compaign_category" name="compaign_category" class="form-select">
-                                    <option value="">Select...</option>
-                                    @foreach ($compaign_categories as $cat)
-                                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                <label for="hall_type"> Hall Types : <span
+                                        class="danger">*</span>
+                                </label>
+                                <select class="form-select required select2" id="hall_type" multiple=""
+                                    name="hall_type[]">
+                                    <option value="__all__">Select All</option>
+                                    @foreach ($hall_types as $hall_type)
+                                        <option value="{{ $hall_type->id }}">{{ $hall_type->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -108,6 +112,18 @@
                                     <option value="__all__">Select All</option>
                                     @foreach ($movie_genres as $g)
                                         <option value="{{ $g->id }}">{{ $g->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-10">
+                                <label for="movie"> Select Movies : </label>
+                                <select class="form-select select2" multiple id="movie" name="movie[]">
+                                    <option value="__all__">Select All</option>
+                                    @foreach ($movies as $movie)
+                                        <option value="{{ $movie->id }}"
+                                                data-genre="{{ $movie->movie_genre_id }}">
+                                            {{ $movie->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -185,20 +201,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label" for="hall_type"> Hall Types : <span
-                                        class="danger">*</span>
-                                </label>
-                                <select class="form-select required " id="hall_type"
-                                    name="hall_type">
-                                    <option value="">Select </option>
-                                    @foreach ($hall_types as $hall_type)
-                                        <option value="{{ $hall_type->id }}">{{ $hall_type->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label" for="gender"> Gender : <span class="danger">*</span>
@@ -271,6 +274,49 @@
         $(function() {
 
 
+
+            $(document).ready(function () {
+
+                const $genreSelect = $('#movie_genre');
+                const $movieSelect = $('#movie');
+
+                function filterMoviesByGenre() {
+                    const selectedGenres = $genreSelect.val() || [];
+                    if (
+                        selectedGenres.length === 0 ||
+                        selectedGenres.includes('__all__')
+                    ) {
+                        $movieSelect.find('option').each(function () {
+                            $(this).prop('disabled', false).show();
+                        });
+
+                        $movieSelect.trigger('change.select2');
+                        return;
+                    }
+
+                    // sinon filtrer par genre
+                    $movieSelect.find('option').each(function () {
+                        const genreId = $(this).data('genre');
+
+                        // garder "Select All"
+                        if ($(this).val() === '__all__') {
+                            $(this).prop('disabled', false).show();
+                            return;
+                        }
+
+                        if (selectedGenres.includes(String(genreId))) {
+                            $(this).prop('disabled', false).show();
+                        } else {
+                            $(this).prop('disabled', true).hide();
+                            $(this).prop('selected', false);
+                        }
+                    });
+
+                    $movieSelect.trigger('change.select2');
+                }
+                $genreSelect.on('change', filterMoviesByGenre);
+            });
+
             function initSelect2WithSelectAll(selector) {
                 $(selector).select2({
                     width: '100%',
@@ -300,11 +346,14 @@
                     }
                 });
             }
+
             $(document).ready(function () {
                 initSelect2WithSelectAll('#brand');
                 initSelect2WithSelectAll('#location');
-               // initSelect2WithSelectAll('#hall_type');
+                initSelect2WithSelectAll('#hall_type');
                 initSelect2WithSelectAll('#movie_genre');
+                initSelect2WithSelectAll('#movie');
+
                 //initSelect2WithSelectAll('#interest');
                 initSelect2WithSelectAll('#dcp_creative');
                 //initSelect2WithSelectAll('#target_type');
@@ -352,6 +401,10 @@
                 const locations = $('#location').val();
                 const genres    = $('#movie_genre').val();
                 const compaign_category = $('#compaign_category').val()
+                const hall_type_id = $('#hall_type').val()
+
+                console.log(hall_type_id)
+
 
                 // 🔍 Front validation
                 if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
@@ -376,6 +429,8 @@
                         movie_genre_id: genres,
                         compaign_category_id: compaign_category,
                         template_slot_id: $('#template_slot').val(),
+                        hall_type_id: hall_type_id,
+                        movie_id:$('#movie').val(),
                         _token: "{{ csrf_token() }}"
                     }
                 }).done(function(res) {
@@ -516,7 +571,6 @@
                 $('#compaign_category').val('');
                 $('#budget').val('');
                 $('#langue').val('');
-                $('#hall_type').val('');
                 $('#target_type').val('');
                 $('#interest').val('');
 
@@ -568,10 +622,10 @@
 
                 $('#saveCampaignModal').modal('show');
             });
-
-            $(document).on('click', '#confirm-save-campaign', function(){
+            $('#confirm-save-campaign').on('click', function(){
 
                 let campaignName = $('#compaign_name').val().trim();
+
                 if(!campaignName){
                     showError(
                         "Please enter a campaign name."
@@ -615,6 +669,8 @@
                     movie_genre_id: $('#movie_genre').val(),
                     compaign_category_id: $('#compaign_category').val(),
                     template_slot_id: $('#template_slot').val(),
+                    hall_type_id: $('#hall_type').val(),
+                    movie_id:$('#movie').val(),
 
                     slots: slotsData
                 };
@@ -646,21 +702,21 @@
 
                     $('#confirm-save-campaign').prop('disabled', false);
                 });
+            });
+
+            $(document).on('change', '#dcp-category-filter', function () {
+                const selected = $(this).val();
+
+                $('#dcp-list .dcp-item').each(function () {
+                    const itemCat = $(this).data('category');
+
+                    if (!selected || itemCat == selected) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
                 });
-
-                $(document).on('change', '#dcp-category-filter', function () {
-                    const selected = $(this).val();
-
-                    $('#dcp-list .dcp-item').each(function () {
-                        const itemCat = $(this).data('category');
-
-                        if (!selected || itemCat == selected) {
-                            $(this).show();
-                        } else {
-                            $(this).hide();
-                        }
-                    });
-                });
+            });
 
 
         });

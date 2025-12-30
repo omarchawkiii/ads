@@ -906,6 +906,8 @@
                     })
                     .done(function(data) {
 
+                        console.log(data)
+
                         $('#v_name').text(jv(data.name));
                         $('#v_objective').text(jn(data.compaign_objective));
                         $('#v_category').text(jn(data.compaign_category));
@@ -918,7 +920,7 @@
 
                         $('#v_locations').text(jn(data.locations));
                         $('#v_hall_types').text(jn(data.hall_types));
-                        $('#v_movie').text(jn(data.movie));
+                        $('#v_movie').text(jn(data.movies));
                         $('#v_movie_genres').text(jn(data.movie_genres));
                         $('#v_gender').text(jn(data.gender));
                         $('#v_target_types').text(jn(data.target_types));
