@@ -81,7 +81,7 @@
                                         class="danger">*</span>
                                 </label>
                                 <select class="form-select required select2" id="hall_type" multiple=""
-                                    name="hall_type[]">
+                                    name="hall_type[]"  data-placeholder="Select hall types">
                                     <option value="__all__">Select All</option>
                                     @foreach ($hall_types as $hall_type)
                                         <option value="{{ $hall_type->id }}">{{ $hall_type->name }}</option>
@@ -101,14 +101,14 @@
 
                             <div class="col-md-5">
                                 <label>Location</label>
-                                <select id="location" name="location[]" multiple class="form-select select2">
-                                    <option value="__all__">Select All</option>
+                                <select id="location" name="location[]" multiple class="form-select select2" data-placeholder="Select Location" disabled>
+
                                 </select>
                             </div>
 
                             <div class="col-md-4">
                                 <label>Genre</label>
-                                <select id="movie_genre" name="movie_genre[]" multiple class="form-select select2">
+                                <select id="movie_genre" name="movie_genre[]" multiple class="form-select select2" data-placeholder="Select Genre">
                                     <option value="__all__">Select All</option>
                                     @foreach ($movie_genres as $g)
                                         <option value="{{ $g->id }}">{{ $g->name }}</option>
@@ -117,7 +117,7 @@
                             </div>
                             <div class="col-md-10">
                                 <label for="movie"> Select Movies : </label>
-                                <select class="form-select select2" multiple id="movie" name="movie[]">
+                                <select class="form-select select2" multiple id="movie" name="movie[]" >
                                     <option value="__all__">Select All</option>
                                     @foreach ($movies as $movie)
                                         <option value="{{ $movie->id }}"
@@ -331,20 +331,30 @@
 
                     // Si on clique sur "Select All"
                     if (e.params?.data?.id === ALL_VALUE) {
+
                         if (values.includes(ALL_VALUE)) {
-                            // sélectionner tout sauf __all__
-                            const allValues = $select.find('option')
-                                .map(function () { return this.value; })
+
+                            // sélectionner tout sauf __all__ ET sauf disabled
+                            const allValues = $select.find('option:not(:disabled)')
+                                .map(function () {
+                                    return this.value;
+                                })
                                 .get()
                                 .filter(v => v !== ALL_VALUE);
 
                             $select.val(allValues).trigger('change.select2');
+
                         } else {
                             // désélectionner tout
                             $select.val(null).trigger('change.select2');
                         }
+
+                        // fermer le select après action
+                        $select.select2('close');
                     }
                 });
+
+
             }
 
             $(document).ready(function () {
@@ -368,21 +378,49 @@
             });
 
             // load locations
-            $('#cinema_chain').on('change', function() {
+            $('#cinema_chain').on('change', function () {
+
                 let chainId = $(this).val();
                 let $location = $('#location');
-                $location.empty().append('<option value="__all__">Select All</option>');
 
-                if (!chainId) return;
+                // 🔄 Reset + loader
+                $location
+                    .prop('disabled', true)
+                    .empty()
+                    .append('<option value="">Loading locations...</option>')
+                    .trigger('change'); // important pour Select2
+
+                if (!chainId) {
+                    $location.prop('disabled', false).empty().trigger('change');
+                    return;
+                }
 
                 $.get("{{ url('') }}/advertiser/cinema-chain/" + chainId + "/locations")
-                    .done(function(res) {
-                        res.locations.forEach(function(loc) {
-                            $location.append(`<option value="${loc.id}">${loc.name}</option>`);
-                        });
-                        $location.trigger('change');
+                    .done(function (res) {
+
+                        $location.empty();
+                        if( res.locations.length)
+                        {
+                            // Option Select All (si besoin)
+                            $location.append('<option value="__all__">Select All</option>');
+
+                            res.locations.forEach(function (loc) {
+                                $location.append(
+                                    `<option value="${loc.id}">${loc.name}</option>`
+                                );
+                            });
+                        }
+                        $location.prop('disabled', false).trigger('change');
+                    })
+                    .fail(function () {
+                        $location
+                            .empty()
+                            .append('<option value="">Error loading locations</option>')
+                            .prop('disabled', false)
+                            .trigger('change');
                     });
             });
+
 
             // draggable DCP
             $(".dcp-item").draggable({
@@ -770,7 +808,29 @@
             margin: 11px 0;
             border-radius: 10px;
             border: 1px solid #e0e6eb;
-            border-top-width: initial !important;
+            border-top-width: 1px !important;
         }
+
+
+        body .select2-container--default .select2-selection--multiple
+        {
+            line-height: 28px;
+            min-height: 40px;
+        }
+        .select2-container--default .select2-selection--multiple {
+    position: relative;
+    padding-right: 30px;
+}
+
+.select2-container--default .select2-selection--multiple::after {
+    content: "▾";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+}
+
     </style>
 @endsection
