@@ -850,10 +850,10 @@
                                     '<i class="mdi mdi-magnify "></i>' +
                                     '</button>' +
 
-                                    /*'<a href="/adsamrt/advertiser/compaigns/3/edit" id="' + value.id +
+                                    '<a href="{{ url('') }}/advertiser/compaigns/'+ value.id +'/edit" id="' + value.id +
                                     '"  class=" ustify-content-center btn mb-1 btn-rounded btn-warning  m-1" >' +
                                     '<i class="mdi mdi-tooltip-edit "></i>' +
-                                    '</a>' +*/
+                                    '</a>' +
 
                                     '<button id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +

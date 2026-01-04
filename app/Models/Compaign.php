@@ -31,6 +31,8 @@ class Compaign extends Model
         'ad_duration',
         'status', // 1-pendign 2-approve  3-drafts  4-rejected
         'user_id',
+        'template_slot_id',
+        'cinema_chain_id'
     ];
 
     protected $casts = [

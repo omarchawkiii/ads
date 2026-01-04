@@ -219,9 +219,9 @@
                                 <label class="form-label" for="target_type"> Audience Targeting : <span
                                         class="danger">*</span>
                                 </label>
-                                <select class="form-select  required" id="target_type"
-                                    name="target_type">
-                                    <option value="">Select </option>
+                                <select class="form-select  select2 required" id="target_type"
+                                    name="target_type[]" multiple>
+                                    <option value="__all__">Select All</option>
                                     @foreach ($target_types as $target_type)
                                         <option value="{{ $target_type->id }}">{{ $target_type->name }}
                                             ({{ $target_type->detail }})
@@ -236,7 +236,7 @@
                                         class="danger">*</span>
                                 </label>
                                 <select class="form-select required select2"  id="interest"
-                                    name="interest">
+                                    name="interest[]" multiple>
 
                                     <option value="__all__">Select All</option>
                                     @foreach ($interests as $interest)
@@ -317,10 +317,12 @@
                 $genreSelect.on('change', filterMoviesByGenre);
             });
 
-            function initSelect2WithSelectAll(selector) {
+            function initSelect2WithSelectAll(selector, parent = null) {
+
                 $(selector).select2({
                     width: '100%',
-                    closeOnSelect: false
+                    closeOnSelect: true,
+                    dropdownParent: parent ? $(parent) : $(document.body)
                 });
 
                 $(selector).on('select2:select select2:unselect', function (e) {
@@ -329,34 +331,23 @@
                     const $select = $(this);
                     const values = $select.val() || [];
 
-                    // Si on clique sur "Select All"
                     if (e.params?.data?.id === ALL_VALUE) {
 
                         if (values.includes(ALL_VALUE)) {
-
-                            // sélectionner tout sauf __all__ ET sauf disabled
                             const allValues = $select.find('option:not(:disabled)')
-                                .map(function () {
-                                    return this.value;
-                                })
+                                .map(function () { return this.value })
                                 .get()
                                 .filter(v => v !== ALL_VALUE);
 
                             $select.val(allValues).trigger('change.select2');
-
                         } else {
-                            // désélectionner tout
                             $select.val(null).trigger('change.select2');
                         }
 
-                        // fermer le select après action
                         $select.select2('close');
                     }
                 });
-
-
             }
-
             $(document).ready(function () {
                 initSelect2WithSelectAll('#brand');
                 initSelect2WithSelectAll('#location');
@@ -605,6 +596,9 @@
                 });
             });
             $('#btn-save-campaign').on('click', function(){
+                initSelect2WithSelectAll('#interest')
+                initSelect2WithSelectAll('#target_type')
+
                 $('#compaign_name').val('');
                 $('#compaign_category').val('');
                 $('#budget').val('');
@@ -703,12 +697,18 @@
                     start_date: $('#start_date').val(),
                     end_date: $('#end_date').val(),
                     cinema_chain_id: $('#cinema_chain').val(),
+                    budget: $('#budget').val() ?? 0,
+                    langue: $('#langue').val() ,
+                    gender: $('#gender').val() ,
                     location_id: $('#location').val(),
                     movie_genre_id: $('#movie_genre').val(),
                     compaign_category_id: $('#compaign_category').val(),
                     template_slot_id: $('#template_slot').val(),
                     hall_type_id: $('#hall_type').val(),
                     movie_id:$('#movie').val(),
+                    target_type: $('#target_type').val() ,
+                    interest: $('#interest').val() ,
+
 
                     slots: slotsData
                 };
@@ -769,6 +769,11 @@
     <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
 
     <style>
+        .select2-container.select2-container--default.select2-container--open
+        {
+            z-index: 9999999 !important ;
+        }
+
         .dcp-item {
             cursor: grab;
         }

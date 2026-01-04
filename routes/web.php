@@ -204,6 +204,7 @@ Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update']
     Route::middleware(['auth', 'advertiser'])->prefix('advertiser')->name('advertiser.')->group(function () {
 
     Route::get('/compaigns/{id}/edit', [App\Http\Controllers\CompaignController::class, 'edit'])->name('compaigns.edit');
+    Route::put('/compaigns/{id}/update', [App\Http\Controllers\CompaignController::class, 'update'])->name('compaigns.update');
     Route::get('compaigns', [App\Http\Controllers\CompaignController::class, 'advertiser_index'])->name('compaigns.index');
     Route::get('compaigns/list', [App\Http\Controllers\CompaignController::class, 'my_compaigns'])->name('compaigns.my_compaigns');
     Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show');
@@ -211,6 +212,7 @@ Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update']
     Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'advertiser_destory_company'])->name('compaigns.destroy');
     Route::get('/cinema-chain/{id}/locations', [App\Http\Controllers\CinemaChainController::class, 'getLocations']);
     Route::get('/slots/available', [App\Http\Controllers\SlotController::class, 'getAvailableSlots']);
+    Route::get('/slots/getAvailableSlotsEdit', [App\Http\Controllers\SlotController::class, 'getAvailableSlotsEdit']);
     Route::get('/available-slots-month', [App\Http\Controllers\CompaignController::class, 'getAvailableSlotsMonth'])->name('compaigns.slots.month');
 
     Route::get('compaigns_builder', [App\Http\Controllers\CompaignController::class, 'advertiser_builder_index'])->name('compaigns.index_builder');
