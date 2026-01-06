@@ -37,7 +37,7 @@
                             <th class="text-center">UUID</th>
                             <th class="text-center">Duration</th>
                             <th class="text-center">Category</th>
-                            <th class="text-center">Status</th>
+                            <!--<th class="text-center">Status</th>-->
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -242,6 +242,7 @@
                         const fd = new FormData();
                         fd.append('upload_id', uploadId);
                         fd.append('index', currentIndex);
+                        fd.append('compaign_category_id', compaign_category_id);
                         fd.append('total', total);
                         fd.append('file_name', file.name);
                         fd.append('chunk', blob, `chunk_${currentIndex}`);
@@ -342,8 +343,6 @@
                 }
             });
 
-
-
             function get_dcp_creatives() {
                 $('#wait-modal').modal('show');
 
@@ -369,11 +368,11 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     formatHMS(value.duration) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.compaign_category ? value.compaign_category.name : '-') + '</td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (
+                                    /*'<td class="text-body align-middle fw-medium text-decoration-none">' + (
                                         value.status == 1 ? '<span class="badge bg-warning-subtle text-warning">Pending</span> ' :
                                         value.status == 2 ? '<span class="badge bg-success-subtle text-success">Approved</span>' :
                                         value.status == 3 ? '<span class="badge bg-danger-subtle text-danger">Rejected</span>': '-'
-                                    ) + '</td>' +
+                                    ) + '</td>' +*/
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
 
                                         '<button id="' + value.id +
@@ -406,8 +405,6 @@
 
             }
             get_dcp_creatives();
-
-
 
             $(document).on('click', '.delete', function() {
                 var id = $(this).attr('id');

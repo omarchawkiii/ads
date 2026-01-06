@@ -210,7 +210,7 @@ Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update']
     Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show');
     Route::post('/compaigns', [App\Http\Controllers\CompaignController::class, 'store'])->name('compaigns.store');
     Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'advertiser_destory_company'])->name('compaigns.destroy');
-    Route::get('/cinema-chain/{id}/locations', [App\Http\Controllers\CinemaChainController::class, 'getLocations']);
+    Route::get('/cinema-chain/get_location_from_cienma_chain', [App\Http\Controllers\CinemaChainController::class, 'getLocations']);
     Route::get('/slots/available', [App\Http\Controllers\SlotController::class, 'getAvailableSlots']);
     Route::get('/slots/getAvailableSlotsEdit', [App\Http\Controllers\SlotController::class, 'getAvailableSlotsEdit']);
     Route::get('/available-slots-month', [App\Http\Controllers\CompaignController::class, 'getAvailableSlotsMonth'])->name('compaigns.slots.month');

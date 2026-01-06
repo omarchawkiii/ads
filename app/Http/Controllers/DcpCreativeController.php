@@ -32,7 +32,8 @@ class DcpCreativeController extends Controller
 
     public function get()
     {
-        $dcp_creatives = DcpCreative::with('compaignCategory')->orderBy('name', 'asc')->get();
+        $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->with('compaignCategory')->orderBy('name', 'asc')->get() ;
+        //$dcp_creatives = DcpCreative::with('compaignCategory')->orderBy('name', 'asc')->get();
         return Response()->json(compact('dcp_creatives'));
     }
 
@@ -342,6 +343,7 @@ class DcpCreativeController extends Controller
             'name'                => $meta['name'],
             'duration'            => $meta['total_duration'],
             'path'                => $finalPath,
+            'user_id'             => Auth()->user()->id,
             'compaign_category_id' => $request->compaign_category_id,
         ]);
 

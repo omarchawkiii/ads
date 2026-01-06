@@ -16,12 +16,15 @@ class DcpCreative extends Model
         'duration',
         'path',
         'compaign_category_id',
+        'user_id',
         'status',
     ];
     public function compaigns()
     {
         return $this->belongsToMany(Compaign::class, 'compaign_dcp_creative');
     }
+
+
     public function compaignCategory(): BelongsTo
     {
         return $this->belongsTo(CompaignCategory::class, 'compaign_category_id');
@@ -36,6 +39,11 @@ class DcpCreative extends Model
             'slot_id'
         )->withPivot('compaign_id')
          ->withTimestamps();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
 }

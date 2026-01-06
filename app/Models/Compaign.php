@@ -32,7 +32,6 @@ class Compaign extends Model
         'status', // 1-pendign 2-approve  3-drafts  4-rejected
         'user_id',
         'template_slot_id',
-        'cinema_chain_id'
     ];
 
     protected $casts = [
@@ -82,6 +81,14 @@ class Compaign extends Model
         return $this->belongsToMany(Location::class, 'compaign_location');
     }
 
+    public function cinemaChains()
+    {
+        return $this->belongsToMany(
+            CinemaChain::class,
+            'compaign_cinema_chain'
+        )->withTimestamps();
+    }
+
     // (déjà présents)
     public function targetTypes()
     {
@@ -128,7 +135,8 @@ class Compaign extends Model
             'compaign_slot_dcp',
             'compaign_id',
             'dcp_creative_id'
-        )->withPivot('slot_id')
+        )->withPivot('slot_id', 'position')
+        ->orderBy('pivot_position')
         ->withTimestamps();
     }
 

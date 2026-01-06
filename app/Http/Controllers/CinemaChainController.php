@@ -85,9 +85,10 @@ class CinemaChainController extends Controller
             ], 500);
         }
     }
-    public function getLocations($id)
+    public function getLocations(Request $request)
     {
-        $locations = Location::where('cinema_chain_id', $id)->get(['id','name']);
+
+        $locations = Location::whereIn('cinema_chain_id', $request->cinema_chain_ids)->get(['id','name']);
         return response()->json(['locations' => $locations]);
     }
 }

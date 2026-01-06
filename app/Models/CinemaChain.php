@@ -13,6 +13,13 @@ class CinemaChain extends Model
 
     ];
 
+    public function compaigns()
+    {
+        return $this->belongsToMany(
+            Compaign::class,
+            'compaign_cinema_chain'
+        )->withTimestamps();
+    }
 
     public function locations()
     {

@@ -34,4 +34,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Theme::class);
     }
+
+    public function dcpCreatives()
+    {
+        return $this->hasMany(DcpCreative::class);
+    }
 }

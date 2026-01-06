@@ -94,11 +94,11 @@
 
                             <div class="col-md-3">
                                 <label>Cinema Chain</label>
-                                <select id="cinema_chain" class="form-select">
+                                <select id="cinema_chain" class="form-select select2" multiple name="cinema_chain[]" >
                                     <option value="">Select...</option>
                                     @foreach ($cinema_chains as $chain)
                                         <option value="{{ $chain->id }}"
-                                            @selected($isEdit && $compaign->cinema_chain_id == $chain->id)>
+                                            @selected($isEdit && $compaign->cinemaChains->contains($chain->id))>
                                             {{ $chain->name }}
                                         </option>
                                     @endforeach
@@ -327,97 +327,225 @@
                 $(".dcp-item").draggable({helper: "clone", revert: "invalid"});
             }
 
-            function renderSlots(slots){
+            function renderSlots(slots) {
                 const $container = $('#slots-container');
                 $container.empty();
 
-                if(!slots.length){
+                if (!slots.length) {
                     $container.html('<div class="text-center text-muted">No slots available</div>');
                     return;
                 }
 
                 slots.forEach(slot => {
-                    let remaining = slot.remaining ?? slot.max_duration;
-                    let assignedHtml = '';
-                    if(slot.dcps && slot.dcps.length){
-                        slot.dcps.forEach(d => {
-                            const name = DCP_LIST.find(x=>x.id===d.dcp_id)?.name ?? '';
-                            assignedHtml += `<div class="assigned" data-dcp="${d.dcp_id}" data-duration="${d.duration}">
-                                <span>${name} (${d.duration}s)</span>
-                                <span class="remove">×</span>
-                            </div>`;
-                            remaining -= d.duration;
-                        });
+
+                    const totalPositions = slot.max_ad_slot;
+                    const assignedCount = slot.assigned_dcp ?? 0;
+                    let remainingDuration = slot.remaining_duration;
+
+                    let positionsHtml = '';
+
+                    // 🔹 Construire chaque position
+                    for (let posNum = 1; posNum <= totalPositions; posNum++) {
+
+                        const positionData = slot.positions?.find(p => p.position === posNum);
+
+                        if (positionData) {
+                            const dcpName = DCP_LIST.find(x => x.id === positionData.dcp_id)?.name ?? 'Reserved';
+                            const dcpDuration = DCP_LIST.find(x => x.id === positionData.dcp_id)?.duration ?? 'Reserved';
+                            if (positionData.type === 'reserved') {
+                                // 🔒 position réservée (autre campagne)
+                                positionsHtml += `
+                                    <div class="slot-position reserved" data-position="${posNum}">
+                                        <span class="badge bg-secondary">Reserved (${dcpDuration}) S</span>
+                                    </div>
+                                `;
+                                //remainingDuration -= positionData.duration;
+                            } else {
+                                // 🟢 position de la campagne courante
+                                positionsHtml += `
+                                    <div class="slot-position droppable-position"
+                                        data-position="${posNum}"
+                                        data-slot="${slot.slot_id}">
+                                        <div class="assigned draggable"
+                                            data-dcp="${positionData.dcp_id}"
+                                            data-duration="${positionData.duration}"
+                                            data-position="${posNum}">
+                                            <span>${dcpName} (${positionData.duration}s)</span>
+                                            <span class="remove">×</span>
+                                        </div>
+                                    </div>
+                                `;
+                                //remainingDuration -= positionData.duration;
+                            }
+                        } else {
+                            // 🟢 position libre
+                            positionsHtml += `
+                                <div class="slot-position droppable-position"
+                                    data-position="${posNum}"
+                                    data-slot="${slot.slot_id}">
+                                    <span class="">Drop DCP here</span>
+                                </div>
+                            `;
+                        }
                     }
 
+                    // 🔹 Ajouter le slot dans le DOM
                     $container.append(`
                         <div class="col-md-4">
-                            <div class="slot-box droppable"
-                                data-id="${slot.slot_id}"
+                            <div class="slot-box"
+                                data-slot="${slot.slot_id}"
                                 data-max="${slot.max_duration}"
-                                data-remaining="${remaining}">
+                                data-remaining="${remainingDuration}"
+                                data-max_ad_slot="${slot.max_ad_slot}"
+                                data-assigned="${assignedCount}">
                                 <strong>${slot.name}</strong><br>
-                                <small>Remaining: <span class="remaining">${remaining}</span>s / Max: <span class="max">${slot.max_duration}</span>s</small>
-                                <div class="assigned-list mt-2">${assignedHtml}</div>
+                                <small>
+                                    Remaining: <span class="remaining">${remainingDuration}</span>s /
+                                    Max: <span class="max">${slot.max_duration}</span>s
+                                </small>
+                                <small style="float:right">
+                                    Remaining Positions: <span class="remaining-pos">${totalPositions - assignedCount}</span>
+                                </small>
+                                <div class="positions mt-2">
+                                    ${positionsHtml}
+                                </div>
                             </div>
                         </div>
                     `);
                 });
 
-                initDroppable();
+                initPositionDroppableEdit();
             }
 
-            function initDroppable(){
-                $('.droppable').droppable({
+
+            function initPositionDroppableEdit() {
+                $('.dcp-item').draggable({
+                    helper: 'clone',
+                    appendTo: 'body',
+                    zIndex: 9999,
+                    revert: 'invalid',
+                    cursor: 'move',
+
+                    start: function () {
+                        $('body').addClass('dragging-dcp');
+                    },
+
+                    stop: function () {
+                        $('body').removeClass('dragging-dcp');
+                    }
+                });
+
+                $('.droppable-position').droppable({
                     accept: '.dcp-item',
                     hoverClass: 'active',
-                    drop: function(e, ui){
-                        let dcpId = ui.draggable.data('id');
-                        let dcpName = ui.draggable.find('p:first').text();
-                        let dcpDuration = parseInt(ui.draggable.data('duration'));
 
-                        let $slot = $(this);
-                        let remaining = parseInt($slot.data('remaining'));
-                        let max = parseInt($slot.data('max'));
+                    drop: function (e, ui) {
 
-                        if($slot.find(`.assigned[data-dcp="${dcpId}"]`).length){
-                            Swal.fire('Error', 'This creative is already assigned', 'error');
+                        const $position = $(this);
+                        const $slotBox = $position.closest('.slot-box');
+
+                        const slotId = $slotBox.data('slot');
+                        const positionNum = parseInt($position.data('position'), 10);
+
+                        const dcpId = ui.draggable.data('id');
+                        const dcpName = ui.draggable.find('p:first').text();
+                        const dcpDuration = parseInt(ui.draggable.data('duration'), 10);
+
+                        let remaining = parseInt($slotBox.data('remaining'), 10);
+                        let maxDuration = parseInt($slotBox.data('max'), 10);
+                        let maxAdSlot = parseInt($slotBox.data('max_ad_slot'), 10);
+                        let assigned = parseInt($slotBox.data('assigned') || 0, 10);
+
+                        // ❌ Vérifications
+                        if ($position.find('.assigned').length) {
+                            showError("This position is already occupied.");
+                            return;
+                        }
+                        if ($slotBox.find(`.assigned[data-dcp="${dcpId}"]`).length) {
+                            showError("This creative is already assigned in this slot.");
+                            return;
+                        }
+                        if (assigned >= maxAdSlot) {
+                            showError("Maximum number of creatives reached for this slot.");
+                            return;
+                        }
+                        if (dcpDuration > maxDuration) {
+                            showError("This creative exceeds the maximum duration of the slot.");
+                            return;
+                        }
+                        if (dcpDuration > remaining) {
+                            showError("Not enough remaining time in this slot.");
                             return;
                         }
 
-                        if(dcpDuration > remaining){
-                            Swal.fire('Error', 'Not enough remaining time', 'error');
-                            return;
-                        }
-
+                        // ✅ Mise à jour des compteurs
                         remaining -= dcpDuration;
-                        $slot.data('remaining', remaining);
-                        $slot.find('.remaining').text(remaining);
+                        assigned++;
+                        $slotBox.data('remaining', remaining);
+                        $slotBox.data('assigned', assigned);
 
-                        $slot.find('.assigned-list').append(`
-                            <div class="assigned" data-dcp="${dcpId}" data-duration="${dcpDuration}">
+                        $slotBox.find('.remaining').text(remaining);
+                        $slotBox.find('.remaining-pos').text(maxAdSlot - assigned);
+
+                        // ✅ Ajouter le DCP dans la position
+                        $position.html(`
+                            <div class="assigned draggable"
+                                data-dcp="${dcpId}"
+                                data-duration="${dcpDuration}"
+                                data-position="${positionNum}">
                                 <span>${dcpName} (${dcpDuration}s)</span>
                                 <span class="remove">×</span>
                             </div>
                         `);
+
+                        // ✅ Gestion suppression
+                        $position.find('.remove').on('click', function () {
+                            $slotBox.data('remaining', remaining + dcpDuration);
+                            $slotBox.data('assigned', assigned - 1);
+
+                            $slotBox.find('.remaining').text(remaining + dcpDuration);
+                            $slotBox.find('.remaining-pos').text(maxAdSlot - (assigned - 1));
+
+                            $position.html('<span class="">Drop DCP here</span>');
+                        });
                     }
                 });
             }
 
+            function showError(message){
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Not allowed',
+                    text: message,
+                    confirmButtonColor: '#d33'
+                });
+            }
             $(document).on('click', '.assigned .remove', function(){
-                const $item = $(this).closest('.assigned');
-                const $slot = $item.closest('.slot-box');
-                let remaining = parseInt($slot.data('remaining')) + parseInt($item.data('duration'));
+
+                let $assigned = $(this).closest('.assigned');
+                let duration = parseInt($assigned.data('duration'));
+                let $slot = $assigned.closest('.slot-box');
+
+                let remaining = parseInt($slot.data('remaining'));
+                let assignedCount = parseInt($slot.data('assigned'));
+                let maxAdSlot = parseInt($slot.data('max_ad_slot'));
+
+                // ➖ rollback
+                remaining += duration;
+                assignedCount--;
+
                 $slot.data('remaining', remaining);
+                $slot.data('assigned', assignedCount);
+
                 $slot.find('.remaining').text(remaining);
-                $item.remove();
+                $slot.find('.remaining-positions').text(maxAdSlot - assignedCount);
+
+                $assigned.remove();
             });
 
             // ⚡ Initial render
             renderDcpList();
             renderSlots(EXISTING_SLOTS);
-
-
 
             /* =====================================================
                 *  SELECT2 + SELECT ALL
@@ -458,6 +586,7 @@
             initSelect2WithSelectAll('#location');
             initSelect2WithSelectAll('#movie_genre');
             initSelect2WithSelectAll('#movie');
+            initSelect2WithSelectAll('#cinema_chain');
             //initSelect2WithSelectAll('#interest');
 
 
@@ -488,7 +617,10 @@
                     return;
                 }
 
-                $.get("{{ url('') }}/advertiser/cinema-chain/" + chainId + "/locations")
+                $.get("{{ url('') }}/advertiser/cinema-chain/get_location_from_cienma_chain",
+                    {
+                        cinema_chain_ids: $('#cinema_chain').val(),
+                    })
                     .done(function (res) {
 
                         $location.append('<option value="__all__">Select All</option>');
@@ -499,10 +631,10 @@
 
                         $location.prop('disabled', false).trigger('change');
 
-                        if (IS_EDIT) {
-                            const selectedLocations = @json($compaign->locations->pluck('id') ?? []);
-                            $location.val(selectedLocations).trigger('change.select2');
-                        }
+
+                        const selectedLocations = @json($compaign->locations->pluck('id') ?? []);
+                        $location.val(selectedLocations).trigger('change.select2');
+
                     });
             });
 
@@ -539,36 +671,55 @@
 
             /* =====================================================
                 *  LOAD SLOTS
-                * ===================================================== */
-            $('#btn-load-slots').on('click', loadAvailableSlots);
+            * ===================================================== */
+
+            $('#cinema_chain,#start_date,#end_date,#location,#movie_genre,#compaign_category ,#hall_type').on('change', function () {
+                const startDate = $('#start_date').val();
+                const endDate   = $('#end_date').val();
+                const locations = $('#location').val();
+                const genres    = $('#movie_genre').val();
+                const compaign_category = $('#compaign_category').val()
+                const hall_type_id = $('#hall_type').val()
+                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
+                    $('#slots-container').html(
+                        '<div class="text-center text-muted">Please select filters and load slots</div>');
+
+                }
+                else
+                {
+                    loadAvailableSlots();
+                }
+
+
+
+            });
+
 
             function loadAvailableSlots() {
 
-                if (!$('#start_date').val() || !$('#end_date').val()) {
+                const startDate = $('#start_date').val();
+                const endDate   = $('#end_date').val();
+
+                if (!startDate || !endDate) {
                     Swal.fire('Missing info', 'Please select start and end date', 'warning');
                     return;
                 }
 
                 $('#slots-container').html('<div class="text-center">Loading...</div>');
 
-                let payload = {
-                    start_date: $('#start_date').val(),
-                    end_date: $('#end_date').val(),
+                const payload = {
+                    start_date: startDate,
+                    end_date: endDate,
                     template_slot_id: $('#template_slot').val(),
-
                     cinema_chain_id: $('#cinema_chain').val(),
                     location_id: $('#location').val(),
-
                     movie_id: $('#movie').val(),
                     movie_genre_id: $('#movie_genre').val(),
                     hall_type_id: $('#hall_type').val(),
-
-                    // 🟢 MODE EDIT → exclusion de la campagne courante
-                    compaign_id:  COMPAIGN_ID ,
+                    compaign_id: COMPAIGN_ID // 🟢 MODE EDIT
                 };
 
                 $.get("{{ url('advertiser/slots/getAvailableSlotsEdit') }}", payload)
-
                     .done(function (res) {
 
                         $('#slots-container').empty();
@@ -580,84 +731,106 @@
                             return;
                         }
 
-                        res.slots.forEach(function (slot) {
+                        res.slots.forEach(slot => {
+
+                            let remainingDuration = slot.remaining_duration;
+                            let assignedCount = 0;
+                            let positionsHtml = '';
+
+                            slot.positions.forEach(pos => {
+
+                                /* 🔒 RÉSERVÉ (autre campagne) */
+                                if (pos.type === 'reserved') {
+
+                                    positionsHtml += `
+                                        <div class="slot-position reserved"
+                                            data-position="${pos.position}">
+                                            <span class="badge bg-secondary">Reserved (${pos.duration}s)</span>
+                                        </div>
+                                    `;
+                                }
+
+                                /* 🟢 CAMPAGNE COURANTE */
+                                else if (pos.type === 'current') {
+
+                                    assignedCount++;
+                                    remainingDuration -= pos.duration;
+
+                                    positionsHtml += `
+                                        <div class="slot-position droppable-position"
+                                            data-position="${pos.position}"
+                                            data-slot="${slot.slot_id}">
+
+                                            <div class="assigned draggable"
+                                                data-dcp="${pos.dcp_id}"
+                                                data-duration="${pos.duration}"
+                                                data-position="${pos.position}">
+                                                <span>${pos.dcp_name} (${pos.duration}s)</span>
+                                                <span class="remove">×</span>
+                                            </div>
+
+                                        </div>
+                                    `;
+                                }
+
+                                /* ⚪ LIBRE */
+                                else {
+                                    positionsHtml += `
+                                        <div class="slot-position droppable-position"
+                                            data-position="${pos.position}"
+                                            data-slot="${slot.slot_id}">
+                                            <span>Drop DCP here</span>
+                                        </div>
+                                    `;
+                                }
+                            });
 
                             $('#slots-container').append(`
                                 <div class="col-md-4">
-                                    <div class="slot-box droppable"
-                                        data-id="${slot.id}"
-                                        data-remaining="${slot.remaining}"
-                                        data-max="${slot.max_duration}">
+                                    <div class="slot-box"
+                                        data-slot="${slot.slot_id}"
+                                        data-max="${slot.max_duration}"
+                                        data-remaining="${remainingDuration}"
+                                        data-max_ad_slot="${slot.max_ad_slot}"
+                                        data-assigned="${assignedCount}">
 
                                         <strong>${slot.name}</strong><br>
 
                                         <small>
                                             Remaining:
-                                            <span class="remaining">${slot.remaining}</span>s /
+                                            <span class="remaining">${remainingDuration}</span>s /
                                             Max:
                                             <span class="max">${slot.max_duration}</span>s
                                         </small>
 
-                                        <div class="assigned-list mt-2"></div>
+                                        <small style="float:right">
+                                            Remaining Positions:
+                                            <span class="remaining-pos">
+                                                ${slot.max_ad_slot - assignedCount}
+                                            </span>
+                                        </small>
+
+                                        <div class="positions mt-2">
+                                            ${positionsHtml}
+                                        </div>
                                     </div>
                                 </div>
                             `);
                         });
 
-                        initDroppable();
-
-                        // 🟡 Restaurer les DCP déjà assignés en EDIT
-                        if (IS_EDIT) {
-                            restoreAssignedDcps();
-                        }
+                        initPositionDroppableEdit();
                     })
-
-                    .fail(function () {
+                    .fail(() => {
                         Swal.fire('Error', 'Failed to load available slots', 'error');
                     });
             }
 
 
+
+
             /* =====================================================
                 *  DROPPABLE
                 * ===================================================== */
-            function initDroppable() {
-
-                $('.droppable').droppable({
-                    accept: '.dcp-item',
-                    hoverClass: 'active',
-                    drop: function (e, ui) {
-
-                        const dcpId = ui.draggable.data('id');
-                        const dcpName = ui.draggable.find('p').text();
-                        const dcpDuration = parseInt(ui.draggable.data('duration'));
-
-                        const $slot = $(this);
-                        let remaining = parseInt($slot.data('remaining'));
-
-                        if ($slot.find(`.assigned[data-dcp="${dcpId}"]`).length) {
-                            Swal.fire('Error', 'Creative already assigned', 'error');
-                            return;
-                        }
-
-                        if (dcpDuration > remaining) {
-                            Swal.fire('Error', 'Not enough remaining duration', 'error');
-                            return;
-                        }
-
-                        remaining -= dcpDuration;
-                        $slot.data('remaining', remaining);
-                        $slot.find('.remaining').text(remaining);
-
-                        $slot.find('.assigned-list').append(`
-                            <div class="assigned" data-dcp="${dcpId}" data-duration="${dcpDuration}">
-                                <span>${dcpName} (${dcpDuration}s)</span>
-                                <span class="remove">×</span>
-                            </div>
-                        `);
-                    }
-                });
-            }
 
             /* =====================================================
                 *  RESTORE ASSIGNED DCP (EDIT)
@@ -685,21 +858,7 @@
                 });
             }
 
-            /* =====================================================
-                *  REMOVE ASSIGNED
-                * ===================================================== */
-            $(document).on('click', '.assigned .remove', function () {
 
-                const $item = $(this).closest('.assigned');
-                const duration = parseInt($item.data('duration'));
-                const $slot = $item.closest('.slot-box');
-
-                let remaining = parseInt($slot.data('remaining')) + duration;
-                $slot.data('remaining', remaining);
-                $slot.find('.remaining').text(remaining);
-
-                $item.remove();
-            });
 
             $('#btn-save-campaign').on('click', function(){
                 initSelect2WithSelectAll('#target_type');
@@ -758,22 +917,33 @@
             * ===================================================== */
             $('#confirm-save-campaign').on('click', function () {
 
-                let slots = [];
+                let slotsData = [];
 
-                $('.slot-box').each(function () {
+                $('.slot-box').each(function(){
+                    let $slot = $(this);
+                    let slotId = $slot.data('slot');
 
                     let dcps = [];
 
-                    $(this).find('.assigned').each(function () {
-                        dcps.push({
-                            dcp_id: $(this).data('dcp'),
-                            duration: $(this).data('duration') // requis pour la validation backend
-                        });
+                    // 🔹 On récupère les DCP par position, on ignore les positions vides
+                    $slot.find('.slot-position').each(function(){
+                        let $pos = $(this);
+                        let $assigned = $pos.find('.assigned');
+
+                        if($assigned.length){ // ⚡ ignorer les positions vides
+                            let $dcp = $assigned.first();
+                            dcps.push({
+                                dcp_id: $dcp.data('dcp'),
+                                duration: $dcp.data('duration'),
+                                position: $dcp.data('position'),
+
+                            });
+                        }
                     });
 
-                    if (dcps.length > 0) {
-                        slots.push({
-                            slot_id: $(this).data('id'),
+                    if(dcps.length > 0){ // ⚡ n'envoyer que les slots qui ont au moins 1 DCP
+                        slotsData.push({
+                            slot_id: slotId,
                             dcps: dcps
                         });
                     }
@@ -802,14 +972,10 @@
                     hall_type_id: $('#hall_type').val() ?? [],
                     movie_id: $('#movie').val() ?? [],
 
-                    slots: slots
+                    slots: slotsData
                 };
 
-                // sécurité : au moins un slot
-                if (!slots.length) {
-                    Swal.fire('Error', 'Please assign at least one DCP to a slot.', 'error');
-                    return;
-                }
+
 
                 $.ajax({
                     url: "{{ url('advertiser/compaigns/'.$compaign->id).'/update' }}",
@@ -825,6 +991,7 @@
                     Swal.fire('Error', 'Error while saving campaign', 'error');
                 });
             });
+
 
 
         });
@@ -903,6 +1070,61 @@
             color: #666;
             pointer-events: none;
         }
+
+
+        .positions-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .reserved-bar {
+            height: 34px;
+            background: #e0e0e0;
+            border: 1px dashed #bdbdbd;
+            border-radius: 4px;
+            cursor: not-allowed;
+        }
+
+        .free-position {
+            height: 34px;
+            border: 1px dashed #4caf50;
+            border-radius: 4px;
+        }
+
+        .assigned {
+            background: #d1e7dd;
+            border: 1px solid #198754;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: move;
+        }
+        .slot-position {
+    border: 1px dashed #ccc;
+    padding: 8px;
+    margin-bottom: 6px;
+    min-height: 40px;
+    text-align: center;
+    background: #fafafa;
+}
+
+.slot-position.reserved {
+    background: #e0e0e0;
+    border: 1px solid #aaa;
+    cursor: not-allowed;
+}
+
+.drop-hover {
+    background: #e7f3ff;
+    border-color: #0d6efd;
+}
+
+.assigned {
+    background: #d1e7dd;
+    padding: 5px;
+    border-radius: 4px;
+}
+
 
     </style>
 @endsection
