@@ -62,4 +62,10 @@ class Slot extends Model
     {
         return $this->belongsTo(TemplateSlot::class);
     }
+
+
+    public function positions(): HasMany
+    {
+        return $this->hasMany(Position::class);
+    }
 }

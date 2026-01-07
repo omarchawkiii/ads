@@ -241,11 +241,18 @@ Playlist Template Builder
                     </div>
                     <div class="col-md">
                         <label>Max Ad Slots:</label>
-                        <input type="number" min="1" class="form-control max_ad_slot" placeholder="Max Ads Slots" value="${slot.max_ad_slot ?? 1}" required>
+                        <select class="form-select max_ad_slot">
+                            ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${slot.max_ad_slot == n ? 'selected' : ''}>${n}</option>`).join('')}
+                        </select>
+
                     </div>
+
                     <div class="col-md-1 d-flex justify-content-center align-items-center">
                         <button type="button" class="btn btn-danger btn-sm remove_slot_row mt-3">✕</button>
                     </div>
+
+                    <div class="ad_slot_types mt-2 row"></div>
+
                 </div>`;
             }
 
@@ -261,6 +268,38 @@ Playlist Template Builder
                 $(this).closest('.slot-row').remove();
             });
 
+            function generateAdSlotTypes($container, count, slotData = []) {
+                $container.html(''); // vider
+                for (let i = 0; i < count; i++) {
+                    let selectedValue = slotData[i] || 0;
+                    console.log(slotData[i])
+                    $container.append(`
+                        <div class="mb-1 col-md-2">
+                            <label>Ad Slot ${i+1} Type:</label>
+                            <select class="form-select ad_slot_type">
+
+                                <option value="0" ${selectedValue == 0 ? 'selected' : ''}>Manual</option>
+                                <option value="1" ${selectedValue == 1 ? 'selected' : ''}>Smart</option>
+                            </select>
+                        </div>
+                    `);
+                }
+            }
+
+            $(document).on('input', '.max_ad_slot', function() {
+                let $row = $(this).closest('.slot-row');
+                let count = parseInt($(this).val()) || 0;
+                let $container = $row.find('.ad_slot_types');
+
+                // Vérifier si on a déjà des valeurs existantes pour ne pas les perdre
+                let existing = [];
+                $container.find('.ad_slot_type').each(function() {
+                    existing.push($(this).val());
+                });
+
+                generateAdSlotTypes($container, count, existing);
+            });
+
 
             $(document).on("submit", "#create_slot_modal", function(event) {
 
@@ -274,6 +313,7 @@ Playlist Template Builder
                         name: $(this).find('.slot_name').val(),
                         max_duration: $(this).find('.max_duration').val(),
                         max_ad_slot: $(this).find('.max_ad_slot').val(),
+                        ad_slot_types: $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });
                 });
 
@@ -382,21 +422,20 @@ Playlist Template Builder
 
             $(document).on('click', '.edit', function() {
                 var slot = $(this).attr('id');
-                var url = '{{ url('') }}' + '/slots/' + slot+ '/show/';
+                var url = '{{ url('') }}' + '/slots/' + slot + '/show/';
 
                 $.ajax({
                     url: url,
                     type: 'GET',
-                    method: 'GET',
-                    beforeSend: function () {
+                    beforeSend: function() {
                         $("#wait-modal").modal('show');
                     },
                     headers: {
                         'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                        "_token": "{{ csrf_token() }}",
+                        "_token": "{{ csrf_token() }}"
                     },
                     success: function(response) {
-
+                        console.log(response)
                         $("#wait-modal").modal('hide');
 
                         var template = response.template;
@@ -424,28 +463,34 @@ Playlist Template Builder
                                         </div>
                                         <div class="col-md">
                                             <label>Max Ad Slots:</label>
-                                            <input type="number" min="1" class="form-control max_ad_slot" value="${slot.max_ad_slot ?? 1}" placeholder="Max Ads" required>
+                                            <select class="form-select max_ad_slot">
+                                                ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${slot.max_ad_slot == n ? 'selected' : ''}>${n}</option>`).join('')}
+                                            </select>
                                         </div>
                                         <div class="col-md-1 d-flex justify-content-center align-items-center">
                                             <button type="button" class="btn btn-danger btn-sm remove_slot_row">✕</button>
                                         </div>
+                                        <div class="ad_slot_types mt-2 row"></div>
                                     </div>
                                 `);
-                            });
 
+                                // Générer les selects Intelligent / Manual
+                                var row = $('#edit_slots_container .slot-row').last();
+                                var adContainer = row.find('.ad_slot_types');
+
+                                generateAdSlotTypes(adContainer, slot.max_ad_slot, slot.ad_slot_types);
+                            });
                         } else {
                             $('#edit_slots_container').append(slotRow());
                         }
 
                         $('#edit_slot_modal').modal('show');
-
-
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(response);
+                        console.log(errorThrown);
                     }
-                })
-            })
+                });
+            });
 
             $(document).on("submit","#edit_slot_form" , function(event) {
                 event.preventDefault();
@@ -460,6 +505,7 @@ Playlist Template Builder
                         name: $(this).find('.slot_name').val(),
                         max_duration: $(this).find('.max_duration').val(),
                         max_ad_slot: $(this).find('.max_ad_slot').val(),
+                        ad_slot_types: $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });
                 });
 
@@ -527,4 +573,27 @@ Playlist Template Builder
 
         });
     </script>
+@endsection
+
+@section('custom_css')
+    <style>
+
+        #edit_slots_container .row.g-2.slot-row.mb-2.align-items-stretch.mb-1,
+        #slots_container .row.g-2.slot-row.mb-2.align-items-stretch.mb-1
+        {
+            border-radius: 5px;
+            border: 1px solid #eee;
+            padding: 5px 3px;
+            margin-bottom: 30px !important;
+
+        }
+        #edit_slots_container,
+        #slots_container
+        {
+            margin-top: 15px !important;
+
+        }
+
+    </style>
+
 @endsection

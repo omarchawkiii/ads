@@ -19,13 +19,27 @@ class SlotController extends Controller
         return view('admin.slots.index');
     }
 
-    public function show(Request $request)
+    public function show__(Request $request)
     {
         $template = TemplateSlot::with('slots')->findOrFail($request->id);
         return response()->json(compact('template'));
 
-        /*$slot = Slot::findOrFail($request->id) ;
-        return Response()->json(compact('slot'));*/
+
+    }
+
+    public function show(Request $request)
+    {
+        $template = TemplateSlot::with(['slots.positions'])->findOrFail($request->id);
+
+        // Optionnel : transformer les positions en tableau simple de types pour le front
+        $template->slots->transform(function ($slot) {
+            $slot->ad_slot_types = $slot->positions->pluck('type')->toArray();
+            return $slot;
+        });
+
+        return response()->json([
+            'template' => $template
+        ]);
     }
 
     public function get()
@@ -36,30 +50,10 @@ class SlotController extends Controller
         ->get();
 
         return response()->json(compact('templateSlots'));
-        /*$slots = Slot::orderBy('name', 'asc')->get();
-        return Response()->json(compact('slots'));*/
+
     }
 
-    /*public function store(Request $request)
-    {
-        try
-        {
-            $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'cpm'  => ['required', 'integer', 'min:0'],
-                'max_duration' => ['required', 'integer', 'min:1'],
-            ]);
-            $slot = Slot::create($validated);
-            return response()->json([
-                'message' => 'Slot created successfully.',
-                'data' => $slot,
-            ], 201);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Operation failed.',
-            ], 500);
-        }
-    }*/
+
 
     public function store(Request $request)
     {
@@ -76,15 +70,21 @@ class SlotController extends Controller
                 'name' => $request->template_name,
             ]);
 
-            foreach ($request->slots as $slot) {
-                Slot::create([
+            foreach ($request->slots as $slotData) {
+                $slot = Slot::create([
                     'template_slot_id' => $template->id,
-                    'segment_name' => $slot['segment_name'] ?? null,
-                    'name' => $slot['name'],
-                    'max_duration' => $slot['max_duration'],
+                    'segment_name' => $slotData['segment_name'] ?? null,
+                    'name' => $slotData['name'],
+                    'max_duration' => $slotData['max_duration'],
                     'cpm' => 0,
-                    'max_ad_slot' => $slot['max_ad_slot'] ?? 1,
+                    'max_ad_slot' => $slotData['max_ad_slot'] ?? 1,
                 ]);
+
+                foreach ($slotData['ad_slot_types'] as $type) {
+                    $slot->positions()->create([
+                        'type' => $type
+                    ]);
+                }
             }
             return response()->json([
                 'message' => 'Slot created successfully.',
@@ -98,27 +98,6 @@ class SlotController extends Controller
         }
     }
 
-    /*public function update(Request $request, Slot $slot)
-    {
-        try
-        {
-            $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'cpm'  => ['required', 'integer', 'min:0'],
-                'max_duration' => ['required', 'integer', 'min:1'],
-            ]);
-
-            $slot->update($validated);
-            return response()->json([
-                'message' => 'Slot updated successfully.',
-                'data' => $slot,
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Operation failed.',
-            ], 500);
-        }
-    }*/
 
     public function update(Request $request, $id)
     {
@@ -140,11 +119,13 @@ class SlotController extends Controller
         foreach ($request->slots as $slotData) {
 
             if (!empty($slotData['id'])) {
+
                 $slot = Slot::where('id', $slotData['id'])
                             ->where('template_slot_id', $template->id)
                             ->first();
 
                 if ($slot) {
+
                     $slot->update([
                         'segment_name' => $slotData['segment_name'] ?? null,
                         'name' => $slotData['name'],
@@ -153,6 +134,14 @@ class SlotController extends Controller
                     ]);
 
                     $sentSlotIds[] = $slot->id;
+
+                    $slot->positions()->delete();
+                    foreach ($slotData['ad_slot_types'] as $type) {
+                        $slot->positions()->create([
+                            'type' => $type
+                        ]);
+                    }
+
                 }
 
             } else {
@@ -167,6 +156,13 @@ class SlotController extends Controller
                 ]);
 
                 $sentSlotIds[] = $newSlot->id;
+
+                foreach ($slotData['ad_slot_types'] as $type) {
+                    $newSlot->positions()->create([
+                        'type' => $type
+                    ]);
+                }
+
             }
         }
 
@@ -203,109 +199,6 @@ class SlotController extends Controller
 
 
 
-
-    /*public function getAvailableSlots(Request $request)
-    {
-        $v = $request->validate([
-            'start_date'           => 'required|date',
-            'end_date'             => 'required|date|after_or_equal:start_date',
-            'template_slot_id'     => 'required|exists:template_slots,id',
-            'cinema_chain_id'      => 'nullable|integer|exists:cinema_chains,id',
-            'location_id'          => 'required|array',
-            'location_id.*'        => 'integer|exists:locations,id',
-            'movie_genre_id'       => 'nullable|array',
-            'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
-            'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
-            'movie_id'             => 'nullable|array',
-            'movie_id.*'           => 'integer|exists:movies,id',
-        ]);
-
-        $start = Carbon::parse($v['start_date'])->startOfDay();
-        $end   = Carbon::parse($v['end_date'])->endOfDay();
-
-        if (!empty($v['movie_genre_id'])) {
-            $hasMovies = Movie::whereIn('movie_genre_id', $v['movie_genre_id'])
-              //  ->whereNotNull('play_at')
-               // ->whereBetween('play_at', [$start, $end])
-                ->exists();
-
-            if (!$hasMovies) {
-                return response()->json([
-                    'slots' => []
-                ]);
-            }
-
-        }
-
-        // 1️⃣ Tous les slots du template
-        $slots = Slot::where('template_slot_id', $v['template_slot_id'])
-            ->select('id', 'name', 'max_duration')
-            ->get();
-
-        if ($slots->isEmpty()) {
-            return response()->json(['slots' => []]);
-        }
-
-        $slotIds = $slots->pluck('id');
-
-        // 2️⃣ Calcul des durées déjà utilisées par slot
-        $usedQuery = DB::table('compaign_slot_dcp as csd')
-            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
-            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
-            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
-            ->whereIn('csd.slot_id', $slotIds)
-            ->whereIn('cl.location_id', $v['location_id'])
-            ->where(function ($q) use ($start, $end) {
-                $q->whereBetween('c.start_date', [$start, $end])
-                ->orWhereBetween('c.end_date', [$start, $end])
-                ->orWhere(function ($q2) use ($start, $end) {
-                    $q2->where('c.start_date', '<=', $start)
-                        ->where('c.end_date', '>=', $end);
-                });
-            });
-
-        // ➕ filtres optionnels
-        if (!empty($v['cinema_chain_id'])) {
-            $usedQuery->join('locations as l', 'l.id', '=', 'cl.location_id')
-                    ->where('l.cinema_chain_id', $v['cinema_chain_id']);
-        }
-
-        /*if (!empty($v['compaign_category_id'])) {
-            $usedQuery->where('c.compaign_category_id', $v['compaign_category_id']);
-        }//
-
-        if (!empty($v['movie_genre_id'])) {
-            $usedQuery->join('compaign_movie_genre as cmg', 'cmg.compaign_id', '=', 'c.id')
-                    ->whereIn('cmg.movie_genre_id', $v['movie_genre_id']);
-        }
-
-        // group by slot et somme des durées
-        $usedBySlot = $usedQuery
-            ->select('csd.slot_id', DB::raw('SUM(d.duration) as used'))
-            ->groupBy('csd.slot_id')
-            ->pluck('used', 'csd.slot_id'); // [slot_id => used]
-
-        // 3️⃣ Construire la réponse avec remaining
-        $result = $slots->map(function ($slot) use ($usedBySlot) {
-            $used = (int) ($usedBySlot[$slot->id] ?? 0);
-            $remaining = max(0, $slot->max_duration - $used);
-
-            return [
-                'id'            => $slot->id,
-                'name'          => $slot->name,
-                'max_duration' => (int) $slot->max_duration,
-                'used'          => $used,
-                'remaining'     => $remaining,
-            ];
-        })
-        // 👉 si tu veux cacher ceux sans temps restant :
-        ->filter(fn ($s) => $s['remaining'] > 0)
-        ->values();
-
-        return response()->json([
-            'slots' => $result
-        ]);
-    }*/
 
     public function getAvailableSlots(Request $request)
     {
