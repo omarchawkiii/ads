@@ -42,7 +42,7 @@
         @include('advertiser.partiels.header')
 
         <div class="body-wrapper">
-            <div class="container-fluid">
+            <div class="container-fluid padding-15">
                 @yield('content')
             </div>
         </div>

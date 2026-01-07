@@ -591,6 +591,9 @@ class CompaignController extends Controller
     }
     public function edit($id)
     {
+        /* =====================================================
+        | 0️⃣ Charger la campagne
+        ===================================================== */
         $compaign = Compaign::with([
             'movies:id',
             'locations:id',
@@ -603,9 +606,11 @@ class CompaignController extends Controller
 
         $locationIds = $compaign->locations->pluck('id')->toArray();
         $slotIds     = $compaign->slots->pluck('id')->toArray();
+        $cinemaChainIds = $compaign->cinemaChains->pluck('id')->toArray();
+        $locationsOfCinemaChaings = Location::whereIn('cinema_chain_id', $cinemaChainIds)->get();
 
         /* =====================================================
-        | 1️⃣ DCP disponibles pour l'utilisateur
+        | 1️⃣ DCP disponibles pour l’utilisateur
         ===================================================== */
         $dcp_creatives = DcpCreative::where('status', 1)
             ->where('user_id', auth()->id())
@@ -620,7 +625,7 @@ class CompaignController extends Controller
             ->get();
 
         /* =====================================================
-        | 3️⃣ Récupérer toutes les positions
+        | 3️⃣ Récupérer toutes les positions AVEC DURÉE
         ===================================================== */
         $positionsQuery = DB::table('compaign_slot_dcp as csd')
             ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
@@ -638,17 +643,17 @@ class CompaignController extends Controller
             })
             ->select(
                 'csd.slot_id',
+                'csd.position',
                 'csd.dcp_creative_id',
-                'csd.position', // ✅ position exacte
                 'd.duration',
                 'c.id as compaign_id',
                 'c.created_at'
             )
-            ->orderBy('c.created_at')
+            ->orderBy('csd.position')
             ->get();
-
+                //dd($positionsQuery);
         /* =====================================================
-        | 4️⃣ Regrouper les positions par slot
+        | 4️⃣ Regrouper les positions PAR SLOT
         ===================================================== */
         $positionsBySlot = [];
 
@@ -663,8 +668,10 @@ class CompaignController extends Controller
             ];
         }
 
+        //dd($positionsBySlot);
+
         /* =====================================================
-        | 5️⃣ Construire payload final des slots
+        | 5️⃣ Construire le payload FINAL des slots
         ===================================================== */
         $slotsPayload = [];
 
@@ -673,11 +680,22 @@ class CompaignController extends Controller
 
                 $positions = $positionsBySlot[$slot->id] ?? [];
 
-                $reserved = array_filter($positions, fn($p) => $p['type'] === 'reserved');
-                $current  = array_filter($positions, fn($p) => $p['type'] === 'current');
+                /* 🔥 POSITIONS EFFECTIVES (current + reserved seulement) */
+                $effectivePositions = array_filter(
+                    $positions,
+                    fn ($p) => in_array($p['type'], ['current', 'reserved'])
+                );
 
-                $usedDuration = array_sum(array_column($positions, 'duration'));
-                $assignedDcp  = count($positions);
+                /* 🔥 CALCULS CORRECTS PAR SLOT */
+                $usedDuration = array_sum(
+                    array_map(
+                        fn ($p) => $p['duration'] ?? 0,
+                        $effectivePositions
+                    )
+                );
+                //dd($usedDuration, $effectivePositions, $positions);
+
+                $assignedDcp = count($effectivePositions);
 
                 $remainingDuration = max(0, $slot->max_duration - $usedDuration);
                 $remainingDcp      = max(0, $slot->max_ad_slot - $assignedDcp);
@@ -697,7 +715,7 @@ class CompaignController extends Controller
         }
 
         /* =====================================================
-        | 6️⃣ Retour vers la view
+        | 6️⃣ Retour vers la vue
         ===================================================== */
         return view('advertiser.compaigns.edit_builder', [
             'compaign'            => $compaign,
@@ -706,7 +724,9 @@ class CompaignController extends Controller
             'slot_templates'      => TemplateSlot::orderBy('name')->get(),
             'isEdit'              => true,
             'selectedLocations'   => $locationIds,
-            // selects
+            'locationsOfCinemaChaings' =>$locationsOfCinemaChaings,
+
+            // Selects
             'compaign_categories' => CompaignCategory::orderBy('name')->get(),
             'brands'              => Brand::orderBy('name')->get(),
             'compaign_objectives' => CompaignObjective::orderBy('name')->get(),
@@ -722,6 +742,8 @@ class CompaignController extends Controller
             'cinema_chains'       => CinemaChain::orderBy('name')->get(),
         ]);
     }
+
+
 
 
     public function update_(Request $request, $id)
@@ -962,135 +984,135 @@ class CompaignController extends Controller
     }
 
     public function update(Request $request, $id)
-{
-    $v = $request->validate([
+    {
+        $v = $request->validate([
 
-        'compaign_name'       => 'required|string|max:255',
-        'template_slot_id'    => 'required|integer|exists:template_slots,id',
-        'start_date'          => 'required|date',
-        'end_date'            => 'required|date|after_or_equal:start_date',
+            'compaign_name'       => 'required|string|max:255',
+            'template_slot_id'    => 'required|integer|exists:template_slots,id',
+            'start_date'          => 'required|date',
+            'end_date'            => 'required|date|after_or_equal:start_date',
 
-        'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
+            'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
 
-        'cinema_chain_id'      => 'nullable|array',
-        'cinema_chain_id.*'    => 'integer|exists:cinema_chains,id',
+            'cinema_chain_id'      => 'nullable|array',
+            'cinema_chain_id.*'    => 'integer|exists:cinema_chains,id',
 
-        'location_id'          => 'array',
-        'location_id.*'        => 'integer|exists:locations,id',
+            'location_id'          => 'array',
+            'location_id.*'        => 'integer|exists:locations,id',
 
-        'movie_genre_id'       => 'array',
-        'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
+            'movie_genre_id'       => 'array',
+            'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
 
-        'movie_id'             => 'required|array|min:1',
-        'movie_id.*'           => 'integer|exists:movies,id',
+            'movie_id'             => 'required|array|min:1',
+            'movie_id.*'           => 'integer|exists:movies,id',
 
-        'hall_type_id'         => 'array',
-        'hall_type_id.*'       => 'integer|exists:hall_types,id',
+            'hall_type_id'         => 'array',
+            'hall_type_id.*'       => 'integer|exists:hall_types,id',
 
-        // 🔥 slots + dcps + position
-        'slots'                       => 'required|array|min:1',
-        'slots.*.slot_id'             => 'required|integer|exists:slots,id',
-        'slots.*.dcps'                => 'required|array|min:1',
-        'slots.*.dcps.*.dcp_id'       => 'required|integer|exists:dcp_creatives,id',
-        'slots.*.dcps.*.position'     => 'required|integer|min:1',
+            // 🔥 slots + dcps + position
+            'slots'                       => 'required|array|min:1',
+            'slots.*.slot_id'             => 'required|integer|exists:slots,id',
+            'slots.*.dcps'                => 'required|array|min:1',
+            'slots.*.dcps.*.dcp_id'       => 'required|integer|exists:dcp_creatives,id',
+            'slots.*.dcps.*.position'     => 'required|integer|min:1',
 
-        'budget'          => 'required|integer|min:1',
-        'langue'          => 'required|integer|exists:langues,id',
-        'gender'          => 'required|integer|exists:genders,id',
+            'budget'          => 'required|integer|min:1',
+            'langue'          => 'required|integer|exists:langues,id',
+            'gender'          => 'required|integer|exists:genders,id',
 
-        'target_type'     => 'array',
-        'target_type.*'   => 'integer|exists:target_types,id',
+            'target_type'     => 'array',
+            'target_type.*'   => 'integer|exists:target_types,id',
 
-        'interest'        => 'array',
-        'interest.*'      => 'integer|exists:interests,id',
-    ]);
-
-    return DB::transaction(function () use ($v, $request, $id) {
-
-        /* -------------------------------------------------
-        | 1️⃣ récupérer la campagne
-        -------------------------------------------------*/
-        $compaign = Compaign::findOrFail($id);
-
-        /* -------------------------------------------------
-        | 2️⃣ update champs simples
-        -------------------------------------------------*/
-        $compaign->update([
-            'name'                  => $v['compaign_name'],
-            'template_slot_id'      => $v['template_slot_id'],
-            'start_date'            => $v['start_date'],
-            'end_date'              => $v['end_date'],
-            'langue_id'             => $v['langue'],
-            'gender_id'             => $v['gender'],
-            'budget'                => $v['budget'],
-            'compaign_category_id'  =>  1  ?? null,
+            'interest'        => 'array',
+            'interest.*'      => 'integer|exists:interests,id',
         ]);
 
-        // helper
-        $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
+        return DB::transaction(function () use ($v, $request, $id) {
 
-        /* -------------------------------------------------
-        | 3️⃣ relations many-to-many
-        -------------------------------------------------*/
-        $compaign->movies()->sync($ids('movie_id'));
+            /* -------------------------------------------------
+            | 1️⃣ récupérer la campagne
+            -------------------------------------------------*/
+            $compaign = Compaign::findOrFail($id);
 
-        $request->has('cinema_chain_id')
-            ? $compaign->cinemaChains()->sync($ids('cinema_chain_id'))
-            : $compaign->cinemaChains()->detach();
+            /* -------------------------------------------------
+            | 2️⃣ update champs simples
+            -------------------------------------------------*/
+            $compaign->update([
+                'name'                  => $v['compaign_name'],
+                'template_slot_id'      => $v['template_slot_id'],
+                'start_date'            => $v['start_date'],
+                'end_date'              => $v['end_date'],
+                'langue_id'             => $v['langue'],
+                'gender_id'             => $v['gender'],
+                'budget'                => $v['budget'],
+                'compaign_category_id'  =>  1  ?? null,
+            ]);
 
-        $request->has('location_id')
-            ? $compaign->locations()->sync($ids('location_id'))
-            : $compaign->locations()->detach();
+            // helper
+            $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
 
-        $request->has('movie_genre_id')
-            ? $compaign->movieGenres()->sync($ids('movie_genre_id'))
-            : $compaign->movieGenres()->detach();
+            /* -------------------------------------------------
+            | 3️⃣ relations many-to-many
+            -------------------------------------------------*/
+            $compaign->movies()->sync($ids('movie_id'));
 
-        $request->has('hall_type_id')
-            ? $compaign->hallTypes()->sync($ids('hall_type_id'))
-            : $compaign->hallTypes()->detach();
+            $request->has('cinema_chain_id')
+                ? $compaign->cinemaChains()->sync($ids('cinema_chain_id'))
+                : $compaign->cinemaChains()->detach();
 
-        $request->has('target_type')
-            ? $compaign->targetTypes()->sync($ids('target_type'))
-            : $compaign->targetTypes()->detach();
+            $request->has('location_id')
+                ? $compaign->locations()->sync($ids('location_id'))
+                : $compaign->locations()->detach();
 
-        $request->has('interest')
-            ? $compaign->interests()->sync($ids('interest'))
-            : $compaign->interests()->detach();
+            $request->has('movie_genre_id')
+                ? $compaign->movieGenres()->sync($ids('movie_genre_id'))
+                : $compaign->movieGenres()->detach();
 
-        /* -------------------------------------------------
-        | 4️⃣ slots
-        -------------------------------------------------*/
-        $slotIds = collect($v['slots'])->pluck('slot_id')->unique()->toArray();
-        $compaign->slots()->sync($slotIds);
+            $request->has('hall_type_id')
+                ? $compaign->hallTypes()->sync($ids('hall_type_id'))
+                : $compaign->hallTypes()->detach();
 
-        /* -------------------------------------------------
-        | 5️⃣ DCPs → detach + attach (COMME STORE)
-        -------------------------------------------------*/
-        $compaign->dcpCreatives()->detach();
+            $request->has('target_type')
+                ? $compaign->targetTypes()->sync($ids('target_type'))
+                : $compaign->targetTypes()->detach();
 
-        foreach ($v['slots'] as $slotData) {
-            foreach ($slotData['dcps'] as $dcp) {
-                $compaign->dcpCreatives()->attach($dcp['dcp_id'], [
-                    'slot_id'   => $slotData['slot_id'],
-                    'position'  => $dcp['position'],
-                    'created_at'=> now(),
-                    'updated_at'=> now(),
-                ]);
+            $request->has('interest')
+                ? $compaign->interests()->sync($ids('interest'))
+                : $compaign->interests()->detach();
+
+            /* -------------------------------------------------
+            | 4️⃣ slots
+            -------------------------------------------------*/
+            $slotIds = collect($v['slots'])->pluck('slot_id')->unique()->toArray();
+            $compaign->slots()->sync($slotIds);
+
+            /* -------------------------------------------------
+            | 5️⃣ DCPs → detach + attach (COMME STORE)
+            -------------------------------------------------*/
+            $compaign->dcpCreatives()->detach();
+
+            foreach ($v['slots'] as $slotData) {
+                foreach ($slotData['dcps'] as $dcp) {
+                    $compaign->dcpCreatives()->attach($dcp['dcp_id'], [
+                        'slot_id'   => $slotData['slot_id'],
+                        'position'  => $dcp['position'],
+                        'created_at'=> now(),
+                        'updated_at'=> now(),
+                    ]);
+                }
             }
-        }
 
-        /* -------------------------------------------------
-        | 6️⃣ regen XML
-        -------------------------------------------------*/
-        CampaignXmlGenerator::generate($compaign);
+            /* -------------------------------------------------
+            | 6️⃣ regen XML
+            -------------------------------------------------*/
+            CampaignXmlGenerator::generate($compaign);
 
-        return response()->json([
-            'message' => 'Compaign updated successfully.',
-            'id'      => $compaign->id,
-        ]);
-    });
-}
+            return response()->json([
+                'message' => 'Compaign updated successfully.',
+                'id'      => $compaign->id,
+            ]);
+        });
+    }
 
 
     public function destroy(Compaign $compaign)

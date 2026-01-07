@@ -52,7 +52,7 @@
                     <div class="card-header bg-info text-white">
                         Filters
                     </div>
-                    <div class="card-body">
+                    <div class="card-body padding-15">
                         <div class="row g-2">
 
                             <div class="col-md-3">
@@ -143,7 +143,7 @@
                     <div class="card-header bg-success text-white">
                         Available Slots
                     </div>
-                    <div class="card-body">
+                    <div class="card-body padding-15">
                         <div id="slots-container" class="row g-3">
                             <div class="text-center text-muted">
                                 Please select filters and load slots
@@ -358,7 +358,10 @@
                 initSelect2WithSelectAll('#dcp_creative');
                 //initSelect2WithSelectAll('#target_type');
             });
-
+            function getCleanSelectValues(selector) {
+                let values = $(selector).val() || [];
+                return values.filter(v => v !== '__all__');
+            }
             const today = new Date().toISOString().split('T')[0];
             $('#start_date').attr('min', today);
             $('#end_date').attr('min', today);
@@ -423,14 +426,15 @@
 
             $('#btn-load-slots').on('click', function() {
                 loadAvailableSlots();
-                $('#cinema_chain,#start_date,#end_date,#location,#movie_genre,#compaign_category ,#hall_type').on('change', function () {
+                $('#start_date,#end_date,#location,#movie_genre,#template_slot ,#hall_type,#movie').on('change', function () {
                     const startDate = $('#start_date').val();
                     const endDate   = $('#end_date').val();
                     const locations = $('#location').val();
                     const genres    = $('#movie_genre').val();
+                    const movie    = $('#movie').val();
                     const compaign_category = $('#compaign_category').val()
                     const hall_type_id = $('#hall_type').val()
-                    if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
+                    if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0 || movie.length === 0) {
                         $('#slots-container').html(
                             '<div class="text-center text-muted">Please select filters and load slots</div>');
 
@@ -450,7 +454,7 @@
 
                 const startDate = $('#start_date').val();
                 const endDate   = $('#end_date').val();
-                const locations = $('#location').val();
+                const locations = getCleanSelectValues('#location');
 
                 if (!startDate || !endDate || !locations || locations.length === 0) {
                     Swal.fire('Missing info', 'Select start, end date and location', 'warning');
@@ -465,8 +469,8 @@
                     template_slot_id: $('#template_slot').val(),
                     cinema_chain_id: $('#cinema_chain').val(),
                     location_id: locations,
-                    movie_id: $('#movie').val(),
-                    movie_genre_id: $('#movie_genre').val(),
+                    movie_id: getCleanSelectValues('#movie'),
+                    movie_genre_id: getCleanSelectValues('#movie_genre'),
                     hall_type_id: $('#hall_type').val(),
                     compaign_category_id: $('#compaign_category').val(),
                 })
@@ -480,7 +484,19 @@
                         );
                         return;
                     }
+                    const slotCount = res.slots.length;
 
+                    let colClass = 'col-md-4';
+
+                    if (slotCount === 1) {
+                        colClass = 'col-md-12';
+                    } else if (slotCount === 2) {
+                        colClass = 'col-md-6';
+                    } else if (slotCount === 3) {
+                        colClass = 'col-md-4';
+                    } else {
+                        colClass = 'col-md-3';
+                    }
                     res.slots.forEach(slot => {
 
                         let positionsHtml = '';
@@ -514,14 +530,13 @@
                         });
 
                         $('#slots-container').append(`
-                            <div class="col-md-4">
+                            <div class="${colClass}">
                                 <div class="slot-box"
                                     data-slot="${slot.slot_id}"
                                     data-max="${slot.max_duration}"
                                     data-remaining="${remainingDuration}">
 
                                     <strong>${slot.name}</strong><br>
-
                                     <small>
                                         Remaining:
                                         <span class="remaining">${remainingDuration}</span>s /
@@ -591,12 +606,6 @@
                         /* ❌ 1) DCP déjà utilisé dans ce slot */
                         if ($slotBox.find(`.assigned[data-dcp="${dcpId}"]`).length) {
                             showError("This creative is already assigned in this slot.");
-                            return;
-                        }
-
-                        /* ❌ 2) Max positions atteintes */
-                        if (assigned >= maxAdSlot) {
-                            showError("Maximum number of creatives reached for this slot.");
                             return;
                         }
 

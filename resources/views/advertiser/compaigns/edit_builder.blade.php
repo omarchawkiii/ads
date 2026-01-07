@@ -51,7 +51,7 @@
                     <div class="card-header bg-info text-white">
                         Filters
                     </div>
-                    <div class="card-body">
+                    <div class="card-body padding-15">
                         <div class="row g-2">
 
                             <div class="col-md-3">
@@ -95,7 +95,7 @@
                             <div class="col-md-3">
                                 <label>Cinema Chain</label>
                                 <select id="cinema_chain" class="form-select select2" multiple name="cinema_chain[]" >
-                                    <option value="">Select...</option>
+
                                     @foreach ($cinema_chains as $chain)
                                         <option value="{{ $chain->id }}"
                                             @selected($isEdit && $compaign->cinemaChains->contains($chain->id))>
@@ -108,7 +108,8 @@
                             <div class="col-md-5">
                                 <label>Location</label>
                                 <select id="location" class="form-select select2" multiple >
-                                    @foreach ($locations as $location)
+                                    <option value="__all__">Select All</option>
+                                    @foreach ($locationsOfCinemaChaings as $location)
                                         <option
                                             value="{{ $location->id }}"
                                             @if(in_array($location->id, $selectedLocations ?? [])) selected @endif
@@ -157,11 +158,11 @@
                 </div>
 
                 {{-- ================= SLOTS ================= --}}
-                <div class="card">
+                <div class="card ">
                     <div class="card-header bg-success text-white">
                         Available Slots
                     </div>
-                    <div class="card-body">
+                    <div class="card-body padding-15">
                         <div id="slots-container" class="row g-3">
                             <div class="text-center text-muted">
                                 Please select filters and load slots
@@ -341,7 +342,7 @@
                     const totalPositions = slot.max_ad_slot;
                     const assignedCount = slot.assigned_dcp ?? 0;
                     let remainingDuration = slot.remaining_duration;
-
+                    console.log(slot)
                     let positionsHtml = '';
 
                     // 🔹 Construire chaque position
@@ -395,17 +396,15 @@
                             <div class="slot-box"
                                 data-slot="${slot.slot_id}"
                                 data-max="${slot.max_duration}"
-                                data-remaining="${remainingDuration}"
+                                data-remaining="${slot.remaining_duration}"
                                 data-max_ad_slot="${slot.max_ad_slot}"
                                 data-assigned="${assignedCount}">
                                 <strong>${slot.name}</strong><br>
                                 <small>
-                                    Remaining: <span class="remaining">${remainingDuration}</span>s /
+                                    Remaining: <span class="remaining">${slot.remaining_duration}</span>s /
                                     Max: <span class="max">${slot.max_duration}</span>s
                                 </small>
-                                <small style="float:right">
-                                    Remaining Positions: <span class="remaining-pos">${totalPositions - assignedCount}</span>
-                                </small>
+
                                 <div class="positions mt-2">
                                     ${positionsHtml}
                                 </div>
@@ -465,10 +464,7 @@
                             showError("This creative is already assigned in this slot.");
                             return;
                         }
-                        if (assigned >= maxAdSlot) {
-                            showError("Maximum number of creatives reached for this slot.");
-                            return;
-                        }
+
                         if (dcpDuration > maxDuration) {
                             showError("This creative exceeds the maximum duration of the slot.");
                             return;
@@ -673,14 +669,15 @@
                 *  LOAD SLOTS
             * ===================================================== */
 
-            $('#cinema_chain,#start_date,#end_date,#location,#movie_genre,#compaign_category ,#hall_type').on('change', function () {
+            $('#start_date,#end_date,#location,#movie_genre,#template_slot ,#hall_type,#movie').on('change', function () {
                 const startDate = $('#start_date').val();
                 const endDate   = $('#end_date').val();
                 const locations = $('#location').val();
                 const genres    = $('#movie_genre').val();
+                const movie    = $('#movie').val();
                 const compaign_category = $('#compaign_category').val()
                 const hall_type_id = $('#hall_type').val()
-                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
+                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0|| movie.length === 0) {
                     $('#slots-container').html(
                         '<div class="text-center text-muted">Please select filters and load slots</div>');
 
@@ -693,6 +690,11 @@
 
 
             });
+
+            function getCleanSelectValues(selector) {
+                let values = $(selector).val() || [];
+                return values.filter(v => v !== '__all__');
+            }
 
 
             function loadAvailableSlots() {
@@ -712,9 +714,9 @@
                     end_date: endDate,
                     template_slot_id: $('#template_slot').val(),
                     cinema_chain_id: $('#cinema_chain').val(),
-                    location_id: $('#location').val(),
-                    movie_id: $('#movie').val(),
-                    movie_genre_id: $('#movie_genre').val(),
+                    location_id: getCleanSelectValues('#location'),
+                    movie_id: getCleanSelectValues('#movie'),
+                    movie_genre_id: getCleanSelectValues('#movie_genre'),
                     hall_type_id: $('#hall_type').val(),
                     compaign_id: COMPAIGN_ID // 🟢 MODE EDIT
                 };
@@ -730,6 +732,20 @@
                             );
                             return;
                         }
+                        const slotCount = res.slots.length;
+
+                        let colClass = 'col-md-4';
+
+                        if (slotCount === 1) {
+                            colClass = 'col-md-12';
+                        } else if (slotCount === 2) {
+                            colClass = 'col-md-6';
+                        } else if (slotCount === 3) {
+                            colClass = 'col-md-4';
+                        } else {
+                            colClass = 'col-md-3';
+                        }
+
 
                         res.slots.forEach(slot => {
 
@@ -785,12 +801,15 @@
                                 }
                             });
 
+
+
+
                             $('#slots-container').append(`
-                                <div class="col-md-4">
+                                <div class="${colClass}">
                                     <div class="slot-box"
                                         data-slot="${slot.slot_id}"
                                         data-max="${slot.max_duration}"
-                                        data-remaining="${remainingDuration}"
+                                        data-remaining="${slot.remaining_duration}"
                                         data-max_ad_slot="${slot.max_ad_slot}"
                                         data-assigned="${assignedCount}">
 
@@ -798,17 +817,11 @@
 
                                         <small>
                                             Remaining:
-                                            <span class="remaining">${remainingDuration}</span>s /
+                                            <span class="remaining">${slot.remaining_duration}</span>s /
                                             Max:
                                             <span class="max">${slot.max_duration}</span>s
                                         </small>
 
-                                        <small style="float:right">
-                                            Remaining Positions:
-                                            <span class="remaining-pos">
-                                                ${slot.max_ad_slot - assignedCount}
-                                            </span>
-                                        </small>
 
                                         <div class="positions mt-2">
                                             ${positionsHtml}
@@ -824,9 +837,11 @@
                         Swal.fire('Error', 'Failed to load available slots', 'error');
                     });
             }
+            loadAvailableSlots()
 
-
-
+            $('#btn-load-slots').on('click', function() {
+                loadAvailableSlots();
+            });
 
             /* =====================================================
                 *  DROPPABLE
