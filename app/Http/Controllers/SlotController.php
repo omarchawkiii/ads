@@ -194,161 +194,9 @@ class SlotController extends Controller
         }
     }
 
+
+
     public function getAvailableSlots__(Request $request)
-    {
-        $v = $request->validate([
-            'start_date'        => 'required|date',
-            'end_date'          => 'required|date|after_or_equal:start_date',
-            'template_slot_id'  => 'required|exists:template_slots,id',
-
-            'cinema_chain_id'   => 'required|array|min:1',
-            'cinema_chain_id.*' => 'integer|exists:cinema_chains,id',
-
-            'location_id'       => 'required|array|min:1',
-            'location_id.*'     => 'integer|exists:locations,id',
-
-            'movie_id'          => 'nullable|array',
-            'movie_id.*'        => 'integer|exists:movies,id',
-
-            'movie_genre_id'    => 'nullable|array',
-            'movie_genre_id.*'  => 'integer|exists:movie_genres,id',
-
-            'hall_type_id'      => 'nullable|array',
-            'hall_type_id.*'    => 'integer|exists:hall_types,id',
-
-            'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
-        ]);
-
-        $start = Carbon::parse($v['start_date'])->startOfDay();
-        $end   = Carbon::parse($v['end_date'])->endOfDay();
-
-        /* -------------------------------------------------
-        | 1️⃣ Slots du template
-        -------------------------------------------------*/
-        $slots = Slot::with('positions')->where('template_slot_id', $v['template_slot_id'])
-            ->select('id', 'name', 'max_duration', 'max_ad_slot')
-            ->get();
-
-        if ($slots->isEmpty()) {
-            return response()->json(['slots' => []]);
-        }
-
-        $slotIds = $slots->pluck('id')->toArray();
-
-        /* -------------------------------------------------
-        | 2️⃣ DCPs déjà réservés AVEC POSITION
-        -------------------------------------------------*/
-        $assignmentsQuery = DB::table('compaign_slot_dcp as csd')
-            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
-            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
-            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
-            ->join('compaign_cinema_chain as ccc', 'ccc.compaign_id', '=', 'c.id')
-            ->whereIn('csd.slot_id', $slotIds)
-            ->whereIn('cl.location_id', $v['location_id'])
-            ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id'])
-            ->where(function ($q) use ($start, $end) {
-                $q->whereBetween('c.start_date', [$start, $end])
-                  ->orWhereBetween('c.end_date', [$start, $end])
-                  ->orWhere(function ($q2) use ($start, $end) {
-                      $q2->where('c.start_date', '<=', $start)
-                         ->where('c.end_date', '>=', $end);
-                  });
-            });
-
-        // 🎯 filtres optionnels
-        if (!empty($v['compaign_category_id'])) {
-            $assignmentsQuery->where('c.compaign_category_id', $v['compaign_category_id']);
-        }
-
-        if (!empty($v['movie_id'])) {
-            $assignmentsQuery
-                ->join('compaign_movie as cm', 'cm.compaign_id', '=', 'c.id')
-                ->whereIn('cm.movie_id', $v['movie_id']);
-        } elseif (!empty($v['movie_genre_id'])) {
-            $assignmentsQuery
-                ->join('compaign_movie_genre as cmg', 'cmg.compaign_id', '=', 'c.id')
-                ->whereIn('cmg.movie_genre_id', $v['movie_genre_id']);
-        }
-
-        if (!empty($v['hall_type_id'])) {
-            $assignmentsQuery
-                ->join('compaign_hall_type as cht', 'cht.compaign_id', '=', 'c.id')
-                ->whereIn('cht.hall_type_id', $v['hall_type_id']);
-        }
-
-        $assignments = $assignmentsQuery
-            ->select(
-                'csd.slot_id',
-                'csd.position',
-                'd.id as dcp_id',
-                'd.duration'
-            )
-            ->get()
-            ->groupBy('slot_id');
-
-        /* -------------------------------------------------
-        | 3️⃣ Construction des slots AVEC positions
-        -------------------------------------------------*/
-        $result = $slots->map(function ($slot) use ($assignments) {
-
-            $slotAssignments = $assignments[$slot->id] ?? collect();
-
-            // index par position
-            $byPosition = $slotAssignments->keyBy('position');
-
-            $positions = [];
-            $usedDuration = 0;
-            $assignedCount = 0;
-
-            for ($pos = 1; $pos <= $slot->max_ad_slot; $pos++) {
-
-                if ($byPosition->has($pos)) {
-                    $row = $byPosition[$pos];
-
-                    $positions[] = [
-                        'position' => $pos,
-                        'type'     => 'reserved',
-                        'dcp_id'   => $row->dcp_id,
-                        'duration' => (int) $row->duration,
-                    ];
-
-                    $usedDuration += (int) $row->duration;
-                    $assignedCount++;
-                } else {
-                    $positions[] = [
-                        'position' => $pos,
-                        'type'     => 'free',
-                    ];
-                }
-            }
-
-            $remainingDuration = max(0, (int) $slot->max_duration - $usedDuration);
-
-            // ❌ slot plein → on le retire
-            if ($remainingDuration <= 0 || $assignedCount >= $slot->max_ad_slot) {
-                return null;
-            }
-
-            return [
-                'slot_id'            => $slot->id,
-                'name'               => $slot->name,
-                'max_duration'       => (int) $slot->max_duration,
-                'max_ad_slot'        => (int) $slot->max_ad_slot,
-                'assigned_dcp'       => $assignedCount,
-                'remaining_duration' => $remainingDuration,
-                'positions'          => $positions,
-            ];
-        })
-        ->filter()
-        ->values();
-
-        return response()->json([
-            'slots' => $result
-        ]);
-    }
-
-
-    public function getAvailableSlots(Request $request)
     {
         $v = $request->validate([
             'start_date'        => 'required|date',
@@ -460,6 +308,144 @@ class SlotController extends Controller
                 }
                 // 🆓 Libre
                 else {
+                    $positions[] = [
+                        'position' => $pos,
+                        'type'     => 'free',
+                    ];
+                }
+            }
+
+            $remainingDuration = max(0, (int) $slot->max_duration - $usedDuration);
+
+            if ($remainingDuration <= 0 || $assignedCount >= $slot->max_ad_slot) {
+                return null;
+            }
+
+            return [
+                'slot_id'            => $slot->id,
+                'name'               => $slot->name,
+                'max_duration'       => (int) $slot->max_duration,
+                'max_ad_slot'        => (int) $slot->max_ad_slot,
+                'assigned_dcp'       => $assignedCount,
+                'remaining_duration' => $remainingDuration,
+                'positions'          => $positions,
+            ];
+        })
+        ->filter()
+        ->values();
+
+        return response()->json([
+            'slots' => $result
+        ]);
+    }
+
+
+    public function getAvailableSlots(Request $request)
+    {
+        $v = $request->validate([
+            'start_date'        => 'required|date',
+            'end_date'          => 'required|date|after_or_equal:start_date',
+            'template_slot_id'  => 'required|exists:template_slots,id',
+            'cinema_chain_id'   => 'required|array|min:1',
+            'cinema_chain_id.*' => 'integer|exists:cinema_chains,id',
+            'location_id'       => 'required|array|min:1',
+            'location_id.*'     => 'integer|exists:locations,id',
+            'movie_id'          => 'nullable|array',
+            'movie_id.*'        => 'integer|exists:movies,id',
+            'movie_genre_id'    => 'nullable|array',
+            'movie_genre_id.*'  => 'integer|exists:movie_genres,id',
+            'hall_type_id'      => 'nullable|array',
+            'hall_type_id.*'    => 'integer|exists:hall_types,id',
+            'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
+        ]);
+
+        $start = Carbon::parse($v['start_date'])->startOfDay();
+        $end   = Carbon::parse($v['end_date'])->endOfDay();
+
+        // 1️⃣ Slots avec positions
+        $slots = Slot::with('positions')
+            ->where('template_slot_id', $v['template_slot_id'])
+            ->select('id', 'name', 'max_duration', 'max_ad_slot')
+            ->get();
+
+        if ($slots->isEmpty()) {
+            return response()->json(['slots' => []]);
+        }
+
+        $slotIds = $slots->pluck('id')->toArray();
+
+        // 2️⃣ DCPs déjà réservés
+        $assignments = DB::table('compaign_slot_dcp as csd')
+            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
+            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
+            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
+            ->join('compaign_cinema_chain as ccc', 'ccc.compaign_id', '=', 'c.id')
+            ->whereIn('csd.slot_id', $slotIds)
+            ->whereIn('cl.location_id', $v['location_id'])
+            ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id'])
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('c.start_date', [$start, $end])
+                ->orWhereBetween('c.end_date', [$start, $end])
+                ->orWhere(function ($q2) use ($start, $end) {
+                    $q2->where('c.start_date', '<=', $start)
+                        ->where('c.end_date', '>=', $end);
+                });
+            })
+            ->select(
+                'csd.slot_id',
+                'csd.position',
+                'd.id as dcp_id',
+                'd.duration'
+            )
+            ->get()
+            ->groupBy('slot_id');
+
+        // 3️⃣ Construction finale avec ordre réel des positions
+        $result = $slots->map(function ($slot) use ($assignments) {
+
+            $slotAssignments = $assignments[$slot->id] ?? collect();
+            $byPosition = $slotAssignments->keyBy('position');
+
+            $positions = [];
+            $usedDuration = 0;
+            $assignedCount = 0;
+
+            // Parcourir les positions existantes dans l'ordre
+            foreach ($slot->positions as $posObj) {
+                $pos = $posObj->id; // on peut utiliser id ou créer un index si besoin
+                $isSmart = $posObj->type; // true ou false
+
+                if ($byPosition->has($pos)) {
+                    $row = $byPosition[$pos];
+                    $positions[] = [
+                        'position' => $pos,
+                        'type'     => 'reserved',
+                        'dcp_id'   => $row->dcp_id,
+                        'duration' => (int) $row->duration,
+                    ];
+                    $usedDuration += (int) $row->duration;
+                    $assignedCount++;
+                } else {
+                    $positions[] = [
+                        'position' => $pos,
+                        'type'     => $isSmart ? 'smart' : 'free',
+                    ];
+                }
+            }
+
+            // 🔹 Si moins de positions que max_ad_slot, compléter à la fin
+            for ($pos = count($slot->positions)+1; $pos <= $slot->max_ad_slot; $pos++) {
+                if ($byPosition->has($pos)) {
+                    $row = $byPosition[$pos];
+                    $positions[] = [
+                        'position' => $pos,
+                        'type'     => 'reserved',
+                        'dcp_id'   => $row->dcp_id,
+                        'duration' => (int) $row->duration,
+                    ];
+                    $usedDuration += (int) $row->duration;
+                    $assignedCount++;
+                } else {
                     $positions[] = [
                         'position' => $pos,
                         'type'     => 'free',
@@ -661,6 +647,7 @@ class SlotController extends Controller
         ]);
     }
 
+
     public function getAvailableSlotsEdit(Request $request)
     {
         $v = $request->validate([
@@ -690,12 +677,9 @@ class SlotController extends Controller
         $start = Carbon::parse($v['start_date'])->startOfDay();
         $end   = Carbon::parse($v['end_date'])->endOfDay();
 
-        /*
-        |--------------------------------------------------------------------------
-        | 1️⃣ Slots du template
-        |--------------------------------------------------------------------------
-        */
-        $slots = Slot::where('template_slot_id', $v['template_slot_id'])
+        // 1️⃣ Slots du template
+        $slots = Slot::with('positions')
+            ->where('template_slot_id', $v['template_slot_id'])
             ->select('id', 'name', 'max_duration', 'max_ad_slot')
             ->get();
 
@@ -705,11 +689,7 @@ class SlotController extends Controller
 
         $slotIds = $slots->pluck('id');
 
-        /*
-        |--------------------------------------------------------------------------
-        | 2️⃣ DCP de la campagne courante (toujours inclus)
-        |--------------------------------------------------------------------------
-        */
+        // 2️⃣ DCP de la campagne courante
         $currentAssignments = DB::table('compaign_slot_dcp as csd')
             ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
             ->where('csd.compaign_id', $v['compaign_id'])
@@ -724,11 +704,7 @@ class SlotController extends Controller
             )
             ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | 3️⃣ DCP des autres campagnes (mêmes filtres que CREATE)
-        |--------------------------------------------------------------------------
-        */
+        // 3️⃣ DCP des autres campagnes avec filtres
         $otherAssignmentsQuery = DB::table('compaign_slot_dcp as csd')
             ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
             ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
@@ -779,21 +755,12 @@ class SlotController extends Controller
             ->orderBy('csd.position')
             ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | 4️⃣ Merge & group by slot
-        |--------------------------------------------------------------------------
-        */
+        // 4️⃣ Merge & group by slot
         $assignments = $currentAssignments
             ->merge($otherAssignments)
             ->groupBy('slot_id');
 
-        /*
-        |--------------------------------------------------------------------------
-        | 5️⃣ Construction finale (IDENTIQUE AU CREATE)
-        |--------------------------------------------------------------------------
-        */
-       // 5️⃣ Construction finale des slots
+        // 5️⃣ Construction finale avec ordre exact et smart positions
         $result = $slots->map(function ($slot) use ($assignments, $v) {
 
             $slotAssignments = $assignments[$slot->id] ?? collect();
@@ -803,14 +770,12 @@ class SlotController extends Controller
             $usedDuration = 0;
             $assignedCount = 0;
 
-            // 🔹 Pré-calcul
-            $hasAnyAssignment = $slotAssignments->isNotEmpty();
-
-            for ($pos = 1; $pos <= $slot->max_ad_slot; $pos++) {
+            foreach ($slot->positions as $posObj) {
+                $pos = $posObj->id;
+                $isSmart = $posObj->type; // true/false
 
                 if ($byPosition->has($pos)) {
                     $row = $byPosition[$pos];
-
                     $isCurrent = $row->compaign_id == $v['compaign_id'];
 
                     $positions[] = [
@@ -823,17 +788,7 @@ class SlotController extends Controller
 
                     $usedDuration += (int) $row->duration;
                     $assignedCount++;
-
                 } else {
-
-                    // 🔥 SMART POSITION (exactement comme CREATE)
-                    $remainingDuration = (int) $slot->max_duration - $usedDuration;
-
-                    $isSmart =
-                        $hasAnyAssignment &&
-                        $remainingDuration > 0 &&
-                        $assignedCount < $slot->max_ad_slot;
-
                     $positions[] = [
                         'position' => $pos,
                         'type'     => $isSmart ? 'smart' : 'free',
@@ -841,9 +796,28 @@ class SlotController extends Controller
                 }
             }
 
+            // compléter les positions manquantes jusqu'à max_ad_slot
+            for ($pos = count($slot->positions)+1; $pos <= $slot->max_ad_slot; $pos++) {
+                if ($byPosition->has($pos)) {
+                    $row = $byPosition[$pos];
+                    $positions[] = [
+                        'position' => $pos,
+                        'type'     => 'reserved',
+                        'dcp_id'   => $row->dcp_id,
+                        'duration' => (int) $row->duration,
+                    ];
+                    $usedDuration += (int) $row->duration;
+                    $assignedCount++;
+                } else {
+                    $positions[] = [
+                        'position' => $pos,
+                        'type'     => 'free',
+                    ];
+                }
+            }
+
             $remainingDuration = max(0, (int) $slot->max_duration - $usedDuration);
 
-            // 🔥 Toujours afficher le slot si la campagne courante y a un DCP
             $hasCurrentCampaign = $slotAssignments
                 ->contains(fn ($row) => $row->compaign_id == $v['compaign_id']);
 
@@ -871,6 +845,9 @@ class SlotController extends Controller
             'slots' => $result
         ]);
     }
+
+
+
 
 
 
