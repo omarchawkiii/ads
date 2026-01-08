@@ -18,8 +18,5 @@ class TemplateSlot extends Model
         return $this->hasMany(Slot::class);
     }
 
-    public function positions(): HasMany
-    {
-        return $this->hasMany(Position::class);
-    }
+
 }

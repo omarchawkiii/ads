@@ -766,6 +766,17 @@
                                     `;
                                 }
 
+
+                                if (pos.type === 'smart') {
+
+                                    positionsHtml += `
+                                        <div class="slot-position reserved"
+                                            data-position="${pos.position}">
+                                            <span class="badge bg-secondary">Smart Position</span>
+                                        </div>
+                                    `;
+                                }
+
                                 /* 🟢 CAMPAGNE COURANTE */
                                 else if (pos.type === 'current') {
 

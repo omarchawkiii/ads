@@ -516,6 +516,15 @@
                                     </div>
                                 `;
                             }
+                            if (pos.type === 'smart') {
+                                positionsHtml += `
+                                    <div class="slot-position reserved" data-position="${pos.position}">
+                                        <span class="badge bg-secondary">
+                                            Smart Postion
+                                        </span>
+                                    </div>
+                                `;
+                            }
 
                             // 🟢 POSITION LIBRE
                             if (pos.type === 'free') {
