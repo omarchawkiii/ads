@@ -9,12 +9,12 @@
         <div class="row">
 
             {{-- ================= LEFT : DCP creatives ================= --}}
-            <div class="col-md-3">
-                <div class="card h-100">
+            <div class="col-md-3 filter">
+                <div class="card h-100 screen-max-height">
                     <div class="card-header bg-primary text-white">
                         DCP Creatives
                     </div>
-                    <div class="card-body" style="padding:15px">
+                    <div class="card-body " style="padding:15px">
 
                         <div class="mb-2">
                             <select id="dcp-category-filter" class="form-select">
@@ -158,7 +158,7 @@
                 </div>
 
                 {{-- ================= SLOTS ================= --}}
-                <div class="card ">
+                <div class="card available-slots-max-height">
                     <div class="card-header bg-success text-white">
                         Available Slots
                     </div>
@@ -436,7 +436,8 @@
 
                 $('.droppable-position').droppable({
                     accept: '.dcp-item',
-                    hoverClass: 'active',
+                    hoverClass: 'droppable-hover',
+
 
                     drop: function (e, ui) {
 
@@ -734,19 +735,6 @@
                         }
                         const slotCount = res.slots.length;
 
-                        let colClass = 'col-md-4';
-
-                        if (slotCount === 1) {
-                            colClass = 'col-md-12';
-                        } else if (slotCount === 2) {
-                            colClass = 'col-md-6';
-                        } else if (slotCount === 3) {
-                            colClass = 'col-md-4';
-                        } else {
-                            colClass = 'col-md-3';
-                        }
-
-
                         res.slots.forEach(slot => {
 
                             let remainingDuration = slot.remaining_duration;
@@ -816,7 +804,7 @@
 
 
                             $('#slots-container').append(`
-                                <div class="${colClass}">
+                                <div class="col-md-12">
                                     <div class="slot-box"
                                         data-slot="${slot.slot_id}"
                                         data-max="${slot.max_duration}"
@@ -1020,6 +1008,36 @@
 
 
 
+
+           /*
+           $(document).ready(function() {
+                function adjustBlockHeight() {
+                    // 📏 hauteur de la navbar
+                    var navbarHeight = $('.navbar').outerHeight() || 0;
+                    var filterHeight = $('.filter').outerHeight() || 0;
+                    // 📏 hauteur de l'écran
+                    var windowHeight = $(window).height();
+                    console.log(windowHeight)
+
+                    // 🎯 calcul max-height pour le bloc
+                    var maxHeight = windowHeight - navbarHeight;
+                    var slotsMaxHeight = windowHeight - navbarHeight - filterHeight;
+                    // ✅ appliquer au bloc ciblé
+                    $('.screen-max-height').css('max-height', maxHeight + 'px');
+                    $('.available-slots-max-height').css('max-height', maxHeight + 'px');
+                }
+
+
+                // 📌 appeler au chargement
+                adjustBlockHeight();
+
+                // 🔄 recalculer à chaque resize
+                $(window).resize(function() {
+                    adjustBlockHeight();
+                });
+            });*/
+
+
         });
     </script>
 
@@ -1075,6 +1093,9 @@
             border-radius: 10px;
             border: 1px solid #e0e6eb;
             border-top-width: 1px !important;
+            background: white;
+            border-radius: 10px !important;
+            padding: 10px;
         }
 
         body .select2-container--default .select2-selection--multiple
@@ -1126,32 +1147,36 @@
             cursor: move;
         }
         .slot-position {
-    border: 1px dashed #ccc;
-    padding: 8px;
-    margin-bottom: 6px;
-    min-height: 40px;
-    text-align: center;
-    background: #fafafa;
-}
+            border: 1px dashed #ccc;
+            padding: 8px;
+            margin-bottom: 6px;
+            min-height: 40px;
+            text-align: center;
+            background: #fafafa;
+        }
 
-.slot-position.reserved {
-    background: #e0e0e0;
-    border: 1px solid #aaa;
-    cursor: not-allowed;
-}
+        .slot-position.reserved {
+            background: #e0e0e0;
+            border: 1px solid #aaa;
+            cursor: not-allowed;
+        }
 
-.drop-hover {
-    background: #e7f3ff;
-    border-color: #0d6efd;
-}
+        .drop-hover {
+            background: #e7f3ff;
+            border-color: #0d6efd;
+        }
 
-.assigned {
-    background: #d1e7dd;
-    padding: 5px;
-    border-radius: 4px;
-}
+        .assigned {
+            background: #d1e7dd;
+            padding: 5px;
+            border-radius: 4px;
+        }
 
-
+        .droppable-hover {
+            box-shadow: 0 0 15px rgb(54 199 108);
+            border-radius: 5px;
+            transition: box-shadow 0.2s ease;
+        }
     </style>
 @endsection
 

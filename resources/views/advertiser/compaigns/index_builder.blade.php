@@ -484,19 +484,7 @@
                         );
                         return;
                     }
-                    const slotCount = res.slots.length;
 
-                    let colClass = 'col-md-4';
-
-                    if (slotCount === 1) {
-                        colClass = 'col-md-12';
-                    } else if (slotCount === 2) {
-                        colClass = 'col-md-6';
-                    } else if (slotCount === 3) {
-                        colClass = 'col-md-4';
-                    } else {
-                        colClass = 'col-md-3';
-                    }
                     res.slots.forEach(slot => {
 
                         let positionsHtml = '';
@@ -539,7 +527,7 @@
                         });
 
                         $('#slots-container').append(`
-                            <div class="${colClass}">
+                            <div class="col-md-12">
                                 <div class="slot-box"
                                     data-slot="${slot.slot_id}"
                                     data-max="${slot.max_duration}"
@@ -583,10 +571,11 @@
                         $('body').removeClass('dragging-dcp');
                     }
                 });
+
                 $('.droppable-position').droppable({
 
                     accept: '.dcp-item',
-                    hoverClass: 'active',
+                    hoverClass: 'droppable-hover',
 
                     drop: function (e, ui) {
 
@@ -669,6 +658,7 @@
                     }
                 });
             }
+
 
             function initDroppable() {
 
@@ -1006,6 +996,10 @@
             border-radius: 10px;
             border: 1px solid #e0e6eb;
             border-top-width: 1px !important;
+
+            background: white;
+            border-radius: 10px !important;
+            padding: 10px;
         }
 
 
@@ -1030,31 +1024,36 @@
         }
 
         .slot-position {
-    border: 1px dashed #ccc;
-    padding: 8px;
-    margin-bottom: 6px;
-    min-height: 40px;
-    text-align: center;
-    background: #fafafa;
-}
+            border: 1px dashed #ccc;
+            padding: 8px;
+            margin-bottom: 6px;
+            min-height: 40px;
+            text-align: center;
+            background: #fafafa;
+        }
 
-.slot-position.reserved {
-    background: #e0e0e0;
-    border: 1px solid #aaa;
-    cursor: not-allowed;
-}
+        .slot-position.reserved {
+            background: #e0e0e0;
+            border: 1px solid #aaa;
+            cursor: not-allowed;
+        }
 
-.drop-hover {
-    background: #e7f3ff;
-    border-color: #0d6efd;
-}
+        .drop-hover {
+            background: #e7f3ff;
+            border-color: #0d6efd;
+        }
 
-.assigned {
-    background: #d1e7dd;
-    padding: 5px;
-    border-radius: 4px;
-}
+        .assigned {
+            background: #d1e7dd;
+            padding: 5px;
+            border-radius: 4px;
+        }
 
+        .droppable-hover {
+            box-shadow: 0 0 15px rgb(54 199 108);
+            border-radius: 5px;
+            transition: box-shadow 0.2s ease;
+        }
 
 
     </style>

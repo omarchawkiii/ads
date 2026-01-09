@@ -123,3 +123,9 @@ table.dataTable thead>tr>th.sorting:after, table.dataTable thead>tr>th.sorting_a
 {
     padding: 15px !important ;
 }
+/*
+.screen-max-height,
+.available-slots-max-height
+{
+    overflow-x: auto !important;
+}*/
