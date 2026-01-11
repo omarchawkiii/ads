@@ -9,7 +9,7 @@
         <div class="row">
 
             {{-- ================= LEFT : DCP creatives ================= --}}
-            <div class="col-md-3 filter">
+            <div class="col-md-3 ">
                 <div class="card h-100 screen-max-height">
                     <div class="card-header bg-primary text-white">
                         DCP Creatives
@@ -44,10 +44,10 @@
             </div>
 
             {{-- ================= RIGHT ================= --}}
-            <div class="col-md-9">
+            <div class="col-md-9 ">
 
                 {{-- ================= FILTERS ================= --}}
-                <div class="card mb-3">
+                <div class="card mb-3 filter">
                     <div class="card-header bg-info text-white">
                         Filters
                     </div>
@@ -1009,7 +1009,7 @@
 
 
 
-           /*
+
            $(document).ready(function() {
                 function adjustBlockHeight() {
                     // 📏 hauteur de la navbar
@@ -1017,14 +1017,19 @@
                     var filterHeight = $('.filter').outerHeight() || 0;
                     // 📏 hauteur de l'écran
                     var windowHeight = $(window).height();
+                    console.log(navbarHeight)
+                    console.log(filterHeight)
                     console.log(windowHeight)
 
                     // 🎯 calcul max-height pour le bloc
-                    var maxHeight = windowHeight - navbarHeight;
-                    var slotsMaxHeight = windowHeight - navbarHeight - filterHeight;
+                    var maxHeight = windowHeight - navbarHeight -70 ;
+                    var slotsMaxHeight = windowHeight - navbarHeight - filterHeight -80;
+
+                    console.log(maxHeight)
+                    console.log(slotsMaxHeight)
                     // ✅ appliquer au bloc ciblé
                     $('.screen-max-height').css('max-height', maxHeight + 'px');
-                    $('.available-slots-max-height').css('max-height', maxHeight + 'px');
+                    $('.available-slots-max-height').css('max-height', slotsMaxHeight + 'px');
                 }
 
 
@@ -1035,7 +1040,7 @@
                 $(window).resize(function() {
                     adjustBlockHeight();
                 });
-            });*/
+            });
 
 
         });
