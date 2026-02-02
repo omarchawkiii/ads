@@ -227,13 +227,16 @@ Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update']
     Route::delete('dcp_creatives', [App\Http\Controllers\DcpCreativeController::class, 'destroy'])->name('dcp_creatives.destroy');
     Route::get('dcp_creatives/{id}/show', [App\Http\Controllers\DcpCreativeController::class, 'show'])->name('dcp_creatives.show');
 
-
-
-
     Route::post('/zip-upload/init', [App\Http\Controllers\DcpCreativeController::class, 'init'])->name('zip.upload.init');
     Route::post('/zip-upload/chunk', [App\Http\Controllers\DcpCreativeController::class, 'chunk'])->name('zip.upload.chunk');
     Route::post('/zip-upload/complete', [App\Http\Controllers\DcpCreativeController::class, 'complete'])->name('zip.upload.complete');
 
+    Route::get('/customers', [App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/list', [App\Http\Controllers\CustomerController::class, 'get'])->name('customers.get');
+    Route::get('/customers/{id}/show', [App\Http\Controllers\CustomerController::class, 'show'])->name('customers.show');
+    Route::post('/customers', [App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
+        Route::put('/customers/{customer}', [App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
+    Route::delete('/customers/{customer}', [App\Http\Controllers\CustomerController::class, 'destroy'])->name('customers.destroy');
 
 
 });

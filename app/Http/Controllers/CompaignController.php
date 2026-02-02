@@ -198,7 +198,6 @@ class CompaignController extends Controller
                 }
             }
 
-
             // 5️⃣ Génération XML
             CampaignXmlGenerator::generate($compaign);
 
@@ -346,249 +345,6 @@ class CompaignController extends Controller
         });
     }
 
-    public function edit_($id)
-    {
-        $compaign = Compaign::with([
-            'movies:id',
-            'locations:id',
-            'movieGenres:id',
-            'hallTypes:id',
-            'cinemaChains:id',
-            'slots:id,template_slot_id,name,max_duration',
-            'dcpCreatives:id',
-        ])->findOrFail($id);
-
-        //$dcp_creatives = DcpCreative::where('status', 1)->get();
-        $dcp_creatives = DcpCreative::where('status', 1)->where('user_id',Auth()->user()->id)->orderBy('name', 'asc')->get() ;
-
-        // 🔹 Charger tous les TemplateSlots avec leurs slots
-        $templateSlots = TemplateSlot::with('slots')
-            ->where('id', $compaign->template_slot_id)
-            ->orderBy('name')
-            ->get();
-
-        $slotsPayload = [];
-
-        // 🔹 Calculer le used pour chaque slot selon les règles de getAvailableSlots() pour les autres campagnes
-        $slotIds = $compaign->slots->pluck('id');
-
-        $usedBySlotQuery = DB::table('compaign_slot_dcp as csd')
-            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
-            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
-            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
-            ->whereIn('csd.slot_id', $slotIds)
-            ->whereIn('cl.location_id', $compaign->locations->pluck('id')->toArray())
-            ->where(function ($q) use ($compaign) {
-                $start = $compaign->start_date;
-                $end   = $compaign->end_date;
-                $q->whereBetween('c.start_date', [$start, $end])
-                  ->orWhereBetween('c.end_date', [$start, $end])
-                  ->orWhere(function ($q2) use ($start, $end) {
-                      $q2->where('c.start_date', '<=', $start)
-                         ->where('c.end_date', '>=', $end);
-                  });
-            })
-            ->where('c.id', '!=', $compaign->id) // ignorer la campagne en édition
-            ->select('csd.slot_id', DB::raw('SUM(d.duration) as used'))
-            ->groupBy('csd.slot_id');
-
-        $usedBySlot = $usedBySlotQuery->pluck('used', 'csd.slot_id');
-
-        // 🔹 Ajouter les DCP existants dans la campagne
-        foreach ($compaign->dcpCreatives as $dcp) {
-            $slotId = $dcp->pivot->slot_id;
-            $dcp_data= DcpCreative::find($dcp->id);
-            if (!isset($slotsPayload[$slotId])) {
-                $slot = $compaign->slots->firstWhere('id', $slotId);
-                $slotsPayload[$slotId] = [
-                    'slot_id' => $slotId,
-                    'name' => $slot->name ?? 'Slot ' . $slotId,
-                    'max_duration' => $slot->max_duration ?? 0,
-                    'dcps' => [],
-                ];
-            }
-
-            $slotsPayload[$slotId]['dcps'][] = [
-                'dcp_id' => $dcp->id,
-                'duration' => (int) $dcp_data->duration, // prendre la durée depuis DcpCreative
-            ];
-        }
-
-        // 🔹 Compléter tous les slots du template avec calcul du remaining
-        foreach ($templateSlots as $tpl) {
-            foreach ($tpl->slots as $slot) {
-                $assignedDuration = array_sum(array_column($slotsPayload[$slot->id]['dcps'] ?? [], 'duration'));
-                $used = (int) ($usedBySlot[$slot->id] ?? 0);
-                $remaining = max(0, $slot->max_duration - $used); // ne pas compter la campagne actuelle
-
-                $slotsPayload[$slot->id] = [
-                    'slot_id' => $slot->id,
-                    'name' => $slot->name,
-                    'max_duration' => $slot->max_duration,
-                    'dcps' => $slotsPayload[$slot->id]['dcps'] ?? [],
-                    'used' => $used + $assignedDuration, // info totale pour affichage
-                    'remaining' => $remaining,
-                ];
-            }
-        }
-
-        return view('advertiser.compaigns.edit_builder', [
-            'compaign' => $compaign,
-            'slotsData' => array_values($slotsPayload),
-            'dcp_creatives' => $dcp_creatives,
-            'slot_templates' => $templateSlots,
-            'isEdit' => true,
-            'selectedLocations'    => $compaign->locations->pluck('id')->toArray(),
-
-            // 🔹 Données pour les selects
-            'compaign_categories' => CompaignCategory::orderBy('name')->get(),
-            'brands' => Brand::orderBy('name')->get(),
-            'compaign_objectives' => CompaignObjective::orderBy('name')->get(),
-            'langues' => Langue::orderBy('name')->get(),
-            'locations' => Location::orderBy('name')->get(),
-            'hall_types' => HallType::orderBy('name')->get(),
-            'movies' => Movie::orderBy('name')->get(),
-            'movie_genres' => MovieGenre::orderBy('name')->get(),
-            'slot_templates' => TemplateSlot::orderBy('name', 'asc')->get() ,
-            'genders' => Gender::orderBy('name')->get(),
-            'target_types' => TargetType::orderBy('name')->get(),
-            'interests' => Interest::orderBy('name')->get(),
-            'slots' => Slot::orderBy('name')->get(),
-            'cinema_chains' => CinemaChain::orderBy('name')->get(),
-        ]);
-    }
-
-    public function edit__($id)
-    {
-        $compaign = Compaign::with([
-            'movies:id',
-            'locations:id',
-            'movieGenres:id',
-            'hallTypes:id',
-            'cinemaChains:id',
-            'slots:id,template_slot_id,name,max_duration,max_ad_slot',
-            'dcpCreatives:id',
-        ])->findOrFail($id);
-
-        $dcp_creatives = DcpCreative::where('status', 1)
-            ->where('user_id', Auth()->user()->id)
-            ->orderBy('name', 'asc')
-            ->get();
-
-        // 🔹 Charger le template slot avec tous les slots
-        $templateSlots = TemplateSlot::with('slots')
-            ->where('id', $compaign->template_slot_id)
-            ->orderBy('name')
-            ->get();
-
-        $slotsPayload = [];
-
-        $slotIds = $compaign->slots->pluck('id')->toArray();
-        $locationIds = $compaign->locations->pluck('id')->toArray();
-
-        // 🔹 Calculer le used et le nombre de DCP assignés par slot (autres campagnes)
-        $usedBySlotQuery = DB::table('compaign_slot_dcp as csd')
-            ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
-            ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
-            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
-            ->whereIn('csd.slot_id', $slotIds)
-            ->whereIn('cl.location_id', $locationIds)
-            ->where(function ($q) use ($compaign) {
-                $start = $compaign->start_date;
-                $end   = $compaign->end_date;
-                $q->whereBetween('c.start_date', [$start, $end])
-                ->orWhereBetween('c.end_date', [$start, $end])
-                ->orWhere(function ($q2) use ($start, $end) {
-                    $q2->where('c.start_date', '<=', $start)
-                        ->where('c.end_date', '>=', $end);
-                });
-            })
-            ->where('c.id', '!=', $compaign->id)
-            ->select(
-                'csd.slot_id',
-                DB::raw('SUM(d.duration) as used_duration'),
-                DB::raw('COUNT(csd.dcp_creative_id) as assigned_dcp_count')
-            )
-            ->groupBy('csd.slot_id');
-
-        $usedBySlot = $usedBySlotQuery->get()->keyBy('slot_id');
-
-        // 🔹 Ajouter les DCP existants dans la campagne
-        foreach ($compaign->dcpCreatives as $dcp) {
-            $slotId = $dcp->pivot->slot_id;
-            $dcpData = DcpCreative::find($dcp->id);
-
-            if (!isset($slotsPayload[$slotId])) {
-                $slot = $compaign->slots->firstWhere('id', $slotId);
-                $slotsPayload[$slotId] = [
-                    'slot_id' => $slotId,
-                    'name' => $slot->name ?? 'Slot ' . $slotId,
-                    'max_duration' => $slot->max_duration ?? 0,
-                    'max_ad_slot' => $slot->max_ad_slot ?? 0,
-                    'dcps' => [],
-                ];
-            }
-
-            $slotsPayload[$slotId]['dcps'][] = [
-                'dcp_id' => $dcp->id,
-                'duration' => (int) $dcpData->duration,
-            ];
-        }
-
-        // 🔹 Compléter tous les slots du template avec calcul du remaining et du remaining DCP
-        foreach ($templateSlots as $tpl) {
-            foreach ($tpl->slots as $slot) {
-                $assignedDuration = array_sum(array_column($slotsPayload[$slot->id]['dcps'] ?? [], 'duration'));
-                $assignedDcpCount = count($slotsPayload[$slot->id]['dcps'] ?? []);
-
-                $usedData = $usedBySlot[$slot->id] ?? null;
-                $usedDurationOther = (int) ($usedData->used_duration ?? 0);
-                $assignedDcpOther = (int) ($usedData->assigned_dcp_count ?? 0);
-
-                $remainingDuration = max(0, $slot->max_duration - $usedDurationOther);
-                $remainingDcp = max(0, $slot->max_ad_slot - $assignedDcpOther);
-
-                $slotsPayload[$slot->id] = [
-                    'slot_id' => $slot->id,
-                    'name' => $slot->name,
-                    'max_duration' => $slot->max_duration,
-                    'max_ad_slot' => $slot->max_ad_slot,
-                    'dcps' => $slotsPayload[$slot->id]['dcps'] ?? [],
-                    'used_duration' => $usedDurationOther + $assignedDuration,
-                    'assigned_dcp' => $assignedDcpOther + $assignedDcpCount,
-                    'remaining_duration' => $remainingDuration,
-                    'remaining_dcp' => $remainingDcp,
-                ];
-
-
-            }
-        }
-
-        return view('advertiser.compaigns.edit_builder', [
-            'compaign' => $compaign,
-            'slotsData' => array_values($slotsPayload),
-            'dcp_creatives' => $dcp_creatives,
-            'slot_templates' => $templateSlots,
-            'isEdit' => true,
-            'selectedLocations' => $locationIds,
-
-            // 🔹 Données pour les selects
-            'compaign_categories' => CompaignCategory::orderBy('name')->get(),
-            'brands' => Brand::orderBy('name')->get(),
-            'compaign_objectives' => CompaignObjective::orderBy('name')->get(),
-            'langues' => Langue::orderBy('name')->get(),
-            'locations' => Location::orderBy('name')->get(),
-            'hall_types' => HallType::orderBy('name')->get(),
-            'movies' => Movie::orderBy('name')->get(),
-            'movie_genres' => MovieGenre::orderBy('name')->get(),
-            'slot_templates' => TemplateSlot::orderBy('name', 'asc')->get(),
-            'genders' => Gender::orderBy('name')->get(),
-            'target_types' => TargetType::orderBy('name')->get(),
-            'interests' => Interest::orderBy('name')->get(),
-            'slots' => Slot::orderBy('name')->get(),
-            'cinema_chains' => CinemaChain::orderBy('name')->get(),
-        ]);
-    }
     public function edit($id)
     {
         /* =====================================================
@@ -743,10 +499,6 @@ class CompaignController extends Controller
         ]);
     }
 
-
-
-
-
     public function update(Request $request, $id)
     {
         $v = $request->validate([
@@ -899,7 +651,6 @@ class CompaignController extends Controller
         $compaigns = Compaign::where('user_id',Auth()->user()->id)->orderBy('created_at', 'desc')->get();
         return Response()->json(compact('compaigns'));
     }
-
 
     public function advertiser_index()
     {
@@ -1126,7 +877,6 @@ class CompaignController extends Controller
 
         return view('advertiser.compaigns.index_builder', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'));
     }
-
 
     public function planningSlotsPage()
     {

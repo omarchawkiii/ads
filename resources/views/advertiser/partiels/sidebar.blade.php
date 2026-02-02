@@ -60,6 +60,12 @@
               <span class="hide-menu">DCP Creative</span>
             </a>
           </li>
+          <li class="sidebar-item">
+            <a class="sidebar-link" href="{{ route('advertiser.customers.index') }}" id="get-url" aria-expanded="false">
+                <i class="mdi mdi-account-star"> </i>
+              <span class="hide-menu">Customer</span>
+            </a>
+          </li>
 
         </ul>
       </nav>

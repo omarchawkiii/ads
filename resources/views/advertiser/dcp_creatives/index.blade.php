@@ -37,7 +37,7 @@
                             <th class="text-center">UUID</th>
                             <th class="text-center">Duration</th>
                             <th class="text-center">Category</th>
-                            <!--<th class="text-center">Status</th>-->
+                            <th class="text-center">Customer</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -110,6 +110,18 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Custmers</label>
+                            <select class="form-control" id="customer_id" required>
+                                <option value="">-- Select Customer --</option>
+
+                                @foreach($customers ?? [] as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <div class="d-flex gap-2">
                             <button type="submit" id="startBtn" class="btn btn-success">Start uploading</button>
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -188,6 +200,7 @@
             $('#uploadForm').on('submit', async function(e) {
                 e.preventDefault();
                 const compaign_category_id = $('#compaign_category_id').val();
+                const customer_id = $('#customer_id').val();
                 const file = $('#fileInput')[0].files[0];
                 if (!file) return;
 
@@ -218,6 +231,7 @@
                         data: {
                             file_name: file.name,
                             compaign_category_id:compaign_category_id,
+                            customer_id:customer_id,
                             file_size: file.size
                         }
                     });
@@ -243,6 +257,7 @@
                         fd.append('upload_id', uploadId);
                         fd.append('index', currentIndex);
                         fd.append('compaign_category_id', compaign_category_id);
+                        fd.append('customer_id', customer_id);
                         fd.append('total', total);
                         fd.append('file_name', file.name);
                         fd.append('chunk', blob, `chunk_${currentIndex}`);
@@ -291,6 +306,7 @@
                             total: total,
                             file_name: file.name,
                             compaign_category_id:compaign_category_id,
+                            customer_id:customer_id,
                         }
                     });
 
@@ -339,6 +355,7 @@
                     resetProgressUI();
                     $('#fileInput').val('');
                     $('#compaign_category_id').val('');
+                    $('#customer_id').val('');
                     get_dcp_creatives();
                 }
             });
@@ -368,6 +385,7 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     formatHMS(value.duration) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.compaign_category ? value.compaign_category.name : '-') + '</td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.customer ? value.customer.name : '-') + '</td>' +
                                     /*'<td class="text-body align-middle fw-medium text-decoration-none">' + (
                                         value.status == 1 ? '<span class="badge bg-warning-subtle text-warning">Pending</span> ' :
                                         value.status == 2 ? '<span class="badge bg-success-subtle text-success">Approved</span>' :

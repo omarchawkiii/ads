@@ -39,4 +39,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(DcpCreative::class);
     }
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
 }

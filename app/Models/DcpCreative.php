@@ -17,6 +17,7 @@ class DcpCreative extends Model
         'path',
         'compaign_category_id',
         'user_id',
+        'customer_id',
         'status',
     ];
     public function compaigns()
@@ -41,9 +42,9 @@ class DcpCreative extends Model
          ->withTimestamps();
     }
 
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class);
     }
 
 }

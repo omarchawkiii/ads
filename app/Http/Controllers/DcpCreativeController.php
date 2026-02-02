@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CompaignCategory;
+use App\Models\Customer;
 use App\Models\DcpCreative;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,7 +22,9 @@ class DcpCreativeController extends Controller
     public function index()
     {
         $categories = CompaignCategory::orderBy('name')->get();
-        return view('advertiser.dcp_creatives.index',compact('categories'));
+        $customers = Customer::where('user_id',Auth()->user()->id)->orderBy('name')->get();
+
+        return view('advertiser.dcp_creatives.index',compact('categories','customers'));
     }
 
     public function show(Request $request)
@@ -32,7 +35,7 @@ class DcpCreativeController extends Controller
 
     public function get()
     {
-        $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->with('compaignCategory')->orderBy('name', 'asc')->get() ;
+        $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->with('compaignCategory','customer')->orderBy('name', 'asc')->get() ;
         //$dcp_creatives = DcpCreative::with('compaignCategory')->orderBy('name', 'asc')->get();
         return Response()->json(compact('dcp_creatives'));
     }
@@ -211,6 +214,7 @@ class DcpCreativeController extends Controller
             'total'      => 'required|integer|min:1',
             'file_name'  => 'required|string',
             'compaign_category_id' => ['required', 'exists:compaign_categories,id'],
+            'customer_id' => ['required', 'exists:customers,id'],
         ]);
 
         $uploadId  = $request->input('upload_id');
@@ -345,6 +349,7 @@ class DcpCreativeController extends Controller
             'path'                => $finalPath,
             'user_id'             => Auth()->user()->id,
             'compaign_category_id' => $request->compaign_category_id,
+            'customer_id' => $request->customer_id,
         ]);
 
         return response()->json([
