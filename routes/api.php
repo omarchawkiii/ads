@@ -31,6 +31,9 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [App\Http\Controllers\Api\UserController::class, 'index']);
+    Route::post('/refresh_locations', [App\Http\Controllers\Api\LocationCotroller::class, 'refresh_locations']);
+    Route::get('/get_campaign', [App\Http\Controllers\Api\CompaignController::class, 'index']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
