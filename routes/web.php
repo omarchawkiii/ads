@@ -174,6 +174,11 @@ Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::cla
 Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
 Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.approuve')->middleware(['auth','admin']);
 Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.billing')->middleware(['auth','admin']);
+Route::get('/compaigns/refresh_camapaign', [App\Http\Controllers\CompaignController::class, 'refresh_camapaign'])->name('compaigns.refresh_camapaign')->middleware(['auth','admin']);
+
+
+
+
 
 
 Route::get('/planning/slots', [App\Http\Controllers\CompaignController::class, 'planningSlotsPage'])->name('planning.slots.page');

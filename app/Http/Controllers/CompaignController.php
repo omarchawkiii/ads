@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use GuzzleHttp\Exception\RequestException;
-
+use Illuminate\Mail\Mailables\Content;
 
 class CompaignController extends Controller
 {
@@ -84,7 +84,7 @@ class CompaignController extends Controller
         return Response()->json(compact('compaigns'));
     }
 
-    public function store(Request $request)
+    public function store_(Request $request)
     {
         $v = $request->validate([
 
@@ -208,141 +208,141 @@ class CompaignController extends Controller
         });
     }
 
-    public function store_(Request $request)
+
+    public function store(Request $request)
     {
         $v = $request->validate([
-            'campaign_name' => "test",
-            'compaign_name'    => 'required|string|max:255',
-            'template_slot_id' => 'required|integer|exists:template_slots,id',
-            'start_date'       => 'required|date',
-            'end_date'         => 'required|date|after_or_equal:start_date',
-
-            // filtres
+            'compaign_name'        => 'required|string|max:255',
+            'template_slot_id'     => 'required|integer|exists:template_slots,id',
+            'start_date'           => 'required|date',
+            'end_date'             => 'required|date|after_or_equal:start_date',
             'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
-            'cinema_chain_id'      => 'nullable|integer|exists:cinema_chains,id',
-            'location_id'         => 'array',
-            'location_id.*'       => 'integer|exists:locations,id',
-            'movie_genre_id'      => 'array',
-            'movie_genre_id.*'    => 'integer|exists:movie_genres,id',
-
-            'movie_id'             => 'required|array|min:1',
+            'cinema_chain_id'      => 'nullable|array',
+            'cinema_chain_id.*'    => 'integer|exists:cinema_chains,id',
+            'location_id'          => 'array',
+            'location_id.*'        => 'integer|exists:locations,id',
+            'movie_genre_id'       => 'array',
+            'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
+            'movie_id'             => 'nullable|array|min:1',
             'movie_id.*'           => 'integer|exists:movies,id',
-
-            'hall_type_id'    => 'array',
-            'hall_type_id.*'  => 'integer|exists:hall_types,id',
-
-            // slots + dcps
-            'slots'                     => 'required|array|min:1',
-            'slots.*.slot_id'           => 'required|integer|exists:slots,id',
-            'slots.*.dcps'              => 'required|array|min:1',
-            'slots.*.dcps.*.dcp_id'     => 'required|integer|exists:dcp_creatives,id',
-            'slots.*.dcps.*.duration'   => 'required|integer|min:1',
-
-            'budget'            => 'required|integer|min:1',
-
-
-            'langue'            => 'required',
-            'langue.*'          => 'integer|exists:langues,id',
-
-            'gender'            => 'required',
-            'gender.*'          => 'integer|exists:genders,id',
-
-            'target_type'        => 'array',
-            'target_type.*'      => 'integer|exists:target_types,id',
-
-            'interest'        => 'array',
-            'interest.*'      => 'integer|exists:interests,id',
-
-
-
+            'hall_type_id'         => 'array',
+            'hall_type_id.*'       => 'integer|exists:hall_types,id',
+            'slots'                    => 'required|array|min:1',
+            'slots.*.slot_id'          => 'required|integer|exists:slots,id',
+            'slots.*.dcps'             => 'required|array|min:1',
+            'slots.*.dcps.*.position'  => 'required|integer|min:1',
+            'slots.*.dcps.*.dcp_id'    => 'required|integer|exists:dcp_creatives,id',
+            'budget'      => 'required|integer|min:1',
+            'langue'      => 'required|integer|exists:langues,id',
+            'gender'      => 'required|integer|exists:genders,id',
+            'target_type'   => 'array',
+            'target_type.*' => 'integer|exists:target_types,id',
+            'interest'      => 'array',
+            'interest.*'    => 'integer|exists:interests,id',
         ]);
 
-        return DB::transaction(function () use ($v, $request) {
+        $compaign = DB::transaction(function () use ($v, $request) {
 
-            // 1️⃣ create compaign
+            // 1️⃣ Création de la campagne
             $compaign = Compaign::create([
-                'name'             => $v['compaign_name'],
-                'template_slot_id' => $v['template_slot_id'],
+                'name'                  => $v['compaign_name'],
+                'template_slot_id'      => $v['template_slot_id'],
                 'langue_id'             => $v['langue'],
                 'gender_id'             => $v['gender'],
-                'budget'             => $v['budget'],
-                'compaign_objective_id' =>1,
-                'movie_id'              => 6,
-                'slot_id'               => null,
+                'budget'                => $v['budget'],
+                'compaign_objective_id' => 1,
                 'ad_duration'           => 30,
-                'start_date'       => $v['start_date'],
-                'end_date'         => $v['end_date'],
-                'compaign_category_id' => 1,
-                'cinema_chain_id'      => $v['cinema_chain_id'] ?? null,
-                'user_id'          => Auth::id(),
-                'status'           => 1,
+                'start_date'            => $v['start_date'],
+                'end_date'              => $v['end_date'],
+                'compaign_category_id'  => 1,
+                'user_id'               => Auth::id(),
+                'status'                => 1,
             ]);
 
-
-
-
-            // helper pour arrays
             $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
+
+            // 2️⃣ Relations
             $compaign->movies()->sync($ids('movie_id'));
 
+            if ($request->has('cinema_chain_id')) $compaign->cinemaChains()->sync($ids('cinema_chain_id'));
+            if ($request->has('location_id'))     $compaign->locations()->sync($ids('location_id'));
+            if ($request->has('movie_genre_id'))  $compaign->movieGenres()->sync($ids('movie_genre_id'));
+            if ($request->has('hall_type_id'))    $compaign->hallTypes()->sync($ids('hall_type_id'));
+            if ($request->has('target_type'))     $compaign->targetTypes()->sync($ids('target_type'));
+            if ($request->has('interest'))        $compaign->interests()->sync($ids('interest'));
 
+            // 3️⃣ Slots
+            $compaign->slots()->sync(
+                collect($v['slots'])->pluck('slot_id')->unique()->toArray()
+            );
 
-            if ($request->has('location_id')) {
-                $compaign->locations()->sync($ids('location_id'));
-            }
-
-            if ($request->has('movie_genre_id')) {
-                $compaign->movieGenres()->sync($ids('movie_genre_id'));
-            }
-
-
-            if ($request->has('hall_type_id')) {
-
-                $compaign->hallTypes()->sync($ids('hall_type_id'));
-            }
-
-            if ($request->has('target_type')) {
-
-                $compaign->targetTypes()->sync($ids('target_type'));
-            }
-
-            if ($request->has('interest')) {
-
-                $compaign->interests()->sync($ids('interest'));
-            }
-
-
-            // 3️⃣ attach slots (compaign_slot)
-            $slotIds = collect($v['slots'])->pluck('slot_id')->unique()->toArray();
-            $compaign->slots()->sync($slotIds);
-
-           // 4️⃣ attach dcps with slot_id (compaign_slot_dcp)
-            $pivotData = [];
-
+            // 4️⃣ DCPs
+            $compaign->dcpCreatives()->detach();
             foreach ($v['slots'] as $slotData) {
-                $slotId = $slotData['slot_id'];
-
                 foreach ($slotData['dcps'] as $dcp) {
-                    $dcpId = $dcp['dcp_id'];
-
-                    $pivotData[$dcpId] = [
-                        'slot_id' => $slotId,
-                        // 'duration' => $dcp['duration'], // ajoute-le ici si la colonne existe
-                    ];
+                    $compaign->dcpCreatives()->attach($dcp['dcp_id'], [
+                        'slot_id'    => $slotData['slot_id'],
+                        'position'   => $dcp['position'],
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
             }
 
-            // sync sur la relation dcpCreatives
-            $compaign->dcpCreatives()->sync($pivotData);
+            // 5️⃣ Génération XML
+            CampaignXmlGenerator::generate($compaign);
 
-            $xmlPath = CampaignXmlGenerator::generate($compaign);
-
-
-            return response()->json([
-                'message' => 'Compaign created successfully.',
-                'id'      => $compaign->id,
-            ], 201);
+            return $compaign;
         });
+
+        // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
+        $this->pushCampaignToNoc($compaign);
+
+        return response()->json([
+            'message' => 'Compaign created successfully.',
+            'id'      => $compaign->id,
+        ], 201);
+    }
+    private function pushCampaignToNoc(Compaign $compaign): void
+    {
+        try {
+            $config = Config::first();
+
+            if (!$config) {
+
+                return;
+            }
+
+            $url = rtrim($config->link, '/') . '/api/receive_campaign';
+
+            $client = new Client();
+            $response = $client->request('POST', $url, [
+                'connect_timeout' => 5,
+                'query' => [
+                    'username' => $config->user,
+                    'password' => $config->password,
+                ],
+                'json' => [
+                    'id'      => $compaign->id,
+                    'name'    => $compaign->name,
+                    'xml_url' => url("storage/app/public/campaigns/campaign_{$compaign->id}.xml"),
+                ],
+            ]);
+
+            $contents = json_decode($response->getBody(), true);
+
+            if (!$contents || !$contents['status']) {
+
+                return;
+            }
+
+
+
+        } catch (RequestException $e) {
+
+        } catch (\Exception $e) {
+
+        }
     }
 
     public function edit($id)
@@ -501,6 +501,7 @@ class CompaignController extends Controller
 
     public function update(Request $request, $id)
     {
+
         $v = $request->validate([
 
             'compaign_name'       => 'required|string|max:255',
@@ -622,7 +623,8 @@ class CompaignController extends Controller
             | 6️⃣ regen XML
             -------------------------------------------------*/
             CampaignXmlGenerator::generate($compaign);
-
+           // $response = $this->sendCampaignToNOC($compaign->id);
+            $response = $this->pushCampaignToNoc($compaign);
             return response()->json([
                 'message' => 'Compaign updated successfully.',
                 'id'      => $compaign->id,
@@ -1042,5 +1044,67 @@ class CompaignController extends Controller
 
         return response()->json(['data' => $rows]);
     }
+
+
+    /*public function sendCampaignToNOC($campaignId)
+    {
+        try {
+
+            $client = new Client();
+            $config = Config::first() ;
+            $url = rtrim($config->link, '/') . '/api/adsmart/create_template';
+
+            $campaign = Compaign::findOrFail($campaignId);
+
+            // Payload à envoyer
+            $payload = [
+                'campaign_id'   => $campaign->id,
+                'campaign_name' => $campaign->name,
+                'start_date'    => $campaign->start_date,
+                'end_date'      => $campaign->end_date,
+                'budget'        => $campaign->budget,
+            ];
+
+
+            $response = $client->request('POST', $url,[
+                'connect_timeout' => 5,
+                'query' => [
+                    'content' =>$payload,
+                    'username' => $config->user,
+                    'password' =>$config->password,
+                ],
+            ]);
+
+
+
+            if (!$response->successful()) {
+
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Erreur lors de la création du template NOC'
+                ], 500);
+            }
+
+            $responseData = $response->json();
+
+            // Sauvegarder l’ID template NOC
+            $campaign->noc_template_id = $responseData['template_id'] ?? null;
+            $campaign->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Template créé sur NOC avec succès',
+                'noc_response' => $responseData
+            ]);
+
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }*/
 
 }

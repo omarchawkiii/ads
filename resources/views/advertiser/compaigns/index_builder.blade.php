@@ -162,6 +162,23 @@
             </div>
         </div>
     </div>
+    {{-- ================= RESERVED INFO MODAL ================= --}}
+    <div class="modal fade" id="reservedInfoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold">Position Reserved</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="reservedInfoBody">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="saveCampaignModal" tabindex="-1">
         <div class="modal-dialog modal-lg  modal-dialog-centered">
             <div class="modal-content">
@@ -495,20 +512,25 @@
 
                             // 🔒 POSITION RÉSERVÉE
                             if (pos.type === 'reserved') {
+                                const encodedInfo = encodeURIComponent(JSON.stringify(pos.reserved_info || {}));
                                 positionsHtml += `
-                                    <div class="slot-position reserved"
-                                        data-position="${pos.position}">
+                                    <div class="slot-position reserved reserved-clickable"
+                                        data-position="${pos.position}"
+                                        data-info="${encodedInfo}"
+                                        title="Click for details"
+                                        style="cursor:pointer;">
                                         <span class="badge bg-secondary">
                                             Reserved (${pos.duration}s)
                                         </span>
+                                        <span class="ms-1 text-muted" style="font-size:11px;">ℹ️</span>
                                     </div>
                                 `;
                             }
-                            if (pos.type === 'smart') {
+                            else if (pos.type === 'smart') {
                                 positionsHtml += `
                                     <div class="slot-position reserved" data-position="${pos.position}">
                                         <span class="badge bg-secondary">
-                                            Smart Postion
+                                            Smart Position
                                         </span>
                                     </div>
                                 `;
@@ -751,6 +773,60 @@
                     confirmButtonColor: '#d33'
                 });
             }
+
+            // 🔒 Click on reserved position → show details popup
+            $(document).on('click', '.reserved-clickable', function () {
+                const rawInfo = $(this).attr('data-info');
+                if (!rawInfo) return;
+
+                let info;
+                try { info = JSON.parse(decodeURIComponent(rawInfo)); }
+                catch(e) { return; }
+
+                let html = '';
+
+                // Occupied periods
+                if (info.periods && info.periods.length) {
+                    html += '<h6 class="text-danger fw-bold">🔒 Occupied during your selection:</h6><ul class="mb-2">';
+                    info.periods.forEach(p => {
+                        html += `<li>From <strong>${p.from}</strong> to <strong>${p.to}</strong></li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                // Free periods
+                if (info.free_periods && info.free_periods.length) {
+                    html += '<h6 class="text-success fw-bold">✅ Available periods:</h6><ul class="mb-2">';
+                    info.free_periods.forEach(p => {
+                        html += `<li>From <strong>${p.from}</strong> to <strong>${p.to}</strong></li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p class="text-danger mb-2">❌ No available dates within your selected period.</p>';
+                }
+
+                // Conflicting locations
+                if (info.locations && info.locations.length) {
+                    html += `<h6 class="fw-bold">📍 Conflicting location(s):</h6>`;
+                    html += `<p class="text-muted mb-2">${info.locations.join(', ')}</p>`;
+                }
+
+                // Conflicting cinema chains
+                if (info.cinema_chains && info.cinema_chains.length) {
+                    html += `<h6 class="fw-bold">🎬 Conflicting cinema chain(s):</h6>`;
+                    html += `<p class="text-muted mb-2">${info.cinema_chains.join(', ')}</p>`;
+                }
+
+                // Conflicting hall types
+                if (info.hall_types && info.hall_types.length) {
+                    html += `<h6 class="fw-bold">🏛️ Conflicting hall type(s):</h6>`;
+                    html += `<p class="text-muted mb-2">${info.hall_types.join(', ')}</p>`;
+                }
+
+                $('#reservedInfoBody').html(html);
+                $('#reservedInfoModal').modal('show');
+            });
+
             // remove assigned DCP
             $(document).on('click', '.assigned .remove', function () {
 

@@ -374,15 +374,23 @@ class SlotController extends Controller
 
         $slotIds = $slots->pluck('id')->toArray();
 
-        // 2️⃣ DCPs déjà réservés
-        $assignments = DB::table('compaign_slot_dcp as csd')
+        // 2️⃣ DCPs déjà réservés — on sélectionne TOUTES les campagnes par position
+        $assignmentsQuery = DB::table('compaign_slot_dcp as csd')
             ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
             ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
-            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
-            ->join('compaign_cinema_chain as ccc', 'ccc.compaign_id', '=', 'c.id')
             ->whereIn('csd.slot_id', $slotIds)
-            ->whereIn('cl.location_id', $v['location_id'])
-            ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id'])
+            ->whereExists(function ($sub) use ($v) {
+                $sub->select(DB::raw(1))
+                    ->from('compaign_location as cl')
+                    ->whereColumn('cl.compaign_id', 'c.id')
+                    ->whereIn('cl.location_id', $v['location_id']);
+            })
+            ->whereExists(function ($sub) use ($v) {
+                $sub->select(DB::raw(1))
+                    ->from('compaign_cinema_chain as ccc')
+                    ->whereColumn('ccc.compaign_id', 'c.id')
+                    ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id']);
+            })
             ->where(function ($q) use ($start, $end) {
                 $q->whereBetween('c.start_date', [$start, $end])
                 ->orWhereBetween('c.end_date', [$start, $end])
@@ -390,40 +398,151 @@ class SlotController extends Controller
                     $q2->where('c.start_date', '<=', $start)
                         ->where('c.end_date', '>=', $end);
                 });
-            })
+            });
+
+        if (!empty($v['hall_type_id'])) {
+            $assignmentsQuery->whereExists(function ($sub) use ($v) {
+                $sub->select(DB::raw(1))
+                    ->from('compaign_hall_type as cht')
+                    ->whereColumn('cht.compaign_id', 'c.id')
+                    ->whereIn('cht.hall_type_id', $v['hall_type_id']);
+            });
+        }
+
+        $allAssignments = $assignmentsQuery
             ->select(
                 'csd.slot_id',
                 'csd.position',
+                'c.id as campaign_id',
+                'c.start_date as campaign_start',
+                'c.end_date as campaign_end',
                 'd.id as dcp_id',
                 'd.duration'
             )
-            ->get()
-            ->groupBy('slot_id');
+            ->get();
 
-        // 3️⃣ Construction finale avec ordre réel des positions
-        $result = $slots->map(function ($slot) use ($assignments) {
+        // Group by slot_id, then by position (keep ALL campaigns per position)
+        $assignmentsBySlot = $allAssignments->groupBy('slot_id');
 
-            $slotAssignments = $assignments[$slot->id] ?? collect();
-            $byPosition = $slotAssignments->keyBy('position');
+        // 3️⃣ Batch queries for conflict detail names
+        $campaignIds = $allAssignments->pluck('campaign_id')->unique()->values()->toArray();
 
-            $positions = [];
+        $conflictLocations    = collect();
+        $conflictCinemaChains = collect();
+        $conflictHallTypes    = collect();
+
+        if (!empty($campaignIds)) {
+            $conflictLocations = DB::table('compaign_location as cl')
+                ->join('locations as l', 'l.id', '=', 'cl.location_id')
+                ->whereIn('cl.compaign_id', $campaignIds)
+                ->whereIn('cl.location_id', $v['location_id'])
+                ->select('cl.compaign_id', 'l.name')
+                ->get()
+                ->groupBy('compaign_id')
+                ->map(fn($g) => $g->pluck('name')->toArray());
+
+            $conflictCinemaChains = DB::table('compaign_cinema_chain as ccc')
+                ->join('cinema_chains as cc', 'cc.id', '=', 'ccc.cinema_chain_id')
+                ->whereIn('ccc.compaign_id', $campaignIds)
+                ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id'])
+                ->select('ccc.compaign_id', 'cc.name')
+                ->get()
+                ->groupBy('compaign_id')
+                ->map(fn($g) => $g->pluck('name')->toArray());
+
+            if (!empty($v['hall_type_id'])) {
+                $conflictHallTypes = DB::table('compaign_hall_type as cht')
+                    ->join('hall_types as ht', 'ht.id', '=', 'cht.hall_type_id')
+                    ->whereIn('cht.compaign_id', $campaignIds)
+                    ->whereIn('cht.hall_type_id', $v['hall_type_id'])
+                    ->select('cht.compaign_id', 'ht.name')
+                    ->get()
+                    ->groupBy('compaign_id')
+                    ->map(fn($g) => $g->pluck('name')->toArray());
+            }
+        }
+
+        // Helper: build reserved_info for a group of rows sharing the same position
+        $buildReservedInfo = function ($rows) use ($start, $end, $conflictLocations, $conflictCinemaChains, $conflictHallTypes) {
+
+            $campIds      = $rows->pluck('campaign_id')->toArray();
+            $locations    = collect($campIds)->flatMap(fn($cid) => $conflictLocations[$cid] ?? [])->unique()->values()->toArray();
+            $cinemaChains = collect($campIds)->flatMap(fn($cid) => $conflictCinemaChains[$cid] ?? [])->unique()->values()->toArray();
+            $hallTypes    = collect($campIds)->flatMap(fn($cid) => $conflictHallTypes[$cid] ?? [])->unique()->values()->toArray();
+
+            // Clip each campaign's range to the user's requested period
+            $reservedRanges = $rows->map(function ($r) use ($start, $end) {
+                $rs = Carbon::parse($r->campaign_start);
+                $re = Carbon::parse($r->campaign_end);
+                $rs = $rs->gt($start) ? $rs->copy()->startOfDay() : $start->copy()->startOfDay();
+                $re = $re->lt($end)   ? $re->copy()->startOfDay() : $end->copy()->startOfDay();
+                return ['start' => $rs, 'end' => $re];
+            })->sortBy(fn($p) => $p['start']->timestamp)->values();
+
+            $periods = $reservedRanges->map(fn($p) => [
+                'from' => $p['start']->format('d/m/Y'),
+                'to'   => $p['end']->format('d/m/Y'),
+            ])->toArray();
+
+            // Compute free gaps within [start, end]
+            $freePeriods = [];
+            $cursor  = $start->copy()->startOfDay();
+            $endDay  = $end->copy()->startOfDay();
+
+            foreach ($reservedRanges as $range) {
+                if ($cursor->lt($range['start'])) {
+                    $freePeriods[] = [
+                        'from' => $cursor->format('d/m/Y'),
+                        'to'   => $range['start']->copy()->subDay()->format('d/m/Y'),
+                    ];
+                }
+                $next = $range['end']->copy()->addDay();
+                if ($next->gt($cursor)) {
+                    $cursor = $next;
+                }
+            }
+
+            if ($cursor->lte($endDay)) {
+                $freePeriods[] = [
+                    'from' => $cursor->format('d/m/Y'),
+                    'to'   => $endDay->format('d/m/Y'),
+                ];
+            }
+
+            return [
+                'periods'       => $periods,
+                'free_periods'  => $freePeriods,
+                'locations'     => $locations,
+                'cinema_chains' => $cinemaChains,
+                'hall_types'    => $hallTypes,
+            ];
+        };
+
+        // 4️⃣ Construction finale
+        $result = $slots->map(function ($slot) use ($assignmentsBySlot, $buildReservedInfo) {
+
+            $slotRows   = $assignmentsBySlot[$slot->id] ?? collect();
+            $byPosition = $slotRows->groupBy('position');
+
+            $positions    = [];
             $usedDuration = 0;
             $assignedCount = 0;
 
-            // Parcourir les positions existantes dans l'ordre
             foreach ($slot->positions as $posObj) {
-                $pos = $posObj->id; // on peut utiliser id ou créer un index si besoin
-                $isSmart = $posObj->type; // true ou false
+                $pos     = $posObj->id;
+                $isSmart = $posObj->type;
 
                 if ($byPosition->has($pos)) {
-                    $row = $byPosition[$pos];
+                    $rows     = $byPosition[$pos];
+                    $firstRow = $rows->first();
                     $positions[] = [
-                        'position' => $pos,
-                        'type'     => 'reserved',
-                        'dcp_id'   => $row->dcp_id,
-                        'duration' => (int) $row->duration,
+                        'position'      => $pos,
+                        'type'          => 'reserved',
+                        'dcp_id'        => $firstRow->dcp_id,
+                        'duration'      => (int) $firstRow->duration,
+                        'reserved_info' => $buildReservedInfo($rows),
                     ];
-                    $usedDuration += (int) $row->duration;
+                    $usedDuration += (int) $firstRow->duration;
                     $assignedCount++;
                 } else {
                     $positions[] = [
@@ -433,17 +552,18 @@ class SlotController extends Controller
                 }
             }
 
-            // 🔹 Si moins de positions que max_ad_slot, compléter à la fin
             for ($pos = count($slot->positions)+1; $pos <= $slot->max_ad_slot; $pos++) {
                 if ($byPosition->has($pos)) {
-                    $row = $byPosition[$pos];
+                    $rows     = $byPosition[$pos];
+                    $firstRow = $rows->first();
                     $positions[] = [
-                        'position' => $pos,
-                        'type'     => 'reserved',
-                        'dcp_id'   => $row->dcp_id,
-                        'duration' => (int) $row->duration,
+                        'position'      => $pos,
+                        'type'          => 'reserved',
+                        'dcp_id'        => $firstRow->dcp_id,
+                        'duration'      => (int) $firstRow->duration,
+                        'reserved_info' => $buildReservedInfo($rows),
                     ];
-                    $usedDuration += (int) $row->duration;
+                    $usedDuration += (int) $firstRow->duration;
                     $assignedCount++;
                 } else {
                     $positions[] = [
@@ -704,15 +824,23 @@ class SlotController extends Controller
             )
             ->get();
 
-        // 3️⃣ DCP des autres campagnes avec filtres
+        // 3️⃣ DCP des autres campagnes avec filtres (whereExists = pas de produit cartésien)
         $otherAssignmentsQuery = DB::table('compaign_slot_dcp as csd')
             ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
             ->join('dcp_creatives as d', 'd.id', '=', 'csd.dcp_creative_id')
-            ->join('compaign_location as cl', 'cl.compaign_id', '=', 'c.id')
-            ->join('compaign_cinema_chain as ccc', 'ccc.compaign_id', '=', 'c.id')
             ->whereIn('csd.slot_id', $slotIds)
-            ->whereIn('cl.location_id', $v['location_id'])
-            ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id'])
+            ->whereExists(function ($sub) use ($v) {
+                $sub->select(DB::raw(1))
+                    ->from('compaign_location as cl')
+                    ->whereColumn('cl.compaign_id', 'c.id')
+                    ->whereIn('cl.location_id', $v['location_id']);
+            })
+            ->whereExists(function ($sub) use ($v) {
+                $sub->select(DB::raw(1))
+                    ->from('compaign_cinema_chain as ccc')
+                    ->whereColumn('ccc.compaign_id', 'c.id')
+                    ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id']);
+            })
             ->where('csd.compaign_id', '<>', $v['compaign_id'])
             ->where(function ($q) use ($start, $end) {
                 $q->whereBetween('c.start_date', [$start, $end])
@@ -723,24 +851,13 @@ class SlotController extends Controller
                 });
             });
 
-        if (!empty($v['compaign_category_id'])) {
-            $otherAssignmentsQuery->where('c.compaign_category_id', $v['compaign_category_id']);
-        }
-
-        if (!empty($v['movie_id'])) {
-            $otherAssignmentsQuery
-                ->join('compaign_movie as cm', 'cm.compaign_id', '=', 'c.id')
-                ->whereIn('cm.movie_id', $v['movie_id']);
-        } elseif (!empty($v['movie_genre_id'])) {
-            $otherAssignmentsQuery
-                ->join('compaign_movie_genre as cmg', 'cmg.compaign_id', '=', 'c.id')
-                ->whereIn('cmg.movie_genre_id', $v['movie_genre_id']);
-        }
-
         if (!empty($v['hall_type_id'])) {
-            $otherAssignmentsQuery
-                ->join('compaign_hall_type as cht', 'cht.compaign_id', '=', 'c.id')
-                ->whereIn('cht.hall_type_id', $v['hall_type_id']);
+            $otherAssignmentsQuery->whereExists(function ($sub) use ($v) {
+                $sub->select(DB::raw(1))
+                    ->from('compaign_hall_type as cht')
+                    ->whereColumn('cht.compaign_id', 'c.id')
+                    ->whereIn('cht.hall_type_id', $v['hall_type_id']);
+            });
         }
 
         $otherAssignments = $otherAssignmentsQuery
@@ -748,6 +865,9 @@ class SlotController extends Controller
                 'csd.slot_id',
                 'csd.position',
                 'csd.compaign_id',
+                'c.id as campaign_id',
+                'c.start_date as campaign_start',
+                'c.end_date as campaign_end',
                 'd.id as dcp_id',
                 'd.name as dcp_name',
                 'd.duration'
@@ -755,16 +875,107 @@ class SlotController extends Controller
             ->orderBy('csd.position')
             ->get();
 
-        // 4️⃣ Merge & group by slot
-        $assignments = $currentAssignments
-            ->merge($otherAssignments)
-            ->groupBy('slot_id');
+        // 4️⃣ Batch queries for conflict details on other campaigns
+        $otherCampaignIds = $otherAssignments->pluck('campaign_id')->unique()->values()->toArray();
 
-        // 5️⃣ Construction finale avec ordre exact et smart positions
-        $result = $slots->map(function ($slot) use ($assignments, $v) {
+        $conflictLocations    = collect();
+        $conflictCinemaChains = collect();
+        $conflictHallTypes    = collect();
 
-            $slotAssignments = $assignments[$slot->id] ?? collect();
-            $byPosition = $slotAssignments->keyBy('position');
+        if (!empty($otherCampaignIds)) {
+            $conflictLocations = DB::table('compaign_location as cl')
+                ->join('locations as l', 'l.id', '=', 'cl.location_id')
+                ->whereIn('cl.compaign_id', $otherCampaignIds)
+                ->whereIn('cl.location_id', $v['location_id'])
+                ->select('cl.compaign_id', 'l.name')
+                ->get()
+                ->groupBy('compaign_id')
+                ->map(fn($g) => $g->pluck('name')->toArray());
+
+            $conflictCinemaChains = DB::table('compaign_cinema_chain as ccc')
+                ->join('cinema_chains as cc', 'cc.id', '=', 'ccc.cinema_chain_id')
+                ->whereIn('ccc.compaign_id', $otherCampaignIds)
+                ->whereIn('ccc.cinema_chain_id', $v['cinema_chain_id'])
+                ->select('ccc.compaign_id', 'cc.name')
+                ->get()
+                ->groupBy('compaign_id')
+                ->map(fn($g) => $g->pluck('name')->toArray());
+
+            if (!empty($v['hall_type_id'])) {
+                $conflictHallTypes = DB::table('compaign_hall_type as cht')
+                    ->join('hall_types as ht', 'ht.id', '=', 'cht.hall_type_id')
+                    ->whereIn('cht.compaign_id', $otherCampaignIds)
+                    ->whereIn('cht.hall_type_id', $v['hall_type_id'])
+                    ->select('cht.compaign_id', 'ht.name')
+                    ->get()
+                    ->groupBy('compaign_id')
+                    ->map(fn($g) => $g->pluck('name')->toArray());
+            }
+        }
+
+        // Helper: build reserved_info for a group of rows sharing the same position
+        $buildReservedInfo = function ($rows) use ($start, $end, $conflictLocations, $conflictCinemaChains, $conflictHallTypes) {
+
+            $campIds      = $rows->pluck('campaign_id')->toArray();
+            $locations    = collect($campIds)->flatMap(fn($cid) => $conflictLocations[$cid] ?? [])->unique()->values()->toArray();
+            $cinemaChains = collect($campIds)->flatMap(fn($cid) => $conflictCinemaChains[$cid] ?? [])->unique()->values()->toArray();
+            $hallTypes    = collect($campIds)->flatMap(fn($cid) => $conflictHallTypes[$cid] ?? [])->unique()->values()->toArray();
+
+            $reservedRanges = $rows->map(function ($r) use ($start, $end) {
+                $rs = Carbon::parse($r->campaign_start);
+                $re = Carbon::parse($r->campaign_end);
+                $rs = $rs->gt($start) ? $rs->copy()->startOfDay() : $start->copy()->startOfDay();
+                $re = $re->lt($end)   ? $re->copy()->startOfDay() : $end->copy()->startOfDay();
+                return ['start' => $rs, 'end' => $re];
+            })->sortBy(fn($p) => $p['start']->timestamp)->values();
+
+            $periods = $reservedRanges->map(fn($p) => [
+                'from' => $p['start']->format('d/m/Y'),
+                'to'   => $p['end']->format('d/m/Y'),
+            ])->toArray();
+
+            $freePeriods = [];
+            $cursor  = $start->copy()->startOfDay();
+            $endDay  = $end->copy()->startOfDay();
+
+            foreach ($reservedRanges as $range) {
+                if ($cursor->lt($range['start'])) {
+                    $freePeriods[] = [
+                        'from' => $cursor->format('d/m/Y'),
+                        'to'   => $range['start']->copy()->subDay()->format('d/m/Y'),
+                    ];
+                }
+                $next = $range['end']->copy()->addDay();
+                if ($next->gt($cursor)) {
+                    $cursor = $next;
+                }
+            }
+
+            if ($cursor->lte($endDay)) {
+                $freePeriods[] = [
+                    'from' => $cursor->format('d/m/Y'),
+                    'to'   => $endDay->format('d/m/Y'),
+                ];
+            }
+
+            return [
+                'periods'       => $periods,
+                'free_periods'  => $freePeriods,
+                'locations'     => $locations,
+                'cinema_chains' => $cinemaChains,
+                'hall_types'    => $hallTypes,
+            ];
+        };
+
+        // 5️⃣ Group séparé : campagne courante VS autres (priorité à la courante)
+        $currentBySlot = $currentAssignments->groupBy('slot_id');
+        $otherBySlot   = $otherAssignments->groupBy('slot_id');
+
+        // 6️⃣ Construction finale avec ordre exact et smart positions
+        $result = $slots->map(function ($slot) use ($currentBySlot, $otherBySlot, $buildReservedInfo, $v) {
+
+            $currentByPos = ($currentBySlot[$slot->id] ?? collect())->keyBy('position');
+            $otherByPos   = ($otherBySlot[$slot->id] ?? collect())->groupBy('position');
 
             $positions = [];
             $usedDuration = 0;
@@ -774,18 +985,30 @@ class SlotController extends Controller
                 $pos = $posObj->id;
                 $isSmart = $posObj->type; // true/false
 
-                if ($byPosition->has($pos)) {
-                    $row = $byPosition[$pos];
-                    $isCurrent = $row->compaign_id == $v['compaign_id'];
-
+                // 🔴 Autre campagne en conflit = priorité absolue → reserved
+                if ($otherByPos->has($pos)) {
+                    $rows     = $otherByPos[$pos];
+                    $firstRow = $rows->first();
+                    $positions[] = [
+                        'position'      => $pos,
+                        'type'          => 'reserved',
+                        'dcp_id'        => $firstRow->dcp_id,
+                        'dcp_name'      => null,
+                        'duration'      => (int) $firstRow->duration,
+                        'reserved_info' => $buildReservedInfo($rows),
+                    ];
+                    $usedDuration += (int) $firstRow->duration;
+                    $assignedCount++;
+                // 🟢 Seulement la campagne courante (pas de conflit)
+                } elseif ($currentByPos->has($pos)) {
+                    $row = $currentByPos[$pos];
                     $positions[] = [
                         'position' => $pos,
-                        'type'     => $isCurrent ? 'current' : 'reserved',
+                        'type'     => 'current',
                         'dcp_id'   => $row->dcp_id,
-                        'dcp_name' => $isCurrent ? $row->dcp_name : null,
+                        'dcp_name' => $row->dcp_name,
                         'duration' => (int) $row->duration,
                     ];
-
                     $usedDuration += (int) $row->duration;
                     $assignedCount++;
                 } else {
@@ -798,12 +1021,27 @@ class SlotController extends Controller
 
             // compléter les positions manquantes jusqu'à max_ad_slot
             for ($pos = count($slot->positions)+1; $pos <= $slot->max_ad_slot; $pos++) {
-                if ($byPosition->has($pos)) {
-                    $row = $byPosition[$pos];
+                // 🔴 Autre campagne en conflit = priorité absolue → reserved
+                if ($otherByPos->has($pos)) {
+                    $rows     = $otherByPos[$pos];
+                    $firstRow = $rows->first();
+                    $positions[] = [
+                        'position'      => $pos,
+                        'type'          => 'reserved',
+                        'dcp_id'        => $firstRow->dcp_id,
+                        'duration'      => (int) $firstRow->duration,
+                        'reserved_info' => $buildReservedInfo($rows),
+                    ];
+                    $usedDuration += (int) $firstRow->duration;
+                    $assignedCount++;
+                // 🟢 Seulement la campagne courante (pas de conflit)
+                } elseif ($currentByPos->has($pos)) {
+                    $row = $currentByPos[$pos];
                     $positions[] = [
                         'position' => $pos,
-                        'type'     => 'reserved',
+                        'type'     => 'current',
                         'dcp_id'   => $row->dcp_id,
+                        'dcp_name' => $row->dcp_name,
                         'duration' => (int) $row->duration,
                     ];
                     $usedDuration += (int) $row->duration;
@@ -818,12 +1056,15 @@ class SlotController extends Controller
 
             $remainingDuration = max(0, (int) $slot->max_duration - $usedDuration);
 
-            $hasCurrentCampaign = $slotAssignments
-                ->contains(fn ($row) => $row->compaign_id == $v['compaign_id']);
+            // En mode edit : toujours afficher si la campagne courante ou une autre campagne
+            // a des positions dans ce slot (pour montrer les conflits)
+            $hasCurrentCampaign = $currentByPos->isNotEmpty();
+            $hasReservedPosition = $otherByPos->isNotEmpty();
 
             if (
                 ($remainingDuration <= 0 || $assignedCount >= $slot->max_ad_slot)
                 && !$hasCurrentCampaign
+                && !$hasReservedPosition
             ) {
                 return null;
             }

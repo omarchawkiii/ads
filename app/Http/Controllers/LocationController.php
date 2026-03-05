@@ -112,7 +112,6 @@ class LocationController extends Controller
     {
         $config = Config::first() ;
         $url = rtrim($config->link, '/') . '/api/adsmart/locations';
-
         try {
             $client = new Client();
             $response = $client->request('GET', $url,[

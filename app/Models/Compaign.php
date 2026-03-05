@@ -41,7 +41,6 @@ class Compaign extends Model
     ];
 
 
-
     public function compaignObjective()
     {
         return $this->belongsTo(CompaignObjective::class);

@@ -183,6 +183,23 @@
         </div>
     </div>
 
+    {{-- ================= RESERVED INFO MODAL ================= --}}
+    <div class="modal fade" id="reservedInfoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold">Position Reserved</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="reservedInfoBody">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- ================= SAVE MODAL ================= --}}
 
     <div class="modal fade" id="saveCampaignModal" tabindex="-1">
@@ -714,16 +731,18 @@
                     start_date: startDate,
                     end_date: endDate,
                     template_slot_id: $('#template_slot').val(),
-                    cinema_chain_id: $('#cinema_chain').val(),
+                    cinema_chain_id: getCleanSelectValues('#cinema_chain'),
                     location_id: getCleanSelectValues('#location'),
                     movie_id: getCleanSelectValues('#movie'),
                     movie_genre_id: getCleanSelectValues('#movie_genre'),
-                    hall_type_id: $('#hall_type').val(),
+                    hall_type_id: getCleanSelectValues('#hall_type'),
                     compaign_id: COMPAIGN_ID // 🟢 MODE EDIT
                 };
+                console.log('[loadAvailableSlots] payload →', payload);
 
                 $.get("{{ url('advertiser/slots/getAvailableSlotsEdit') }}", payload)
                     .done(function (res) {
+                        console.log('[loadAvailableSlots] response →', res);
 
                         $('#slots-container').empty();
 
@@ -745,17 +764,20 @@
 
                                 /* 🔒 RÉSERVÉ (autre campagne) */
                                 if (pos.type === 'reserved') {
-
+                                    const encodedInfo = encodeURIComponent(JSON.stringify(pos.reserved_info || {}));
                                     positionsHtml += `
-                                        <div class="slot-position reserved"
-                                            data-position="${pos.position}">
+                                        <div class="slot-position reserved reserved-clickable"
+                                            data-position="${pos.position}"
+                                            data-info="${encodedInfo}"
+                                            title="Click for details"
+                                            style="cursor:pointer;">
                                             <span class="badge bg-secondary">Reserved (${pos.duration}s)</span>
+                                            <span class="ms-1 text-muted" style="font-size:11px;">ℹ️</span>
                                         </div>
                                     `;
                                 }
 
-
-                                if (pos.type === 'smart') {
+                                else if (pos.type === 'smart') {
 
                                     positionsHtml += `
                                         <div class="slot-position reserved"
@@ -832,8 +854,9 @@
 
                         initPositionDroppableEdit();
                     })
-                    .fail(() => {
-                        Swal.fire('Error', 'Failed to load available slots', 'error');
+                    .fail(function(xhr) {
+                        console.error('[loadAvailableSlots] FAIL →', xhr.status, xhr.responseJSON || xhr.responseText);
+                        Swal.fire('Error', 'Failed to load available slots (status: ' + xhr.status + ')', 'error');
                     });
             }
             loadAvailableSlots()
@@ -1042,6 +1065,48 @@
                 });
             });
 
+            /* =====================================================
+             *  RESERVED INFO POPUP
+             * ===================================================== */
+            $(document).on('click', '.reserved-clickable', function () {
+                const rawInfo = $(this).attr('data-info');
+                if (!rawInfo) return;
+                let info;
+                try { info = JSON.parse(decodeURIComponent(rawInfo)); } catch(e) { return; }
+
+                let html = '';
+
+                if (info.periods && info.periods.length) {
+                    html += '<h6 class="text-danger fw-bold">🔒 Occupied during your selection:</h6><ul class="mb-2">';
+                    info.periods.forEach(p => {
+                        html += `<li>From <strong>${p.from}</strong> to <strong>${p.to}</strong></li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (info.free_periods && info.free_periods.length) {
+                    html += '<h6 class="text-success fw-bold">✅ Available periods:</h6><ul class="mb-2">';
+                    info.free_periods.forEach(p => {
+                        html += `<li>From <strong>${p.from}</strong> to <strong>${p.to}</strong></li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p class="text-danger mb-2">❌ No available dates within your selected period.</p>';
+                }
+
+                if (info.locations && info.locations.length) {
+                    html += `<h6 class="fw-bold">📍 Conflicting location(s):</h6><p class="text-muted mb-2">${info.locations.join(', ')}</p>`;
+                }
+                if (info.cinema_chains && info.cinema_chains.length) {
+                    html += `<h6 class="fw-bold">🎬 Conflicting cinema chain(s):</h6><p class="text-muted mb-2">${info.cinema_chains.join(', ')}</p>`;
+                }
+                if (info.hall_types && info.hall_types.length) {
+                    html += `<h6 class="fw-bold">🏛️ Conflicting hall type(s):</h6><p class="text-muted mb-2">${info.hall_types.join(', ')}</p>`;
+                }
+
+                $('#reservedInfoBody').html(html);
+                $('#reservedInfoModal').modal('show');
+            });
 
         });
     </script>
