@@ -429,6 +429,61 @@ Campaign
         </div>
     </div>
 
+    {{-- ===== VIEW CAMPAIGN MODAL ===== --}}
+    <div class="modal fade" id="view_compaign_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h5 class="modal-title text-white">Campaign details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="cmpg_loader" class="py-4 text-center" style="display:none;">
+                        <div class="spinner-border" role="status"></div>
+                        <div class="mt-2">Loading…</div>
+                    </div>
+                    <div id="cmpg_content">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <h6 class="mb-3 fw-semibold">Basics</h6>
+                                <dl class="row small">
+                                    <dt class="col-5 text-muted">Name</dt>       <dd class="col-7" id="v_name">–</dd>
+                                    <dt class="col-5 text-muted">Advertiser</dt> <dd class="col-7" id="v_user">–</dd>
+                                    <dt class="col-5 text-muted">Objective</dt>  <dd class="col-7" id="v_objective">–</dd>
+                                    <dt class="col-5 text-muted">Category</dt>   <dd class="col-7" id="v_category">–</dd>
+                                    <dt class="col-5 text-muted">Brand</dt>      <dd class="col-7" id="v_brands">–</dd>
+                                    <dt class="col-5 text-muted">Start</dt>      <dd class="col-7" id="v_start">–</dd>
+                                    <dt class="col-5 text-muted">End</dt>        <dd class="col-7" id="v_end">–</dd>
+                                    <dt class="col-5 text-muted">Budget</dt>     <dd class="col-7" id="v_budget">–</dd>
+                                    <dt class="col-5 text-muted">Language</dt>   <dd class="col-7" id="v_langue">–</dd>
+                                    <dt class="col-5 text-muted">Duration</dt>   <dd class="col-7" id="v_duration">–</dd>
+                                    <dt class="col-5 text-muted">Status</dt>     <dd class="col-7" id="v_status">–</dd>
+                                    <dt class="col-5 text-muted">Notes</dt>      <dd class="col-7" id="v_note">–</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-3">
+                                <h6 class="mb-3 fw-semibold">Targeting</h6>
+                                <dl class="row small">
+                                    <dt class="col-5 text-muted">Cinemas</dt>     <dd class="col-7" id="v_locations">–</dd>
+                                    <dt class="col-5 text-muted">Hall Types</dt>  <dd class="col-7" id="v_hall_types">–</dd>
+                                    <dt class="col-5 text-muted">Movie</dt>       <dd class="col-7" id="v_movie">–</dd>
+                                    <dt class="col-5 text-muted">Genres</dt>      <dd class="col-7" id="v_movie_genres">–</dd>
+                                    <dt class="col-5 text-muted">Gender</dt>      <dd class="col-7" id="v_gender">–</dd>
+                                    <dt class="col-5 text-muted">Target Type</dt> <dd class="col-7" id="v_target_types">–</dd>
+                                    <dt class="col-5 text-muted">Interests</dt>   <dd class="col-7" id="v_interests">–</dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3 fw-semibold">Template & Slots</h6>
+                                <div id="v_slots_details" class="mt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 
@@ -598,7 +653,7 @@ Campaign
                 const localDate = new Date(`${year}-${month}-${day}`);
                 return formatDateEN(localDate, { variant: 'short' });
             }
-            function get_compaigns() {
+            window.get_compaigns = function get_compaigns() {
                 $('#wait-modal').modal('show');
 
                 $("#compaigns-table").dataTable().fnDestroy();
@@ -633,17 +688,16 @@ Campaign
                                     '<td class=" align-middle fw-medium text-decoration-none">' +
                                         getStatusAction(value.status, value.id )+
 
-                                    '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="View" title="View"  id="' + value.id +
-                                    '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-info  m-1" >' +
-                                    '<i class="mdi mdi-magnify "></i>' +
+                                    '<button data-bs-toggle="tooltip" title="View" data-id="' + value.id +
+                                    '" type="button" class="view btn  mb-1 btn-rounded btn-info m-1">' +
+                                    '<i class="mdi mdi-magnify" style="pointer-events:none"></i>' +
                                     '</button>' +
-                                    '<button data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="View DCPs" title="View DCPs"  class="ustify-content-center btn mb-1 btn-rounded btn-warning  m-1 view-dcps" data-id="' + value.id +'">'+
-                                        '<i class="mdi mdi-bullhorn"></i>' +
+                                    '<button data-bs-toggle="tooltip" title="View DCPs" class="btn  mb-1 btn-rounded btn-warning m-1 view-dcps" data-id="' + value.id +'">'+
+                                        '<i class="mdi mdi-bullhorn" style="pointer-events:none"></i>' +
                                     '</button>'+
-
-                                    '<button  data-bs-toggle="tooltip" data-bs-placement="top"  data-bs-title="Delete" title="Delete"  id="' + value.id +
-                                    '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
-                                    '<i class="mdi mdi-delete"></i>' +
+                                    '<button data-bs-toggle="tooltip" title="Delete" data-id="' + value.id +
+                                    '" type="button" class="delete btn  mb-1 btn-rounded btn-danger m-1">' +
+                                    '<i class="mdi mdi-delete" style="pointer-events:none"></i>' +
                                     '</button>' +
 
 
@@ -754,7 +808,7 @@ Campaign
                 });
             });*/
             $(document).on('click', '.view-dcps', function() {
-                const compaignId = $(this).data('id');
+                const compaignId = $(this).closest('[data-id]').attr('data-id');
                 const url = "{{ url('planning/slots') }}/" + compaignId + "/dcps";
 
                 $('#dcps_content').html('Loading...');
@@ -853,6 +907,189 @@ Campaign
 
 
 
+
+            /* -------- APPROVE -------- */
+            $(document).on('click', '.approuve', function () {
+                var id  = $(this).closest('[data-id]').attr('data-id');
+                var url = "{{ url('') }}" + '/compaigns/approuve/' + id;
+                Swal.fire({
+                    title: 'Approve this campaign?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#198754',
+                    confirmButtonText: 'Yes, approve',
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    $('#page-loader').css('display', 'flex');
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: { _method: 'PUT', _token: "{{ csrf_token() }}" },
+                        headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                        success: function () {
+                            $('#page-loader').hide();
+                            Swal.fire('Approved!', 'Campaign has been approved.', 'success')
+                                .then(function () { get_compaigns(); });
+                        },
+                        error: function (xhr) {
+                            $('#page-loader').hide();
+                            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Operation failed.';
+                            Swal.fire('Error', msg, 'error');
+                        }
+                    });
+                });
+            });
+
+            /* -------- REJECT -------- */
+            $(document).on('click', '.reject', function () {
+                var id  = $(this).closest('[data-id]').attr('data-id');
+                var url = "{{ url('') }}" + '/compaigns/reject/' + id;
+                Swal.fire({
+                    title: 'Reject this campaign?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Yes, reject',
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    $('#page-loader').css('display', 'flex');
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: { _method: 'PUT', _token: "{{ csrf_token() }}" },
+                        headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                        success: function () {
+                            $('#page-loader').hide();
+                            Swal.fire('Rejected', 'Campaign has been rejected.', 'success')
+                                .then(function () { get_compaigns(); });
+                        },
+                        error: function (xhr) {
+                            $('#page-loader').hide();
+                            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Operation failed.';
+                            Swal.fire('Error', msg, 'error');
+                        }
+                    });
+                });
+            });
+
+            /* -------- DELETE -------- */
+            $(document).on('click', '.delete', function () {
+                var id  = $(this).attr('data-id');
+                var url = "{{ url('') }}" + '/compaigns/' + id;
+                Swal.fire({
+                    title: 'Delete this campaign?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Yes, delete',
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+                    $('#page-loader').css('display', 'flex');
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: { _method: 'DELETE', _token: "{{ csrf_token() }}" },
+                        headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                        success: function () {
+                            $('#page-loader').hide();
+                            Swal.fire('Deleted!', 'Campaign has been deleted.', 'success')
+                                .then(function () { get_compaigns(); });
+                        },
+                        error: function (xhr) {
+                            $('#page-loader').hide();
+                            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Operation failed.';
+                            Swal.fire('Error', msg, 'error');
+                        }
+                    });
+                });
+            });
+
+            /* -------- VIEW -------- */
+            $(document).on('click', '.view', function () {
+                var id  = $(this).closest('[data-id]').attr('data-id');
+                var url = "{{ url('') }}" + '/compaigns/' + id + '/show';
+
+                // open modal + show loader
+                $('#view_compaign_modal').modal('show');
+                $('#cmpg_content').hide();
+                $('#cmpg_loader').show();
+
+                $.ajax({ url: url, method: 'GET' })
+                    .done(function (d) {
+                        // helpers
+                        var jv = function(v){ return v || '–'; };
+                        var jn = function(v){
+                            if (!v) return '–';
+                            if (Array.isArray(v)) return v.map(function(x){ return x.name; }).join(', ') || '–';
+                            return v.name || '–';
+                        };
+                        var fmtDate = function(s){
+                            if (!s) return '–';
+                            var p = s.split('-');
+                            if (p.length < 3) return s;
+                            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            return p[2] + ' ' + months[parseInt(p[1],10)-1] + ' ' + p[0];
+                        };
+                        var statusMap = { 1:'<span class="badge bg-warning text-dark">Pending</span>',
+                                          2:'<span class="badge bg-success">Approved</span>',
+                                          3:'<span class="badge bg-secondary">Draft</span>',
+                                          4:'<span class="badge bg-danger">Rejected</span>' };
+
+                        $('#v_name').text(jv(d.name));
+                        $('#v_user').text(d.user ? (d.user.name || '') + ' ' + (d.user.last_name || '') : '–');
+                        $('#v_objective').text(jn(d.compaign_objective));
+                        $('#v_category').text(jn(d.compaign_category));
+                        $('#v_brands').text(jn(d.brands));
+                        $('#v_start').text(fmtDate(d.start_date));
+                        $('#v_end').text(fmtDate(d.end_date));
+                        $('#v_budget').text(d.budget ? '$' + Number(d.budget).toLocaleString() : '–');
+                        $('#v_langue').text(jn(d.langue));
+                        $('#v_duration').text(d.ad_duration ? d.ad_duration + ' s' : '–');
+                        $('#v_status').html(statusMap[d.status] || '–');
+                        $('#v_note').text(jv(d.note));
+
+                        $('#v_locations').text(jn(d.locations));
+                        $('#v_hall_types').text(jn(d.hall_types));
+                        $('#v_movie').text(jn(d.movies));
+                        $('#v_movie_genres').text(jn(d.movie_genres));
+                        $('#v_gender').text(jn(d.gender));
+                        $('#v_target_types').text(jn(d.target_types));
+                        $('#v_interests').text(jn(d.interests));
+
+                        // slots + DCPs
+                        var html = '';
+                        if (d.slots && d.slots.length) {
+                            d.slots.forEach(function(slot) {
+                                html += '<div class="border rounded p-2 mb-2"><strong>' + slot.name + '</strong>' +
+                                        '<span class="text-muted ms-1 small">(Max: ' + slot.max_duration + 's)</span>' +
+                                        '<ul class="mt-1 mb-0 small">';
+                                var dcps = (d.dcp_creatives || []).filter(function(dcp){
+                                    return dcp.pivot && dcp.pivot.slot_id == slot.id;
+                                });
+                                if (dcps.length) {
+                                    dcps.forEach(function(dcp){
+                                        html += '<li>' + dcp.name + ' – ' + dcp.duration + 's</li>';
+                                    });
+                                } else {
+                                    html += '<li class="text-muted">No DCP assigned</li>';
+                                }
+                                html += '</ul></div>';
+                            });
+                        } else {
+                            html = '<div class="text-muted small">No slots found.</div>';
+                        }
+                        $('#v_slots_details').html(html);
+                    })
+                    .fail(function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Unable to load campaign details.' });
+                        $('#view_compaign_modal').modal('hide');
+                    })
+                    .always(function () {
+                        $('#cmpg_loader').hide();
+                        $('#cmpg_content').show();
+                    });
+            });
 
         });
     </script>

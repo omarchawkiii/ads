@@ -45,6 +45,7 @@
             <div class="container-fluid padding-15">
                 @yield('content')
             </div>
+            @include('partiels.loader')
         </div>
     </div>
     <div class="modal    " id="wait-modal" tabindex="-1" role="dialog" aria-labelledby="loadingModal2Label"aria-hidden="true" style="background: #00000038;">

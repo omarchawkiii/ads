@@ -17,6 +17,10 @@
     <link rel="stylesheet" href="{{ asset('assets/libs/sweetalert2/dist/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/custom.css')}}">
     <title>AdSmart | @yield('title')  </title>
+    <script>
+        window.APP_URL    = "{{ url('') }}";
+        window.CSRF_TOKEN = "{{ csrf_token() }}";
+    </script>
     @yield('custom_css')
     <style>
         .loader {
@@ -45,6 +49,7 @@
             <div class="container-fluid">
                 @yield('content')
             </div>
+            @include('partiels.loader')
         </div>
     </div>
     <div class="modal    " id="wait-modal" tabindex="-1" role="dialog" aria-labelledby="loadingModal2Label"aria-hidden="true" style="background: #00000038;">

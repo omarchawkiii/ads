@@ -977,27 +977,26 @@
                     slots: slotsData
                 };
 
+                $('#saveCampaignModal').modal('hide');
+                $('#page-loader').css('display', 'flex');
+
                 $.ajax({
                     url: "{{ url('advertiser/compaigns') }}",
                     method: "POST",
                     data: payload,
-                    beforeSend: function(){
-                        $('#confirm-save-campaign').prop('disabled', true);
-                    }
                 })
                 .done(function(res){
+                    $('#page-loader').hide();
                     Swal.fire({
                         title: 'Done!',
                         text: 'Campaign Created successfully.',
                         icon: 'success',
                         confirmButtonText: 'Continue'
                     });
-                    $('#saveCampaignModal').modal('hide');
-                    $('#confirm-save-campaign').prop('disabled', false);
                 })
                 .fail(function(){
+                    $('#page-loader').hide();
                     showError("Error while saving campaign.");
-                    $('#confirm-save-campaign').prop('disabled', false);
                 });
             });
 
@@ -1131,6 +1130,48 @@
             transition: box-shadow 0.2s ease;
         }
 
+        /* ===================== DARK MODE ===================== */
+        [data-bs-theme="dark"] .slot-box {
+            background: #1e2a35;
+            border-color: #3d5060;
+        }
+
+        [data-bs-theme="dark"] .slot-box.active {
+            background: #162338;
+            border-color: #0d6efd;
+        }
+
+        [data-bs-theme="dark"] .slot-position {
+            background: #16202a;
+            border-color: #3a4a56;
+            color: #cdd9e5;
+        }
+
+        [data-bs-theme="dark"] .slot-position.reserved {
+            background: #2c2c2c;
+            border-color: #555;
+        }
+
+        [data-bs-theme="dark"] .drop-hover {
+            background: #162338;
+            border-color: #0d6efd;
+        }
+
+        [data-bs-theme="dark"] .assigned {
+            background: #163328;
+            border-color: #198754;
+            color: #a3cfbb;
+        }
+
+        [data-bs-theme="dark"] .list-group-item {
+            background: #1e2a35;
+            border-color: #3d5060;
+            color: #cdd9e5;
+        }
+
+        [data-bs-theme="dark"] .droppable-hover {
+            box-shadow: 0 0 15px rgb(54 199 108);
+        }
 
     </style>
 @endsection

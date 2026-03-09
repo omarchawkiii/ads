@@ -1014,16 +1014,20 @@
 
 
 
+                $('#saveCampaignModal').modal('hide');
+                $('#page-loader').css('display', 'flex');
+
                 $.ajax({
                     url: "{{ url('advertiser/compaigns/'.$compaign->id).'/update' }}",
                     type: 'POST', // POST + _method=PUT
                     data: payload
                 })
                 .done(() => {
-                    $('#saveCampaignModal').modal('hide');
+                    $('#page-loader').hide();
                     Swal.fire('Success', 'Campaign updated successfully', 'success');
                 })
                 .fail((xhr) => {
+                    $('#page-loader').hide();
                     console.error(xhr.responseText);
                     Swal.fire('Error', 'Error while saving campaign', 'error');
                 });
@@ -1246,6 +1250,49 @@
             box-shadow: 0 0 15px rgb(54 199 108);
             border-radius: 5px;
             transition: box-shadow 0.2s ease;
+        }
+
+        /* ===================== DARK MODE ===================== */
+        [data-bs-theme="dark"] .slot-box {
+            background: #1e2a35;
+            border-color: #3d5060;
+        }
+
+        [data-bs-theme="dark"] .slot-box.active {
+            background: #162338;
+            border-color: #0d6efd;
+        }
+
+        [data-bs-theme="dark"] .slot-position {
+            background: #16202a;
+            border-color: #3a4a56;
+            color: #cdd9e5;
+        }
+
+        [data-bs-theme="dark"] .slot-position.reserved {
+            background: #2c2c2c;
+            border-color: #555;
+        }
+
+        [data-bs-theme="dark"] .drop-hover {
+            background: #162338;
+            border-color: #0d6efd;
+        }
+
+        [data-bs-theme="dark"] .assigned {
+            background: #163328;
+            border-color: #198754;
+            color: #a3cfbb;
+        }
+
+        [data-bs-theme="dark"] .list-group-item {
+            background: #1e2a35;
+            border-color: #3d5060;
+            color: #cdd9e5;
+        }
+
+        [data-bs-theme="dark"] .droppable-hover {
+            box-shadow: 0 0 15px rgb(54 199 108);
         }
     </style>
 @endsection

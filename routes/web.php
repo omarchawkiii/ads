@@ -16,15 +16,10 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
-    if(Auth::user()->role == 1)
-    {
-        return view('admin.welcome');
+    if (Auth::user()->role == 1) {
+        return app(\App\Http\Controllers\DashboardController::class)->admin();
     }
-    else
-    {
-        return view('advertiser.welcome');
-    }
-
+    return app(\App\Http\Controllers\DashboardController::class)->advertiser();
 })->name('dashboard')->middleware(['auth']);
 
 Route::post('change_theme', [App\Http\Controllers\ConfigController::class, 'change_theme'])->name('change_theme')->middleware(['auth']);
@@ -172,7 +167,7 @@ Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController:
 //Route::get('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.destroy')->middleware(['auth','admin']);
 Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show')->middleware(['auth','admin']);
 Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
-Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.approuve')->middleware(['auth','admin']);
+Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.reject')->middleware(['auth','admin']);
 Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.billing')->middleware(['auth','admin']);
 Route::get('/compaigns/refresh_camapaign', [App\Http\Controllers\CompaignController::class, 'refresh_camapaign'])->name('compaigns.refresh_camapaign')->middleware(['auth','admin']);
 

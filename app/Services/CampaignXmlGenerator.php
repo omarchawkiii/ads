@@ -41,6 +41,7 @@ class CampaignXmlGenerator
         self::addCollection($filters, 'cinema_chains', 'cinema_chain', $compaign->cinemaChains);
         self::addCollection($filters, 'locations', 'location', $compaign->locations);
         self::addCollection($filters, 'movie_genres', 'genre', $compaign->movieGenres);
+        self::addMovies($filters, 'movies', $compaign->movies);
         self::addCollection($filters, 'hall_types', 'hall', $compaign->hallTypes);
         self::addCollection($filters, 'target_types', 'target', $compaign->targetTypes);
         self::addCollection($filters, 'interests', 'interest', $compaign->interests);
@@ -49,7 +50,7 @@ class CampaignXmlGenerator
         self::addCollection($xml, 'brands', 'brand', $compaign->brands);
 
         /* ================= MOVIES ================= */
-        self::addCollection($xml, 'movies', 'movie', $compaign->movies);
+        self::addMovies($xml, 'movies', $compaign->movies);
 
         /* ================= SLOTS + DCP ================= */
         if ($compaign->slots->isNotEmpty()) {
@@ -111,6 +112,20 @@ class CampaignXmlGenerator
             $node = $wrapperNode->addChild($nodeName);
             $node->addAttribute('id', $item->id);
             $node->addAttribute('name', $item->name ?? '');
+        }
+    }
+
+    private static function addMovies($parent, string $wrapper, $collection)
+    {
+        if (!$collection || $collection->isEmpty()) return;
+
+        $wrapperNode = $parent->addChild($wrapper);
+
+        foreach ($collection as $movie) {
+            $node = $wrapperNode->addChild('movie');
+            $node->addAttribute('id', $movie->id);
+            $node->addAttribute('uuid', $movie->uuid ?? '');
+            $node->addAttribute('name', $movie->name ?? '');
         }
     }
 

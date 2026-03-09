@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Location;
 use Illuminate\Http\Request;
 
-class LocationCotroller extends Controller
+class LocationController extends Controller
 {
 
     public function refresh_locations(Request $request)

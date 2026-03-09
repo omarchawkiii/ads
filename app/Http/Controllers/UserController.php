@@ -32,7 +32,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'password'  => ['required', 'min:0','max:255'],
+            'password'  => ['required', 'min:3','max:255'],
             'role'  => ['required', 'integer', 'min:0'],
             'username'  => ['required', 'string', 'min:0', 'max:255'],
             'last_name'  => ['required', 'string', 'min:0', 'max:255'],
