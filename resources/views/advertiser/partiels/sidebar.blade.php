@@ -68,6 +68,22 @@
             </a>
           </li>
 
+          <li>
+            <span class="sidebar-divider lg"></span>
+          </li>
+
+          <li class="nav-small-cap">
+            <iconify-icon icon="solar:menu-dots-linear" class="mini-icon"></iconify-icon>
+            <span class="hide-menu">Billing</span>
+          </li>
+
+          <li class="sidebar-item {{ request()->routeIs('advertiser.invoices.index') ? 'active' : '' }}">
+            <a class="sidebar-link {{ request()->routeIs('advertiser.invoices.index') ? 'active' : '' }}" href="{{ route('advertiser.invoices.index') }}" id="get-url" aria-expanded="false">
+                <i class="mdi mdi-receipt"> </i>
+              <span class="hide-menu">Billing</span>
+            </a>
+          </li>
+
         </ul>
       </nav>
 
