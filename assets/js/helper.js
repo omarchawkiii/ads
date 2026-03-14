@@ -72,7 +72,7 @@ function getInvoiceStatusText(status) {
 }
 
 function getInvoiceNumber(number) {
-    return 'INV-'+number;
+    return number;
 
 }
 
