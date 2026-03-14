@@ -234,6 +234,7 @@
 @endsection
 
 @section('custom_script')
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
   (function () {
     const monthlyData = @json($monthlyCampaigns);

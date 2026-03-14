@@ -29,9 +29,9 @@ class ConfigController extends Controller
             $use_noc = 0 ;
         }
         $new_config = $config->update([
-            'link' => $request->link,
-            'use_noc' => $use_noc,
-            'user' => $request->user,
+            'link'     => $request->link,
+            'use_noc'  => $use_noc,
+            'user'     => $request->user,
             'password' => $request->password,
         ]);
 
@@ -45,6 +45,14 @@ class ConfigController extends Controller
         }
 
     }
+    public function updateTax(Request $request)
+    {
+        $request->validate(['tax' => 'required|numeric|min:0|max:100']);
+        $config = Config::first();
+        $config->update(['tax' => $request->tax]);
+        return response()->json(['message' => 'Tax updated successfully.', 'tax' => $config->tax]);
+    }
+
     public function update_use_noc(Request $request)
     {
         $config = Config::all()->first();

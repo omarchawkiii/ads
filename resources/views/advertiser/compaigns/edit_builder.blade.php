@@ -316,7 +316,7 @@
     <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <script src="{{ asset('assets/js/helper.js') }}"></script>
+    <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
     <script>
 
         $(function(){
@@ -1029,7 +1029,10 @@
                 .fail((xhr) => {
                     $('#page-loader').hide();
                     console.error(xhr.responseText);
-                    Swal.fire('Error', 'Error while saving campaign', 'error');
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message)
+                        ? xhr.responseJSON.message
+                        : 'Error while saving campaign';
+                    Swal.fire('Error', msg, 'error');
                 });
             });
 

@@ -70,7 +70,7 @@
                       </div>
                     </div>
                     <div class="message-body">
-                      <a href="../main/page-user-profile.html" class="p-2 dropdown-item h6 rounded-1">
+                      <a href="{{ route('profile.index') }}" class="p-2 dropdown-item h6 rounded-1">
                         My Profile
                       </a>
                       <a href="#" class="p-2 dropdown-item h6 rounded-1" id="reset_user_password">
@@ -290,7 +290,7 @@
                       </div>
                     </div>
                     <div class="message-body">
-                      <a href="../main/page-user-profile.html" class="p-2 dropdown-item h6 rounded-1">
+                      <a href="{{ route('profile.index') }}" class="p-2 dropdown-item h6 rounded-1">
                         My Profile
                       </a>
                       <a href="../main/page-pricing.html" class="p-2 dropdown-item h6 rounded-1">

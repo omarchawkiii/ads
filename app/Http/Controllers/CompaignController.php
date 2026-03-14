@@ -18,6 +18,7 @@ use App\Models\Movie;
 use App\Models\MovieGenre;
 use App\Models\Slot;
 use App\Models\TargetType;
+use App\Models\Invoice;
 use App\Models\TemplateSlot;
 use App\Services\CampaignXmlGenerator;
 use Carbon\Carbon;
@@ -80,7 +81,7 @@ class CompaignController extends Controller
 
     public function get()
     {
-        $compaigns = Compaign::with('user')->orderBy('name', 'asc')->get();
+        $compaigns = Compaign::with('user')->orderBy('created_at', 'desc')->get();
         return Response()->json(compact('compaigns'));
     }
 
@@ -544,6 +545,14 @@ class CompaignController extends Controller
             'interest.*'      => 'integer|exists:interests,id',
         ]);
 
+        $compaign = Compaign::findOrFail($id);
+
+        if ($compaign->start_date <= now()->toDateString()) {
+            return response()->json([
+                'message' => 'This campaign has already started and cannot be edited.'
+            ], 403);
+        }
+
         return DB::transaction(function () use ($v, $request, $id) {
 
             /* -------------------------------------------------
@@ -563,6 +572,7 @@ class CompaignController extends Controller
                 'gender_id'             => $v['gender'],
                 'budget'                => $v['budget'],
                 'compaign_category_id'  =>  1  ?? null,
+                'status'                => 1, // reset to Pending after edit
             ]);
 
             // helper
@@ -679,6 +689,43 @@ class CompaignController extends Controller
         try
         {
             $compaign->update(['status' => 2]);
+
+            $tax      = (float) (Config::first()->tax ?? 6);
+            $totalHt  = $compaign->budget;
+            $totalTtc = round($totalHt * (1 + $tax / 100), 2);
+
+            $existing = Invoice::where('compaign_id', $compaign->id)->first();
+
+            if ($existing) {
+                // Re-approval: keep the same invoice number, update financial details only
+                $existing->update([
+                    'date'      => now()->toDateString(),
+                    'due_date'  => now()->addDays(30)->toDateString(),
+                    'tax'       => $tax,
+                    'total_ht'  => $totalHt,
+                    'total_ttc' => $totalTtc,
+                ]);
+            } else {
+                // First approval: generate a new sequential number for the year
+                $year    = now()->format('Y');
+                $lastSeq = Invoice::whereYear('date', $year)
+                               ->selectRaw("MAX(CAST(SUBSTRING_INDEX(number, '-', -1) AS UNSIGNED)) as max_seq")
+                               ->value('max_seq') ?? 0;
+                $number  = 'INV-' . $year . '-' . str_pad($lastSeq + 1, 5, '0', STR_PAD_LEFT);
+
+                Invoice::create([
+                    'compaign_id' => $compaign->id,
+                    'number'      => $number,
+                    'date'        => now()->toDateString(),
+                    'due_date'    => now()->addDays(30)->toDateString(),
+                    'status'      => 'unpaid',
+                    'discount'    => 0,
+                    'tax'         => $tax,
+                    'total_ht'    => $totalHt,
+                    'total_ttc'   => $totalTtc,
+                ]);
+            }
+
             return response()->json([
                 'message' => 'Compaign approuved successfully.',
             ]);
@@ -731,7 +778,7 @@ class CompaignController extends Controller
                 if( $contents['status'])
                 {
 
-                    dd($contents['data']);
+                    //dd($contents['data']);
                     foreach($contents['data'] as $data)
                     {
 

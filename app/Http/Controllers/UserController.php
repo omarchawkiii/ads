@@ -95,7 +95,7 @@ class UserController extends Controller
     {
 
             $validated = $request->validate([
-                'password'  => ['required', 'min:0','max:255'],
+                'password'  => ['required', 'min:3','max:255'],
                 'confirm_password' => ['required'],
             ]);
             $user->update([

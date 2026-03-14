@@ -234,6 +234,24 @@
                     </div>
 
 
+                    <!-- Payment History -->
+                    <div class="card mb-3" id="v_payments_card" style="display:none;">
+                        <div class="card-header">💳 Payment History</div>
+                        <div class="card-body p-0">
+                            <table class="table mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount (RM)</th>
+                                        <th>Note</th>
+                                        <th>Proof</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="v_payments_body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div> <!-- end inv_content -->
 
 
@@ -244,12 +262,99 @@
             </div>
         </div>
     </div>
+
+    {{-- ── Payment Modal ── --}}
+    <div class="modal fade" id="pay_invoice_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="pay_invoice_form" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Add Payment — <span id="pay_inv_number"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="pay_invoice_id">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Invoice Total (RM)</label>
+                            <input type="text" class="form-control" id="pay_total" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Already Paid (RM)</label>
+                            <input type="text" class="form-control" id="pay_already_paid" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Remaining (RM)</label>
+                            <input type="text" class="form-control" id="pay_remaining" disabled>
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Amount to Pay (RM) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="pay_amount" name="amount"
+                                   min="0.01" step="0.01" placeholder="e.g. 500.00" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Note / Justification</label>
+                            <textarea class="form-control" id="pay_note" name="note" rows="3"
+                                      placeholder="Payment reference, bank transfer ID, etc."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Proof of Payment <small class="text-muted">(PDF / image, max 5 MB)</small></label>
+                            <input type="file" class="form-control" id="pay_proof" name="proof"
+                                   accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success" id="pay_submit_btn">
+                            <span id="pay_spinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                            Record Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Proof Viewer Modal ── --}}
+    <div class="modal fade" id="proof_viewer_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Proof of Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-3" id="proof_viewer_body">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+                <div class="modal-footer">
+                    <a id="proof_download_link" href="#" class="btn btn-outline-secondary" target="_blank">
+                        <i class="mdi mdi-download"></i> Download
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 
 @section('custom_script')
-    <script src="{{ asset('assets/js/helper.js') }}"></script>
+    <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
     <script>
+        // Override inline to avoid browser cache issues on this page
+        function getInvoiceStatusText(status) {
+            var map = {
+                'paid':           '<span class="badge bg-success-subtle text-success">Paid</span>',
+                'unpaid':         '<span class="badge bg-danger-subtle text-danger">Unpaid</span>',
+                'pending':        '<span class="badge bg-warning-subtle text-warning">Pending</span>',
+                'partially_paid': '<span class="badge bg-info-subtle text-info">Partially Paid</span>',
+            };
+            if (!status) return '<span class="badge bg-danger-subtle text-danger">Unpaid</span>';
+            return map[status] || '<span class="badge bg-secondary-subtle text-secondary">' + status + '</span>';
+        }
+
         $(function() {
             $(document).on('click', '#create_invoice', function() {
                 $('#create_invoice_modal').modal('show');
@@ -268,17 +373,20 @@
                         contentType: false,
                         success: function(response) {
                             $.each(response.invoices, function(index, value) {
-                                var user_invoices = "";
                                 index++;
+                                var advertiser = value.compaign && value.compaign.user
+                                    ? jv(value.compaign.user.name) + ' ' + jv(value.compaign.user.last_name)
+                                    : '—';
+                                var campaign = value.compaign ? jv(value.compaign.name) : '—';
                                 result = result +
                                     '<tr class="odd text-center">' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     getInvoiceNumber(value.number) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value.compaign.user.name + ' ' + value.compaign.user.name +
+                                    advertiser +
                                     ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value.compaign.name + ' </td>' +
+                                    campaign + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     value.total_ht + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
@@ -290,12 +398,14 @@
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     formatDateEN(value.due_date) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    '<button id="' + value.id +
-                                    '" type="button" class="view ustify-content-center btn mb-1 btn-rounded btn-primary m-1" >' +
+                                    '<button data-id="' + value.id + '" type="button" class="view btn mb-1 btn-rounded btn-primary m-1">' +
                                     '<i class="mdi mdi-magnify"></i>' +
                                     '</button>' +
-
-
+                                    (value.status !== 'paid'
+                                        ? '<button data-id="' + value.id + '" data-total="' + value.total_ttc + '" data-number="' + value.number + '" type="button" class="pay_invoice btn mb-1 btn-rounded btn-success m-1">' +
+                                          '<i class="mdi mdi-cash-plus"></i> Pay' +
+                                          '</button>'
+                                        : '') +
                                     '</td>' +
                                     '</tr>';
                             });
@@ -526,20 +636,41 @@
                         }
                     })
                     .done(function(data) {
-                        console.log(getInvoiceStatusText(data.invoice.status))
+                        var inv = data.invoice;
+                        $('#v_number').text(jv(getInvoiceNumber(inv.number)));
+                        var c = inv.compaign;
+                        $('#v_advertiser').text(c && c.user ? jv(c.user.name) + ' ' + jv(c.user.last_name) : '—');
+                        $('#v_campaign').text(c ? jv(c.name) : '—');
+                        $('#v_billing_period').text(jv(formatDateEN(inv.date)));
+                        $('#v_invoice_date').text(jv(inv.due_date));
+                        $('#v_status').html(getInvoiceStatusText(inv.status));
 
+                        $('#v_subtotal').text(parseFloat(inv.total_ht || 0).toFixed(2));
+                        $('#v_tax').text((inv.tax || 0) + '%');
+                        $('#v_total').text(parseFloat(inv.total_ttc || 0).toFixed(2));
 
-                        $('#v_number').text(jv(getInvoiceNumber(data.invoice.number)));
-                        $('#v_advertiser').text(jv(data.invoice.compaign.user.name) + " " + jv(data
-                            .invoice.compaign.user.last_name));
-                        $('#v_campaign').text(jv(data.invoice.compaign.name));
-                        $('#v_billing_period').text(jv(formatDateEN(data.invoice.date)));
-                        $('#v_invoice_date').text(jv(data.invoice.due_date));
-                        $('#v_status').html(getInvoiceStatusText(data.invoice.status) || 'unpaid');
-
-                        $('#v_subtotal').text(data.invoice.total_ht ?? 0);
-                        $('#v_tax').text(data.invoice.tax + '%' ?? 0);
-                        $('#v_total').text(data.invoice.total_ttc ?? +0);
+                        // Payment history
+                        if (inv.payments && inv.payments.length > 0) {
+                            var rows = '';
+                            $.each(inv.payments, function (i, p) {
+                                var proofBtn = p.proof
+                                    ? '<button type="button" class="btn btn-sm btn-outline-primary view_proof_btn" ' +
+                                      'data-id="' + p.id + '" data-proof="' + p.proof + '">' +
+                                      '<i class="mdi mdi-eye"></i> View' +
+                                      '</button>'
+                                    : '—';
+                                rows += '<tr>' +
+                                    '<td>' + formatDateEN(p.created_at) + '</td>' +
+                                    '<td>RM ' + parseFloat(p.amount).toFixed(2) + '</td>' +
+                                    '<td>' + jv(p.note) + '</td>' +
+                                    '<td>' + proofBtn + '</td>' +
+                                    '</tr>';
+                            });
+                            $('#v_payments_body').html(rows);
+                            $('#v_payments_card').show();
+                        } else {
+                            $('#v_payments_card').hide();
+                        }
 
                         $('#view_invoice_modal #v_download').attr('data-invoice-id', data.invoice.id);
                         // hide loader & show content
@@ -589,6 +720,117 @@
                 //     window.URL.revokeObjectURL(url);
                 //   })
                 //   .catch(e => { alert('Download failed'); console.error(e); });
+            });
+
+            /* ── Open payment modal ── */
+            $(document).on('click', '.pay_invoice', function () {
+                const id     = $(this).data('id');
+                const total  = parseFloat($(this).data('total'));
+                const number = $(this).data('number');
+
+                // Fetch existing payments to compute already-paid
+                $.get("{{ url('') }}/invoices/" + id + '/show', function (data) {
+                    const paid = data.invoice.payments
+                        ? data.invoice.payments.reduce(function (s, p) { return s + parseFloat(p.amount); }, 0)
+                        : 0;
+                    const remaining = Math.max(0, total - paid);
+
+                    $('#pay_invoice_id').val(id);
+                    $('#pay_inv_number').text(number);
+                    $('#pay_total').val(parseFloat(total).toFixed(2));
+                    $('#pay_already_paid').val(parseFloat(paid).toFixed(2));
+                    $('#pay_remaining').val(parseFloat(remaining).toFixed(2));
+                    $('#pay_amount').attr('max', remaining).val('');
+                    $('#pay_note').val('');
+                    $('#pay_proof').val('');
+
+                    var payModal = new bootstrap.Modal(document.getElementById('pay_invoice_modal'));
+                    payModal.show();
+                });
+            });
+
+            /* ── Submit payment ── */
+            $(document).on('submit', '#pay_invoice_form', function (e) {
+                e.preventDefault();
+
+                const id       = $('#pay_invoice_id').val();
+                const formData = new FormData(this);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                $('#pay_submit_btn').prop('disabled', true);
+                $('#pay_spinner').removeClass('d-none');
+
+                $.ajax({
+                    url:         "{{ url('') }}/invoices/" + id + '/payments',
+                    type:        'POST',
+                    data:        formData,
+                    processData: false,
+                    contentType: false,
+                })
+                .done(function (res) {
+                    bootstrap.Modal.getInstance(document.getElementById('pay_invoice_modal')).hide();
+                    Swal.fire({
+                        icon:  'success',
+                        title: 'Payment Recorded',
+                        html:  'Paid: <strong>RM ' + parseFloat(res.paid).toFixed(2) + '</strong><br>' +
+                               'Remaining: <strong>RM ' + parseFloat(res.remaining).toFixed(2) + '</strong>',
+                        timer: 3000,
+                        showConfirmButton: false,
+                    });
+                    get_invoices();
+                })
+                .fail(function (xhr) {
+                    let msg = 'Operation failed.';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                })
+                .always(function () {
+                    $('#pay_submit_btn').prop('disabled', false);
+                    $('#pay_spinner').addClass('d-none');
+                });
+            });
+
+            /* ── View proof popup ── */
+            $(document).on('click', '.view_proof_btn', function () {
+                const paymentId = $(this).data('id');
+                const proof     = $(this).data('proof');
+                const proofUrl  = "{{ url('') }}/payments/" + paymentId + "/proof";
+                const ext       = proof.split('.').pop().toLowerCase();
+
+                $('#proof_download_link').attr('href', proofUrl);
+                $('#proof_viewer_body').html(
+                    '<div class="spinner-border text-primary" role="status"></div>'
+                );
+
+                var proofModal = new bootstrap.Modal(document.getElementById('proof_viewer_modal'));
+                proofModal.show();
+
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                    var img = new Image();
+                    img.onload = function () {
+                        $('#proof_viewer_body').html(
+                            '<img src="' + proofUrl + '" class="img-fluid rounded" style="max-height:75vh;">'
+                        );
+                    };
+                    img.onerror = function () {
+                        $('#proof_viewer_body').html(
+                            '<p class="text-danger">Unable to load the image.</p>'
+                        );
+                    };
+                    img.src = proofUrl;
+                } else if (ext === 'pdf') {
+                    $('#proof_viewer_body').html(
+                        '<iframe src="' + proofUrl + '" style="width:100%;height:75vh;border:none;"></iframe>'
+                    );
+                } else {
+                    $('#proof_viewer_body').html(
+                        '<p>Preview not available. <a href="' + proofUrl + '" target="_blank">Click here to open the file.</a></p>'
+                    );
+                }
             });
         });
     </script>

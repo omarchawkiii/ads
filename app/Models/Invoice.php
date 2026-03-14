@@ -25,4 +25,9 @@ class Invoice extends Model
     {
         return $this->belongsTo(Compaign::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

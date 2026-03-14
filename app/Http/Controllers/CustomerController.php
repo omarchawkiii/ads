@@ -14,13 +14,14 @@ class CustomerController extends Controller
 
     public function get()
     {
-        $customers = Customer::orderBy('name')->get();
+
+        $customers = Customer::where('user_id', auth()->id())->orderBy('name')->get();
         return response()->json(compact('customers'));
     }
 
     public function show(Request $request)
     {
-        $customer = Customer::findOrFail($request->id);
+        $customer = Customer::where('user_id', auth()->id())->findOrFail($request->id);
         return response()->json(compact('customer'));
     }
 
@@ -62,6 +63,10 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer)
     {
+        if ($customer->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $customer->delete();
 
         return response()->json([

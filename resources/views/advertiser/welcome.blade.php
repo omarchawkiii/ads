@@ -47,7 +47,7 @@
           <iconify-icon icon="solar:play-circle-linear" class="fs-7 text-success"></iconify-icon>
         </span>
         <div>
-          <p class="text-muted mb-1 fs-2">Active Today</p>
+          <p class="text-muted mb-1 fs-2">Play Today</p>
           <h4 class="mb-0 fw-bold text-success">{{ $activeCampaigns }}</h4>
           <small class="text-muted">{{ $totalDcps }} DCP creatives</small>
         </div>
@@ -142,7 +142,7 @@
               <div class="progress-bar bg-warning" style="width:{{ round($pendingCampaigns / $total * 100) }}%"></div>
             </div>
           </div>
-          <div>
+          <!--<div>
             <div class="d-flex justify-content-between mb-1">
               <span class="fs-2 text-muted">Draft</span>
               <span class="fs-2 fw-semibold text-secondary">{{ $draftCampaigns }}</span>
@@ -150,7 +150,7 @@
             <div class="progress" style="height:6px">
               <div class="progress-bar bg-secondary" style="width:{{ round($draftCampaigns / $total * 100) }}%"></div>
             </div>
-          </div>
+          </div>-->
           <div>
             <div class="d-flex justify-content-between mb-1">
               <span class="fs-2 text-muted">Rejected</span>
@@ -187,7 +187,7 @@
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-between mb-3">
           <h5 class="card-title fw-semibold mb-0">My Recent Campaigns</h5>
-          <a href="{{ route('compaigns.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
+          <a href="{{ route('advertiser.compaigns.index') }}" class="btn btn-sm btn-outline-primary">View All</a>
         </div>
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
@@ -238,6 +238,7 @@
 @endsection
 
 @section('custom_script')
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
   (function () {
     const monthlyData = @json($monthlyCampaigns);

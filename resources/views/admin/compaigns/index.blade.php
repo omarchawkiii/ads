@@ -32,7 +32,7 @@ Campaign
             <div class="card-body table-responsive">
                 <table id="compaigns-table" class="table table-striped table-bordered display text-nowrap dataTable">
                     <thead>
-                        <tr class="text-center">
+                        <tr class="text-center ">
                             <th class="text-center" style="width:160px;">ID</th>
                             <th class="text-center">Name</th>
                             <th class="text-center">Created By</th>
@@ -40,7 +40,7 @@ Campaign
                             <th class="text-center">Start Date</th>
                             <th class="text-center">End Date</th>
                             <th class="text-center">Status</th>
-                            <th class="text-left" style="width:160px;">Actions</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -493,7 +493,7 @@ Campaign
     <script src="{{ asset('assets/libs/select2/dist/js/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
-    <script src="{{ asset('assets/js/helper.js') }}"></script>
+    <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
     <script>
         $(function() {
 
@@ -671,7 +671,7 @@ Campaign
 
                                 index++;
                                 result = result +
-                                    '<tr class="odd ">' +
+                                    '<tr class="odd text-left">' +
                                     '<td class="text-center align-middle fw-medium text-decoration-none">' +
                                     index + ' </td>' +
                                     '<td class="text-center align-middle fw-medium text-decoration-none">' +
@@ -715,6 +715,10 @@ Campaign
                                 "iDisplayLength": 10,
                                 destroy: true,
                                 "bDestroy": true,
+                                autoWidth: false,
+                                columnDefs: [
+                                    { targets: -1, width: 'auto' }
+                                ],
                                 "language": {
                                     search: "_INPUT_",
                                     searchPlaceholder: "Search..."
@@ -729,6 +733,7 @@ Campaign
 
             }
             get_compaigns();
+
             function formatDateTime(dt) {
                 if (!dt) return '-';
                 const d = new Date(dt);
@@ -910,7 +915,7 @@ Campaign
 
             /* -------- APPROVE -------- */
             $(document).on('click', '.approuve', function () {
-                var id  = $(this).closest('[data-id]').attr('data-id');
+                var id  = $(this).closest('[id]').attr('id');
                 var url = "{{ url('') }}" + '/compaigns/approuve/' + id;
                 Swal.fire({
                     title: 'Approve this campaign?',
@@ -927,9 +932,10 @@ Campaign
                         data: { _method: 'PUT', _token: "{{ csrf_token() }}" },
                         headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
                         success: function () {
+                             get_compaigns();
                             $('#page-loader').hide();
                             Swal.fire('Approved!', 'Campaign has been approved.', 'success')
-                                .then(function () { get_compaigns(); });
+
                         },
                         error: function (xhr) {
                             $('#page-loader').hide();
@@ -942,7 +948,7 @@ Campaign
 
             /* -------- REJECT -------- */
             $(document).on('click', '.reject', function () {
-                var id  = $(this).closest('[data-id]').attr('data-id');
+                var id  = $(this).closest('[id]').attr('id');
                 var url = "{{ url('') }}" + '/compaigns/reject/' + id;
                 Swal.fire({
                     title: 'Reject this campaign?',
@@ -959,9 +965,9 @@ Campaign
                         data: { _method: 'PUT', _token: "{{ csrf_token() }}" },
                         headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
                         success: function () {
+                            get_compaigns()
                             $('#page-loader').hide();
-                            Swal.fire('Rejected', 'Campaign has been rejected.', 'success')
-                                .then(function () { get_compaigns(); });
+                            Swal.fire('Rejected', 'Campaign has been rejected.', 'success');
                         },
                         error: function (xhr) {
                             $('#page-loader').hide();

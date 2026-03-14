@@ -36,6 +36,7 @@
                             <th class="text-center">Name</th>
                             <th class="text-center">Start Date</th>
                             <th class="text-center">End Date</th>
+                            <th class="text-center">Status</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -481,7 +482,7 @@
     <script src="{{ asset('assets/libs/select2/dist/js/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
-    <script src="{{ asset('assets/js/helper.js') }}"></script>
+    <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
     <script>
         $(function() {
 
@@ -835,25 +836,28 @@
                             $.each(response.compaigns, function(index, value) {
                                 index++;
                                 result = result +
-                                    '<tr class="odd text-center">' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<tr class="odd ">' +
+                                    '<td class="text-body text-center align-middle fw-medium text-decoration-none">' +
                                     index + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-body text-centeralign-middle fw-medium text-decoration-none">' +
                                     value.name + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-body text-center align-middle fw-medium text-decoration-none">' +
                                         value.start_date + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-body text-center align-middle fw-medium text-decoration-none">' +
                                         value.end_date + ' </td>' +
+                                    '<td class="text-center align-middle">' +
+                                        getStatusText(value.status) + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button id="' + value.id +
                                     '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +
                                     '<i class="mdi mdi-magnify "></i>' +
                                     '</button>' +
 
+                                    (value.start_date > new Date().toISOString().slice(0,10) ?
                                     '<a href="{{ url('') }}/advertiser/compaigns/'+ value.id +'/edit" id="' + value.id +
                                     '"  class=" ustify-content-center btn mb-1 btn-rounded btn-warning  m-1" >' +
                                     '<i class="mdi mdi-tooltip-edit "></i>' +
-                                    '</a>' +
+                                    '</a>' : '') +
 
                                     '<button id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +

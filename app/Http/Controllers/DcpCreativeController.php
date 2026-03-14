@@ -130,7 +130,11 @@ class DcpCreativeController extends Controller
     public function destroy(Request $request)
     {
         try {
+
             $dcp_creative = DcpCreative::findOrFail($request->id);
+            if ($dcp_creative->user_id !== auth()->id()) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
             $dcp_creative->delete();
             return response()->json([
                 'message' => 'DCP Creative deleted successfully.',

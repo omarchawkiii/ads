@@ -22,6 +22,9 @@ Route::get('/', function () {
     return app(\App\Http\Controllers\DashboardController::class)->advertiser();
 })->name('dashboard')->middleware(['auth']);
 
+
+
+
 Route::post('change_theme', [App\Http\Controllers\ConfigController::class, 'change_theme'])->name('change_theme')->middleware(['auth']);
 
 
@@ -190,18 +193,28 @@ Route::put('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class
 Route::delete('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoices.destroy')->middleware(['auth','admin']);
 Route::get('/invoices/{id}/show', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoices.show')->middleware(['auth','admin']);
 Route::get('/invoices/{id}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoices.download')->middleware(['auth','admin']);
+Route::post('/invoices/{id}/payments', [App\Http\Controllers\InvoiceController::class, 'storePayment'])->name('invoices.payments.store')->middleware(['auth','admin']);
+Route::get('/payments/{payment}/proof', [App\Http\Controllers\InvoiceController::class, 'showProof'])->name('payments.proof')->middleware(['auth','admin']);
 
 
 
 Route::get('configs', [App\Http\Controllers\ConfigController::class, 'edit'])->name('invoices.edit')->middleware(['auth','admin']);
 Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update'])->name('configs.store')->middleware(['auth','admin']);
+Route::post('/configs/tax', [App\Http\Controllers\ConfigController::class, 'updateTax'])->name('configs.tax')->middleware(['auth','admin']);
 
 
+
+Route::get('profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index')->middleware(['auth','admin']);
+Route::put('profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update')->middleware(['auth','admin']);
 
 /* ************ End Admin route ********** */
 
 /* ************ advertiser  route ********** */
     Route::middleware(['auth', 'advertiser'])->prefix('advertiser')->name('advertiser.')->group(function () {
+
+    Route::get('/', function () {
+        return app(\App\Http\Controllers\DashboardController::class)->advertiser();
+    })->name('dashboard');
 
     Route::get('/compaigns/{id}/edit', [App\Http\Controllers\CompaignController::class, 'edit'])->name('compaigns.edit');
     Route::put('/compaigns/{id}/update', [App\Http\Controllers\CompaignController::class, 'update'])->name('compaigns.update');
@@ -238,6 +251,12 @@ Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update']
         Route::put('/customers/{customer}', [App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
     Route::delete('/customers/{customer}', [App\Http\Controllers\CustomerController::class, 'destroy'])->name('customers.destroy');
 
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/invoices', [App\Http\Controllers\InvoiceController::class, 'advertiser_index'])->name('invoices.index');
+    Route::get('/invoices/list', [App\Http\Controllers\InvoiceController::class, 'my_invoices'])->name('invoices.list');
+    Route::get('/invoices/{id}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoices.download');
 
 });
 

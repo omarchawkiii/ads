@@ -62,25 +62,16 @@
                     <div class="d-flex align-items-center mb-3 pb-3 border-bottom gap-6">
                       <img src="{{ asset('assets/images/profile/user-1.jpg')}}" class="rounded-circle" width="56" height="56" alt="matdash-img">
                       <div>
-                        <h5 class="mb-0 fs-12">David McMichael <span class="text-success fs-11">Pro</span>
-                        </h5>
-                        <p class="mb-0 text-dark">
-                          david@wrappixel.com
-                        </p>
+                        <h5 class="mb-0 fs-12">{{ Auth::user()->name }} {{ Auth::user()->last_name }} <span class="text-primary fs-11">Advertiser</span></h5>
+                        <p class="mb-0 text-dark">{{ Auth::user()->email }}</p>
                       </div>
                     </div>
                     <div class="message-body">
-                      <a href="../main/page-user-profile.html" class="p-2 dropdown-item h6 rounded-1">
+                      <a href="{{ route('advertiser.profile.index') }}" class="p-2 dropdown-item h6 rounded-1">
                         My Profile
                       </a>
-                      <a href="../main/page-pricing.html" class="p-2 dropdown-item h6 rounded-1">
-                        My Subscription
-                      </a>
-                      <a href="../main/app-invoice.html" class="p-2 dropdown-item h6 rounded-1">
-                        My Invoice <span class="badge bg-danger-subtle text-danger rounded ms-8">4</span>
-                      </a>
-                      <a href="../main/page-account-settings.html" class="p-2 dropdown-item h6 rounded-1">
-                        Account Settings
+                      <a href="{{ route('advertiser.invoices.index') }}" class="p-2 dropdown-item h6 rounded-1">
+                        My Invoices
                       </a>
                       <a onclick="event.preventDefault(); document.getElementById('logout-form').submit();" href="{{ route('logout') }} " role="button" class="p-2 dropdown-item h6 rounded-1">
                         Sign Out

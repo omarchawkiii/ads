@@ -3,6 +3,32 @@
  * getStatusText / getStatusAction used by get_compaigns() in index.blade.php
  */
 
+function getInvoiceStatusText(status) {
+    var map = {
+        'paid':           '<span class="badge bg-success-subtle text-success">Paid</span>',
+        'unpaid':         '<span class="badge bg-danger-subtle text-danger">Unpaid</span>',
+        'pending':        '<span class="badge bg-warning-subtle text-warning">Pending</span>',
+        'partially_paid': '<span class="badge bg-info-subtle text-info">Partially Paid</span>',
+    };
+    if (!status) return '<span class="badge bg-danger-subtle text-danger">Unpaid</span>';
+    return map[status] || '<span class="badge bg-secondary-subtle text-secondary">' + status + '</span>';
+}
+
+function getInvoiceNumber(number) {
+    return number || '—';
+}
+
+function formatDateEN(dateStr) {
+    if (!dateStr) return '—';
+    var d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function jv(val) {
+    return (val !== null && val !== undefined) ? val : '—';
+}
+
 function getStatusText(status) {
     var map = {
         1: '<span class="badge bg-warning text-dark">Pending</span>',

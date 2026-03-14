@@ -14,6 +14,7 @@ class Config extends Model
        'link',
        'user',
        'password',
+       'tax',
     ];
 
 }

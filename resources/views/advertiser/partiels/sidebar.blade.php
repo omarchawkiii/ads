@@ -7,7 +7,7 @@
     <div>
 
       <div class="brand-logo d-flex align-items-center">
-        <a href="{{ route('dashboard') }}" class="text-nowrap logo-img">
+        <a href="{{ route('advertiser.dashboard') }}" class="text-nowrap logo-img">
           <img src="{{ asset('assets/images/logos/logo.png')}}" alt="Logo">
         </a>
 
@@ -28,10 +28,10 @@
           <!-- ---------------------------------- -->
           <!-- Dashboard -->
           <!-- ---------------------------------- -->
-          <li class="sidebar-item" style="display: none">
-            <a class="sidebar-link" href="" id="get-url" aria-expanded="false">
-              <iconify-icon icon="solar:widget-add-line-duotone" class=""></iconify-icon>
-              <span class="hide-menu">Dashboard </span>
+           <li class="sidebar-item {{ request()->routeIs('advertiser.dashboard') ? 'active' : '' }}">
+            <a class="sidebar-link {{ request()->routeIs('advertiser.dashboard') ? 'active' : '' }}" href="{{ route('advertiser.dashboard') }}" id="get-url"  aria-expanded="false">
+                <i class="mdi mdi-chart-bar"> </i>
+              <span class="hide-menu">Dashboard</span>
             </a>
           </li>
 
@@ -40,28 +40,29 @@
             <span class="sidebar-divider lg"></span>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('advertiser.compaigns.index') }}" id="get-url" aria-expanded="false">
+
+          <li class="sidebar-item {{ request()->routeIs('advertiser.compaigns.index') ? 'active' : '' }}">
+            <a class="sidebar-link {{ request()->routeIs('advertiser.compaigns.index') ? 'active' : '' }}" href="{{ route('advertiser.compaigns.index') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-chart-bar"> </i>
               <span class="hide-menu">Campaigns</span>
             </a>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('advertiser.compaigns.index_builder') }}" id="get-url" aria-expanded="false">
+          <li class="sidebar-item {{ request()->routeIs('advertiser.compaigns.index_builder') ? 'active' : '' }}">
+            <a class="sidebar-link {{ request()->routeIs('advertiser.compaigns.index_builder') ? 'active' : '' }}" href="{{ route('advertiser.compaigns.index_builder') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-chart-bar"> </i>
               <span class="hide-menu">Campaigns Builder</span>
             </a>
           </li>
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('advertiser.dcp_creatives.index') }}" id="get-url" aria-expanded="false">
+          <li class="sidebar-item {{ request()->routeIs('advertiser.dcp_creatives.index') ? 'active' : '' }}">
+            <a class="sidebar-link {{ request()->routeIs('advertiser.dcp_creatives.index') ? 'active' : '' }}" href="{{ route('advertiser.dcp_creatives.index') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-bullhorn"> </i>
               <span class="hide-menu">DCP Creative</span>
             </a>
           </li>
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('advertiser.customers.index') }}" id="get-url" aria-expanded="false">
+          <li class="sidebar-item {{ request()->routeIs('advertiser.customers.index') ? 'active' : '' }}">
+            <a class="sidebar-link {{ request()->routeIs('advertiser.customers.index') ? 'active' : '' }}" href="{{ route('advertiser.customers.index') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-account-star"> </i>
               <span class="hide-menu">Customer</span>
             </a>
