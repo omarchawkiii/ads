@@ -30,7 +30,7 @@
           <!-- ---------------------------------- -->
            <li class="sidebar-item {{ request()->routeIs('advertiser.dashboard') ? 'active' : '' }}">
             <a class="sidebar-link {{ request()->routeIs('advertiser.dashboard') ? 'active' : '' }}" href="{{ route('advertiser.dashboard') }}" id="get-url"  aria-expanded="false">
-                <i class="mdi mdi-chart-bar"> </i>
+                <iconify-icon icon="solar:widget-add-line-duotone" class=""></iconify-icon>
               <span class="hide-menu">Dashboard</span>
             </a>
           </li>

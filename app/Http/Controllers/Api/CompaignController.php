@@ -12,7 +12,9 @@ class CompaignController extends Controller
 {
     public function index()
     {
-        $campaigns = Compaign::orderBy('created_at', 'desc')->get();
+        $campaigns = Compaign::where('start_date', '<', now()->toDateString())
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $campaigns = $campaigns->map(function ($campaign) {
             $campaign->xml_url = url("storage/app/public/campaigns/campaign_{$campaign->id}.xml");
