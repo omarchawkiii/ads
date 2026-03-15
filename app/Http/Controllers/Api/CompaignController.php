@@ -12,7 +12,7 @@ class CompaignController extends Controller
 {
     public function index()
     {
-        $campaigns = Compaign::where('start_date', '<', now()->toDateString())
+        $campaigns = Compaign::where('start_date', '>', now()->toDateString())
             ->orderBy('created_at', 'desc')
             ->get();
 
