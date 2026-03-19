@@ -58,9 +58,9 @@
                                        class="table table-striped table-bordered display text-nowrap dataTable">
                                     <thead>
                                     <tr class="text-center">
-                                        <th style="width:160px;">ID</th>
-                                        <th>Name</th>
-                                        <th style="width:160px;">Actions</th>
+                                        <th style="width:160px;" class="text-center">ID</th>
+                                        <th class="text-center">Name</th>
+                                        <th style="width:160px;" class="text-center">Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody></tbody>

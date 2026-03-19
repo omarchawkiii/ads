@@ -839,7 +839,7 @@
                                     '<tr class="odd ">' +
                                     '<td class="text-body text-center align-middle fw-medium text-decoration-none">' +
                                     index + ' </td>' +
-                                    '<td class="text-body text-centeralign-middle fw-medium text-decoration-none">' +
+                                    '<td class="text-body text-center align-middle fw-medium text-decoration-none">' +
                                     value.name + ' </td>' +
                                     '<td class="text-body text-center align-middle fw-medium text-decoration-none">' +
                                         value.start_date + ' </td>' +

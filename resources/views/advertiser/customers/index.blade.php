@@ -30,11 +30,11 @@
             <table id="customers-table" class="table table-striped table-bordered display text-nowrap dataTable">
                 <thead>
                     <tr class="text-center">
-                        <th style="width:80px;">ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th style="width:160px;">Actions</th>
+                        <th style="width:80px;"class="text-center">ID</th>
+                        <th class="text-center">Name</th>
+                        <th class="text-center">Email</th>
+                        <th class="text-center">Phone</th>
+                        <th style="width:160px;" class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -56,19 +56,19 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Name</label>
-                        <input type="text" class="form-control" id="name" required>
+                        <input type="text" class="form-control" id="name" required placeholder="Name">
                     </div>
                     <div class="mb-3">
                         <label>Address</label>
-                        <input type="text" class="form-control" id="address">
+                        <input type="text" class="form-control" id="address" placeholder="Address">
                     </div>
                     <div class="mb-3">
                         <label>Email</label>
-                        <input type="email" class="form-control" id="email">
+                        <input type="email" class="form-control" id="email" placeholder="Email">
                     </div>
                     <div class="mb-3">
                         <label>Phone</label>
-                        <input type="text" class="form-control" id="phone">
+                        <input type="text" class="form-control" id="phone" placeholder="Phone">
                     </div>
                 </div>
 
@@ -100,19 +100,19 @@
 
                     <div class="mb-3">
                         <label>Name</label>
-                        <input type="text" class="form-control" id="name" required>
+                        <input type="text" class="form-control" id="name" required placeholder="Name">
                     </div>
                     <div class="mb-3">
                         <label>Address</label>
-                        <input type="text" class="form-control" id="address">
+                        <input type="text" class="form-control" id="address" placeholder="Address">
                     </div>
                     <div class="mb-3">
                         <label>Email</label>
-                        <input type="email" class="form-control" id="email">
+                        <input type="email" class="form-control" id="email" placeholder="Email">
                     </div>
                     <div class="mb-3">
                         <label>Phone</label>
-                        <input type="text" class="form-control" id="phone">
+                        <input type="text" class="form-control" id="phone" placeholder="Phone">
                     </div>
                 </div>
 
