@@ -14,9 +14,17 @@ class ConfigSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = Carbon::now();
-        DB::table('configs')->insert([
-            ['use_noc' => 0,'link' => 'http://192.168.1.1','user' => 'user','password' => 'password',    'created_at' => $now, 'updated_at' => $now],
-        ]);
+        DB::table('configs')->updateOrInsert(
+            ['id' => 1],
+            [
+                'use_noc'    => 1,
+                'link'       => 'http://192.168.200.236',
+                'user'       => 'adsmart',
+                'password'   => 'adsmart',
+                'tax'        => 6.00,
+                'created_at' => '2025-09-14 03:20:48',
+                'updated_at' => '2025-09-14 03:26:42',
+            ]
+        );
     }
 }

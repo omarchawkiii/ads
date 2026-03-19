@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             SlotSeeder::class,
             AdminUserSeeder::class,
             AdvertiserUserSeeder::class,
+            ConfigSeeder::class,
         ]);
         //\App\Models\Location::factory(3)->create();
        // \App\Models\Screen::factory(3)->create();
