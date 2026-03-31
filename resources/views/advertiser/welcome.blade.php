@@ -225,7 +225,7 @@
                 </td>
               </tr>
               @empty
-              <tr><td colspan="6" class="text-center text-muted py-4">No campaigns yet. <a href="{{ route('compaigns.create') }}">Create your first one.</a></td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-4">No campaigns yet. <a href="{{ route('advertiser.compaigns.index_builder') }}">Create your first one.</a></td></tr>
               @endforelse
             </tbody>
           </table>

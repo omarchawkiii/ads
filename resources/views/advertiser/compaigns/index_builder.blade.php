@@ -987,9 +987,14 @@
                 })
                 .done(function(res){
                     $('#page-loader').hide();
+
+                    var nocLine = res.noc_sent
+                        ? '<br><small class="text-success"><i class="mdi mdi-check-circle"></i> Campaign sent to NOC successfully.</small>'
+                        : '<br><small class="text-warning"><i class="mdi mdi-alert-circle"></i> NOC not notified: ' + (res.noc_reason || 'unknown reason') + '</small>';
+
                     Swal.fire({
                         title: 'Done!',
-                        text: 'Campaign Created successfully.',
+                        html: 'Campaign created successfully.' + nocLine,
                         icon: 'success',
                         confirmButtonText: 'Continue'
                     });

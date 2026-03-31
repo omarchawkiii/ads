@@ -297,26 +297,30 @@ class CompaignController extends Controller
         });
 
         // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
-        $this->pushCampaignToNoc($compaign);
+        $noc = $this->pushCampaignToNoc($compaign);
 
         return response()->json([
-            'message' => 'Compaign created successfully.',
-            'id'      => $compaign->id,
+            'message'   => 'Compaign created successfully.',
+            'id'        => $compaign->id,
+            'noc_sent'  => $noc['sent'],
+            'noc_reason'=> $noc['reason'] ?? null,
         ], 201);
     }
-    private function pushCampaignToNoc(Compaign $compaign): void
+    private function pushCampaignToNoc(Compaign $compaign): array
     {
         try {
             $config = Config::first();
 
-            if (!$config) {
-
-                return;
+            if (!$config || !$config->use_noc) {
+                return ['sent' => false, 'reason' => 'NOC disabled in configuration.'];
             }
 
-            $url = rtrim($config->link, '/') . '/api/receive_campaign';
+            $url = rtrim($config->link, '/') . '/api/adsmart/receive_campaign';
 
-            $client = new Client();
+
+
+            $client   = new Client();
+
             $response = $client->request('POST', $url, [
                 'connect_timeout' => 5,
                 'query' => [
@@ -332,17 +336,19 @@ class CompaignController extends Controller
 
             $contents = json_decode($response->getBody(), true);
 
-            if (!$contents || !$contents['status']) {
-
-                return;
+            if (!$contents || empty($contents['status'])) {
+                return ['sent' => false, 'reason' => $contents['message'] ?? 'NOC returned an unsuccessful response.'];
             }
 
-
+            return ['sent' => true];
 
         } catch (RequestException $e) {
-
+            $detail = $e->hasResponse()
+                ? (string) $e->getResponse()->getBody()
+                : $e->getMessage();
+            return ['sent' => false, 'reason' => 'NOC error: ' . $detail];
         } catch (\Exception $e) {
-
+            return ['sent' => false, 'reason' => $e->getMessage()];
         }
     }
 
@@ -634,11 +640,22 @@ class CompaignController extends Controller
             -------------------------------------------------*/
             CampaignXmlGenerator::generate($compaign);
            // $response = $this->sendCampaignToNOC($compaign->id);
-            $response = $this->pushCampaignToNoc($compaign);
+            ///$response = $this->pushCampaignToNoc($compaign);
+
+                    // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
+            $noc = $this->pushCampaignToNoc($compaign);
+
             return response()->json([
+                'message'   => 'Compaign created successfully.',
+                'id'        => $compaign->id,
+                'noc_sent'  => $noc['sent'],
+                'noc_reason'=> $noc['reason'] ?? null,
+            ], 201);
+
+           /* return response()->json([
                 'message' => 'Compaign updated successfully.',
                 'id'      => $compaign->id,
-            ]);
+            ]); */
         });
     }
 

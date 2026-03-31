@@ -1022,11 +1022,21 @@
                     type: 'POST', // POST + _method=PUT
                     data: payload
                 })
-                .done(() => {
+                .done(function(res) {
                     $('#page-loader').hide();
-                    Swal.fire('Success', 'Campaign updated successfully', 'success');
+
+                    var nocLine = res.noc_sent
+                        ? '<br><small class="text-success"><i class="mdi mdi-check-circle"></i> Campaign sent to NOC successfully.</small>'
+                        : '<br><small class="text-warning"><i class="mdi mdi-alert-circle"></i> NOC not notified: ' + (res.noc_reason || 'unknown reason') + '</small>';
+
+                    Swal.fire({
+                        title: 'Success',
+                        html: 'Campaign updated successfully.' + nocLine,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
                 })
-                .fail((xhr) => {
+                .fail(function(xhr) {
                     $('#page-loader').hide();
                     console.error(xhr.responseText);
                     var msg = (xhr.responseJSON && xhr.responseJSON.message)

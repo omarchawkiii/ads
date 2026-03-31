@@ -148,7 +148,6 @@ class LocationController extends Controller
                         'status' =>0,
                         'message' => $contents['message'],
                     ], 200);
-
                 }
 
             }
@@ -167,7 +166,6 @@ class LocationController extends Controller
                 'status' =>0,
                 'message' => $e->getMessage(),
             ], 500);
-
         }
         catch (\Exception $e) {
             // Capture d'autres exceptions générales
@@ -175,8 +173,6 @@ class LocationController extends Controller
                 'status' =>0,
                 'message' => $e->getMessage(),
             ], 500);
-
         }
-
     }
 }
