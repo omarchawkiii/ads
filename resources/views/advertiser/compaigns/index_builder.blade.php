@@ -988,9 +988,12 @@
                 .done(function(res){
                     $('#page-loader').hide();
 
-                    var nocLine = res.noc_sent
-                        ? '<br><small class="text-success"><i class="mdi mdi-check-circle"></i> Campaign sent to NOC successfully.</small>'
-                        : '<br><small class="text-warning"><i class="mdi mdi-alert-circle"></i> NOC not notified: ' + (res.noc_reason || 'unknown reason') + '</small>';
+                    var nocLine = '';
+                    if (res.hasOwnProperty('noc_sent')) {
+                        nocLine = res.noc_sent
+                            ? '<br><small class="text-success"><i class="mdi mdi-check-circle"></i> Campaign sent to NOC successfully.</small>'
+                            : '<br><small class="text-warning"><i class="mdi mdi-alert-circle"></i> NOC not notified: ' + (res.noc_reason || 'unknown reason') + '</small>';
+                    }
 
                     Swal.fire({
                         title: 'Done!',

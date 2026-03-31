@@ -299,25 +299,27 @@ class CompaignController extends Controller
         // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
         $noc = $this->pushCampaignToNoc($compaign);
 
-        return response()->json([
-            'message'   => 'Compaign created successfully.',
-            'id'        => $compaign->id,
-            'noc_sent'  => $noc['sent'],
-            'noc_reason'=> $noc['reason'] ?? null,
-        ], 201);
+        $response = [
+            'message' => 'Compaign created successfully.',
+            'id'      => $compaign->id,
+        ];
+        if ($noc !== null) {
+            $response['noc_sent']   = $noc['sent'];
+            $response['noc_reason'] = $noc['reason'] ?? null;
+        }
+
+        return response()->json($response, 201);
     }
-    private function pushCampaignToNoc(Compaign $compaign): array
+    private function pushCampaignToNoc(Compaign $compaign): ?array
     {
         try {
             $config = Config::first();
 
             if (!$config || !$config->use_noc) {
-                return ['sent' => false, 'reason' => 'NOC disabled in configuration.'];
+                return null;
             }
 
             $url = rtrim($config->link, '/') . '/api/adsmart/receive_campaign';
-
-
 
             $client   = new Client();
 
@@ -645,12 +647,16 @@ class CompaignController extends Controller
                     // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
             $noc = $this->pushCampaignToNoc($compaign);
 
-            return response()->json([
-                'message'   => 'Compaign created successfully.',
-                'id'        => $compaign->id,
-                'noc_sent'  => $noc['sent'],
-                'noc_reason'=> $noc['reason'] ?? null,
-            ], 201);
+            $response = [
+                'message' => 'Compaign updated successfully.',
+                'id'      => $compaign->id,
+            ];
+            if ($noc !== null) {
+                $response['noc_sent']   = $noc['sent'];
+                $response['noc_reason'] = $noc['reason'] ?? null;
+            }
+
+            return response()->json($response, 201);
 
            /* return response()->json([
                 'message' => 'Compaign updated successfully.',
