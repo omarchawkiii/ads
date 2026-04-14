@@ -43,4 +43,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Customer::class);
     }
+
+    public function cinemaChains()
+    {
+        return $this->belongsToMany(CinemaChain::class, 'cinema_chain_user')->withTimestamps();
+    }
 }

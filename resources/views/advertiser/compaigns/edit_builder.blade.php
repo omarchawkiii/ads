@@ -95,7 +95,7 @@
                             <div class="col-md-3">
                                 <label>Cinema Chain</label>
                                 <select id="cinema_chain" class="form-select select2" multiple name="cinema_chain[]" >
-
+                                    <option value="__all__">Select All</option>
                                     @foreach ($cinema_chains as $chain)
                                         <option value="{{ $chain->id }}"
                                             @selected($isEdit && $compaign->cinemaChains->contains($chain->id))>

@@ -58,8 +58,11 @@
                                        class="table table-striped table-bordered display text-nowrap dataTable">
                                     <thead>
                                     <tr class="text-center">
-                                        <th style="width:160px;" class="text-center">ID</th>
+                                        <th style="width:60px;" class="text-center">ID</th>
                                         <th class="text-center">Name</th>
+                                        <th class="text-center">Contact Name</th>
+                                        <th class="text-center">Contact Email</th>
+                                        <th class="text-center">IP Address</th>
                                         <th style="width:160px;" class="text-center">Actions</th>
                                     </tr>
                                     </thead>
@@ -204,9 +207,31 @@
                         </div>
 
                         <div class="modal-body">
-                            <div class="mb-3">
-                                <label>Name</label>
-                                <input type="text" class="form-control" id="name" required>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label>Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Contact Name</label>
+                                    <input type="text" class="form-control" id="contact_name" placeholder="Contact Name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Contact Email</label>
+                                    <input type="email" class="form-control" id="contact_email" placeholder="Contact Email">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label>IP Address</label>
+                                    <input type="text" class="form-control" id="ip_address" placeholder="e.g. 192.168.1.1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Username</label>
+                                    <input type="text" class="form-control" id="cc_username" placeholder="Username">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Password</label>
+                                    <input type="password" class="form-control" id="cc_password" placeholder="Password">
+                                </div>
                             </div>
                         </div>
 
@@ -230,9 +255,31 @@
 
                         <div class="modal-body">
                             <input type="hidden" id="id">
-                            <div class="mb-3">
-                                <label>Name</label>
-                                <input type="text" class="form-control" id="name" required>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label>Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Contact Name</label>
+                                    <input type="text" class="form-control" id="contact_name" placeholder="Contact Name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Contact Email</label>
+                                    <input type="email" class="form-control" id="contact_email" placeholder="Contact Email">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label>IP Address</label>
+                                    <input type="text" class="form-control" id="ip_address" placeholder="e.g. 192.168.1.1">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Username</label>
+                                    <input type="text" class="form-control" id="cc_username" placeholder="Username">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Password</label>
+                                    <input type="password" class="form-control" id="cc_password" placeholder="Leave blank to keep current">
+                                </div>
                             </div>
                         </div>
 
@@ -531,7 +578,10 @@
                                 result = result +
                                     '<tr class="odd text-center">' +
                                     '<td class="text-body align-middle fw-medium">' + index + '</td>' +
-                                    '<td class="text-body align-middle fw-medium">' + value.name + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' + (value.name || '') + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' + (value.contact_name || '–') + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' + (value.contact_email || '–') + '</td>' +
+                                    '<td class="text-body align-middle fw-medium">' + (value.ip_address || '–') + '</td>' +
                                     '<td class="text-body align-middle fw-medium">' +
                                     '<button id="' + value.id + '" type="button" class="edit btn mb-1 btn-rounded btn-warning m-1">' +
                                     '<i class="mdi mdi-tooltip-edit"></i>' +
@@ -568,14 +618,18 @@
                 $(document).on("submit", "#create_cinema_chain_modal", function(event) {
                     event.preventDefault();
 
-                    var name = $('#create_cinema_chain_modal #name').val();
                     var url = '{{ url('') }}' + '/cinema-chains';
 
                     $.ajax({
                         url: url,
                         type: 'POST',
                         data: {
-                            name: name,
+                            name:          $('#create_cinema_chain_modal #name').val(),
+                            contact_name:  $('#create_cinema_chain_modal #contact_name').val(),
+                            contact_email: $('#create_cinema_chain_modal #contact_email').val(),
+                            ip_address:    $('#create_cinema_chain_modal #ip_address').val(),
+                            username:      $('#create_cinema_chain_modal #cc_username').val(),
+                            password:      $('#create_cinema_chain_modal #cc_password').val(),
                             "_token": "{{ csrf_token() }}",
                         },
                     })
@@ -670,9 +724,15 @@
                         },
                         success: function(response) {
                             $("#wait-modal").modal('hide');
-                            $('#edit_cinema_chain_modal').modal('show');
-                            $('#edit_cinema_chain_modal #name').val(response.cinemaChain.name);
+                            var c = response.cinemaChain;
                             $('#edit_cinema_chain_modal #id').val(id);
+                            $('#edit_cinema_chain_modal #name').val(c.name || '');
+                            $('#edit_cinema_chain_modal #contact_name').val(c.contact_name || '');
+                            $('#edit_cinema_chain_modal #contact_email').val(c.contact_email || '');
+                            $('#edit_cinema_chain_modal #ip_address').val(c.ip_address || '');
+                            $('#edit_cinema_chain_modal #cc_username').val(c.username || '');
+                            $('#edit_cinema_chain_modal #cc_password').val('');
+                            $('#edit_cinema_chain_modal').modal('show');
                         }
                     });
                 });
@@ -681,17 +741,23 @@
                 $(document).on("submit", "#edit_cinema_chain_form", function(event) {
                     event.preventDefault();
 
-                    var name = $('#edit_cinema_chain_form #name').val();
-                    var id = $('#edit_cinema_chain_form #id').val();
+                    var id  = $('#edit_cinema_chain_form #id').val();
                     var url = '{{ url('') }}' + '/cinema-chains/' + id;
+                    var pwd = $('#edit_cinema_chain_form #cc_password').val();
+                    var data = {
+                        name:          $('#edit_cinema_chain_form #name').val(),
+                        contact_name:  $('#edit_cinema_chain_form #contact_name').val(),
+                        contact_email: $('#edit_cinema_chain_form #contact_email').val(),
+                        ip_address:    $('#edit_cinema_chain_form #ip_address').val(),
+                        username:      $('#edit_cinema_chain_form #cc_username').val(),
+                        "_token": "{{ csrf_token() }}",
+                    };
+                    if (pwd) { data.password = pwd; }
 
                     $.ajax({
                         url: url,
                         type: 'PUT',
-                        data: {
-                            name: name,
-                            "_token": "{{ csrf_token() }}",
-                        },
+                        data: data,
                         beforeSend: function() {
                             $("#wait-modal").modal('show');
                         },

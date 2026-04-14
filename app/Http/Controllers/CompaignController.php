@@ -85,129 +85,7 @@ class CompaignController extends Controller
         return Response()->json(compact('compaigns'));
     }
 
-    public function store_(Request $request)
-    {
-        $v = $request->validate([
 
-            'compaign_name'       => 'required|string|max:255',
-            'template_slot_id'    => 'required|integer|exists:template_slots,id',
-            'start_date'          => 'required|date',
-            'end_date'            => 'required|date|after_or_equal:start_date',
-
-            // filtres
-            'compaign_category_id' => 'nullable|integer|exists:compaign_categories,id',
-
-            // 🔵 cinema chains (many-to-many)
-            'cinema_chain_id'      => 'nullable|array',
-            'cinema_chain_id.*'    => 'integer|exists:cinema_chains,id',
-
-            'location_id'          => 'array',
-            'location_id.*'        => 'integer|exists:locations,id',
-
-            'movie_genre_id'       => 'array',
-            'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
-
-            'movie_id'             => 'nullable|array|min:1',
-            'movie_id.*'           => 'integer|exists:movies,id',
-
-            'hall_type_id'         => 'array',
-            'hall_type_id.*'       => 'integer|exists:hall_types,id',
-
-            // slots + dcps
-            'slots'                       => 'required|array|min:1',
-            'slots.*.slot_id'             => 'required|integer|exists:slots,id',
-            'slots.*.dcps'                => 'required|array|min:1',
-            'slots.*.dcps.*.position'     => 'required|integer|min:1',
-            'slots.*.dcps.*.dcp_id'       => 'required|integer|exists:dcp_creatives,id',
-
-            'budget'          => 'required|integer|min:1',
-
-            'langue'          => 'required|integer|exists:langues,id',
-            'gender'          => 'required|integer|exists:genders,id',
-
-            'target_type'     => 'array',
-            'target_type.*'   => 'integer|exists:target_types,id',
-
-            'interest'        => 'array',
-            'interest.*'      => 'integer|exists:interests,id',
-        ]);
-
-        return DB::transaction(function () use ($v, $request) {
-
-            // 1️⃣ Création de la campagne (sans cinema_chain_id)
-            $compaign = Compaign::create([
-                'name'                  => $v['compaign_name'],
-                'template_slot_id'      => $v['template_slot_id'],
-                'langue_id'             => $v['langue'],
-                'gender_id'             => $v['gender'],
-                'budget'                => $v['budget'],
-                'compaign_objective_id' => 1,
-                'ad_duration'           => 30,
-                'start_date'            => $v['start_date'],
-                'end_date'              => $v['end_date'],
-                'compaign_category_id'  => 1,
-                'user_id'               => Auth::id(),
-                'status'                => 1,
-            ]);
-
-            // helper
-            $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
-
-            // 2️⃣ relations simples
-            $compaign->movies()->sync($ids('movie_id'));
-
-            if ($request->has('cinema_chain_id')) {
-                $compaign->cinemaChains()->sync($ids('cinema_chain_id'));
-            }
-
-            if ($request->has('location_id')) {
-                $compaign->locations()->sync($ids('location_id'));
-            }
-
-            if ($request->has('movie_genre_id')) {
-                $compaign->movieGenres()->sync($ids('movie_genre_id'));
-            }
-
-            if ($request->has('hall_type_id')) {
-                $compaign->hallTypes()->sync($ids('hall_type_id'));
-            }
-
-            if ($request->has('target_type')) {
-                $compaign->targetTypes()->sync($ids('target_type'));
-            }
-
-            if ($request->has('interest')) {
-                $compaign->interests()->sync($ids('interest'));
-            }
-
-            // 3️⃣ slots
-            $slotIds = collect($v['slots'])->pluck('slot_id')->unique()->toArray();
-            $compaign->slots()->sync($slotIds);
-
-            // 4️⃣ DCPs avec slot_id (⚠️ duration vient de dcp_creatives)
-
-            $compaign->dcpCreatives()->detach();
-
-            foreach ($v['slots'] as $slotData) {
-                foreach ($slotData['dcps'] as $dcp) {
-                    $compaign->dcpCreatives()->attach($dcp['dcp_id'], [
-                        'slot_id' => $slotData['slot_id'],
-                        'position' => $dcp['position'],
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-
-            // 5️⃣ Génération XML
-            CampaignXmlGenerator::generate($compaign);
-
-            return response()->json([
-                'message' => 'Compaign created successfully.',
-                'id'      => $compaign->id,
-            ], 201);
-        });
-    }
 
 
     public function store(Request $request)
@@ -504,7 +382,7 @@ class CompaignController extends Controller
             'target_types'        => TargetType::orderBy('name')->get(),
             'interests'           => Interest::orderBy('name')->get(),
             'slots'               => Slot::orderBy('name')->get(),
-            'cinema_chains'       => CinemaChain::orderBy('name')->get(),
+            'cinema_chains'       => Auth()->user()->cinemaChains()->orderBy('name')->get(),
         ]);
     }
 
@@ -702,7 +580,7 @@ class CompaignController extends Controller
         $interests = Interest::orderBy('name', 'asc')->get() ;
         $slots = Slot::orderBy('name', 'asc')->get() ;
         $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
-        $cinema_chains  = CinemaChain::orderBy('name', 'asc')->get() ;
+        $cinema_chains  = Auth()->user()->cinemaChains()->orderBy('name', 'asc')->get() ;
 
         return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains'));
     }
@@ -944,7 +822,7 @@ class CompaignController extends Controller
         $slots = Slot::orderBy('name', 'asc')->get() ;
         //$dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
         $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->orderBy('name', 'asc')->get() ;
-        $cinema_chains  = CinemaChain::orderBy('name', 'asc')->get() ;
+        $cinema_chains  = Auth()->user()->cinemaChains()->orderBy('name', 'asc')->get() ;
         $slot_templates = TemplateSlot::orderBy('name', 'asc')->get() ;
 
         return view('advertiser.compaigns.index_builder', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'));

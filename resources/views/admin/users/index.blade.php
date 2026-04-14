@@ -2,6 +2,19 @@
 @section('title')
     users
 @endsection
+
+@section('custom_css')
+    <link rel="stylesheet" href="{{ asset('assets/libs/select2/dist/css/select2.min.css') }}">
+    <style>
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            min-height: 38px;
+            padding: 2px 6px;
+        }
+    </style>
+@endsection
+
 @section('content')
     <div class="">
 
@@ -195,6 +208,33 @@
 
     </div>
 
+    <div class="modal" id="assign_chains_modal" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="assign_chains_form">
+                    <div class="modal-header bg-primary">
+                        <h4 class="modal-title text-white">Assign Cinema Chains</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="user_id">
+                        <div class="mb-3">
+                            <label>Cinema Chains</label>
+                            <select id="cinema_chain_ids" name="cinema_chain_ids[]" multiple
+                                    class="form-select select2-chains" style="width:100%"
+                                    data-placeholder="Select cinema chains...">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn bg-danger-subtle text-danger" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal " id="edit_password_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true"
         role="dialog">
         <div class="modal-dialog modal-md modal-dialog-centered">
@@ -245,6 +285,7 @@
 
 @section('custom_script')
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
+    <script src="{{ asset('assets/libs/select2/dist/js/select2.full.min.js') }}"></script>
     <script>
         (function() {
             'use strict';
@@ -355,6 +396,11 @@
                                     '" type="button" class="edit_password justify-content-center btn mb-1 btn-rounded btn-warning m-1">' +
                                     '<i class="mdi mdi-pencil-lock"></i>' +
                                     '</button>' +
+                                    (value.role == 2 ?
+                                    '<button id="' + value.id +
+                                    '" type="button" class="assign_chains justify-content-center btn mb-1 btn-rounded btn-info m-1" title="Assign Cinema Chains">' +
+                                    '<i class="mdi mdi-home-modern"></i>' +
+                                    '</button>' : '') +
                                     '<button id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
                                     '<i class="mdi mdi-delete"></i>' +
@@ -702,6 +748,95 @@
                     checkUsernameExists(usernameInput, username);
                     }, 1000);
                 }
+            });
+
+            /* ---- Select2 helper for assign chains modal ---- */
+            function initChainsSelect2() {
+                var $s = $('#assign_chains_form #cinema_chain_ids');
+
+                if ($s.hasClass('select2-hidden-accessible')) {
+                    $s.select2('destroy');
+                }
+
+                $s.select2({
+                    width: '100%',
+                    dropdownParent: $('#assign_chains_modal'),
+                    placeholder: 'Select cinema chains...',
+                    closeOnSelect: false,
+                });
+
+                $s.on('select2:select select2:unselect', function(e) {
+                    var ALL = '__all__';
+                    var $select = $(this);
+                    var values  = $select.val() || [];
+
+                    if (e.params && e.params.data && e.params.data.id === ALL) {
+                        if (values.indexOf(ALL) !== -1) {
+                            // select all real options
+                            var allValues = $select.find('option').map(function() { return this.value; }).get()
+                                            .filter(function(v) { return v !== ALL; });
+                            $select.val(allValues).trigger('change.select2');
+                        } else {
+                            $select.val(null).trigger('change.select2');
+                        }
+                        $select.select2('close');
+                    }
+                });
+            }
+
+            /* ---- Assign Cinema Chains ---- */
+            $(document).on('click', '.assign_chains', function() {
+                var userId = $(this).attr('id');
+                $('#assign_chains_form #user_id').val(userId);
+
+                var url = '{{ url('') }}' + '/users/' + userId + '/cinema-chains';
+                $('#wait-modal').modal('show');
+
+                $.ajax({ url: url, type: 'GET' })
+                    .done(function(response) {
+                        $('#wait-modal').modal('hide');
+                        var $select = $('#assign_chains_form #cinema_chain_ids');
+                        $select.empty();
+
+                        // "Select All / Deselect All" special option
+                        $select.append('<option value="__all__">— Select All —</option>');
+
+                        $.each(response.cinemaChains, function(i, chain) {
+                            var selected = response.assignedIds.indexOf(chain.id) !== -1 ? ' selected' : '';
+                            $select.append('<option value="' + chain.id + '"' + selected + '>' + chain.name + '</option>');
+                        });
+
+                        initChainsSelect2();
+                        $('#assign_chains_modal').modal('show');
+                    })
+                    .fail(function() {
+                        $('#wait-modal').modal('hide');
+                        Swal.fire({ title: 'Error', text: 'Could not load cinema chains.', icon: 'error' });
+                    });
+            });
+
+            $(document).on('submit', '#assign_chains_form', function(event) {
+                event.preventDefault();
+                var userId = $('#assign_chains_form #user_id').val();
+                var ids    = ($('#assign_chains_form #cinema_chain_ids').val() || [])
+                                .filter(function(v) { return v !== '__all__'; });
+                var url    = '{{ url('') }}' + '/users/' + userId + '/cinema-chains/sync';
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: { cinema_chain_ids: ids, _token: '{{ csrf_token() }}' },
+                    beforeSend: function() { $('#wait-modal').modal('show'); },
+                })
+                .done(function() {
+                    $('#wait-modal').modal('hide');
+                    $('#assign_chains_modal').modal('hide');
+                    Swal.fire({ title: 'Done!', text: 'Cinema chains assigned successfully.', icon: 'success', confirmButtonText: 'Continue' });
+                })
+                .fail(function() {
+                    $('#wait-modal').modal('hide');
+                    Swal.fire({ title: 'Error', text: 'Operation failed.', icon: 'error' });
+                });
             });
 
         });

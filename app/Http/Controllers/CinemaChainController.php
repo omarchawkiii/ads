@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\CinemaChain;
 use App\Models\Config;
 use App\Models\Location;
+use App\Models\User;
 
 class CinemaChainController extends Controller
 {
@@ -32,7 +33,12 @@ class CinemaChainController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
+                'name'          => ['required', 'string', 'max:255'],
+                'contact_name'  => ['nullable', 'string', 'max:255'],
+                'contact_email' => ['nullable', 'email', 'max:255'],
+                'ip_address'    => ['nullable', 'string', 'max:255'],
+                'username'      => ['nullable', 'string', 'max:255'],
+                'password'      => ['nullable', 'string', 'max:255'],
             ]);
 
             $cinemaChain = CinemaChain::create($validated);
@@ -53,7 +59,12 @@ class CinemaChainController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
+                'name'          => ['required', 'string', 'max:255'],
+                'contact_name'  => ['nullable', 'string', 'max:255'],
+                'contact_email' => ['nullable', 'email', 'max:255'],
+                'ip_address'    => ['nullable', 'string', 'max:255'],
+                'username'      => ['nullable', 'string', 'max:255'],
+                'password'      => ['nullable', 'string', 'max:255'],
             ]);
 
             $cinemaChain->update($validated);
@@ -85,10 +96,40 @@ class CinemaChainController extends Controller
             ], 500);
         }
     }
+
     public function getLocations(Request $request)
     {
-
-        $locations = Location::whereIn('cinema_chain_id', $request->cinema_chain_ids)->get(['id','name']);
+        $locations = Location::whereIn('cinema_chain_id', $request->cinema_chain_ids)->get(['id', 'name']);
         return response()->json(['locations' => $locations]);
+    }
+
+    /** GET /users/{user}/cinema-chains — all chains with assigned flag */
+    public function getUserChains(User $user)
+    {
+        $allChains   = CinemaChain::orderBy('name')->get(['id', 'name']);
+        $assignedIds = $user->cinemaChains()->pluck('cinema_chain_id')->toArray();
+
+        return response()->json([
+            'cinemaChains' => $allChains,
+            'assignedIds'  => $assignedIds,
+        ]);
+    }
+
+    /** POST /users/{user}/cinema-chains/sync — sync assigned chains */
+    public function syncUserChains(Request $request, User $user)
+    {
+        try {
+            $request->validate([
+                'cinema_chain_ids'   => ['nullable', 'array'],
+                'cinema_chain_ids.*' => ['integer', 'exists:cinema_chains,id'],
+            ]);
+
+            $user->cinemaChains()->sync($request->cinema_chain_ids ?? []);
+
+            return response()->json(['message' => 'Cinema chains assigned successfully.']);
+
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Operation failed.'], 500);
+        }
     }
 }

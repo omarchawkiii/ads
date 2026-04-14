@@ -45,6 +45,8 @@ Route::put('/cinema-chains/{cinemaChain}', [App\Http\Controllers\CinemaChainCont
 Route::delete('/cinema-chains/{cinemaChain}', [App\Http\Controllers\CinemaChainController::class, 'destroy'])->name('cinema-chains.destroy')->middleware(['auth','admin']);
 Route::get('/cinema-chains/{id}/show', [App\Http\Controllers\CinemaChainController::class, 'show'])->name('cinema-chains.show')->middleware(['auth','admin']);
 Route::get('/cinema-chains/refresh_cinema-chains', [App\Http\Controllers\CinemaChainController::class, 'refresh_cinema-chains'])->name('cinema-chains.refresh_cinema-chains')->middleware(['auth','admin']);
+Route::get('/users/{user}/cinema-chains', [App\Http\Controllers\CinemaChainController::class, 'getUserChains'])->name('users.cinema-chains.get')->middleware(['auth','admin']);
+Route::post('/users/{user}/cinema-chains/sync', [App\Http\Controllers\CinemaChainController::class, 'syncUserChains'])->name('users.cinema-chains.sync')->middleware(['auth','admin']);
 
 
 Route::get('locations', [App\Http\Controllers\LocationController::class, 'index'])->name('locations.index')->middleware(['auth','admin']);
