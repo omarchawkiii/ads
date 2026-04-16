@@ -31,6 +31,7 @@
             <div class="card-body py-3">
                 <div class="row g-2 align-items-end">
 
+                    @if(!$isDirect)
                     <div class="col-md-3">
                         <label class="form-label fw-semibold mb-1 small">Client</label>
                         <select class="form-select form-select-sm" id="filter_customer_id">
@@ -40,6 +41,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
 
                     <div class="col-md-2">
                         <label class="form-label fw-semibold mb-1 small">Start Date</label>

@@ -600,8 +600,9 @@ class CompaignController extends Controller
         $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
         $cinema_chains  = Auth()->user()->cinemaChains()->orderBy('name', 'asc')->get() ;
         $customers = \App\Models\Customer::where('user_id', Auth()->user()->id)->orderBy('name')->get();
+        $isDirect  = Auth()->user()->advertiser_type === 'direct';
 
-        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','customers'));
+        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','customers','isDirect'));
     }
 
     public function approuve(Compaign $compaign)
