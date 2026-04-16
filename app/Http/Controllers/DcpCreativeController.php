@@ -21,10 +21,19 @@ class DcpCreativeController extends Controller
 
     public function index()
     {
+        $user       = Auth()->user();
         $categories = CompaignCategory::orderBy('name')->get();
-        $customers = Customer::where('user_id',Auth()->user()->id)->orderBy('name')->get();
+        $isDirect   = $user->advertiser_type === 'direct';
 
-        return view('advertiser.dcp_creatives.index',compact('categories','customers'));
+        if ($isDirect) {
+            $autoCustomer = Customer::where('user_id', $user->id)->first();
+            $customers    = collect();
+        } else {
+            $autoCustomer = null;
+            $customers    = Customer::where('user_id', $user->id)->orderBy('name')->get();
+        }
+
+        return view('advertiser.dcp_creatives.index', compact('categories', 'customers', 'isDirect', 'autoCustomer'));
     }
 
     public function show(Request $request)
@@ -213,13 +222,25 @@ class DcpCreativeController extends Controller
 
     public function complete(Request $request)
     {
-        $request->validate([
+        $user     = Auth()->user();
+        $isDirect = $user->advertiser_type === 'direct';
+
+        $customerRules = $isDirect
+            ? []
+            : ['customer_id' => ['required', 'exists:customers,id']];
+
+        $request->validate(array_merge([
             'upload_id'  => 'required|string',
             'total'      => 'required|integer|min:1',
             'file_name'  => 'required|string',
             'compaign_category_id' => ['required', 'exists:compaign_categories,id'],
-            'customer_id' => ['required', 'exists:customers,id'],
-        ]);
+        ], $customerRules));
+
+        if ($isDirect) {
+            $customerId = Customer::where('user_id', $user->id)->value('id');
+        } else {
+            $customerId = $request->customer_id;
+        }
 
         $uploadId  = $request->input('upload_id');
         $total     = (int) $request->input('total');
@@ -353,7 +374,7 @@ class DcpCreativeController extends Controller
             'path'                => $finalPath,
             'user_id'             => Auth()->user()->id,
             'compaign_category_id' => $request->compaign_category_id,
-            'customer_id' => $request->customer_id,
+            'customer_id' => $customerId,
         ]);
 
         return response()->json([

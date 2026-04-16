@@ -26,8 +26,8 @@ class User extends Authenticatable
         'role',
         'username',
         'last_name',
-        'hashed_password'
-
+        'hashed_password',
+        'advertiser_type',
     ];
 
     public function theme()

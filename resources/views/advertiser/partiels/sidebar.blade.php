@@ -61,12 +61,14 @@
               <span class="hide-menu">DCP Creative</span>
             </a>
           </li>
+          @if(auth()->user()->advertiser_type !== 'direct')
           <li class="sidebar-item {{ request()->routeIs('advertiser.customers.index') ? 'active' : '' }}">
             <a class="sidebar-link {{ request()->routeIs('advertiser.customers.index') ? 'active' : '' }}" href="{{ route('advertiser.customers.index') }}" id="get-url" aria-expanded="false">
                 <i class="mdi mdi-account-star"> </i>
-              <span class="hide-menu">Customer</span>
+              <span class="hide-menu">My Clients</span>
             </a>
           </li>
+          @endif
 
           <li>
             <span class="sidebar-divider lg"></span>

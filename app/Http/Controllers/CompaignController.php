@@ -559,9 +559,27 @@ class CompaignController extends Controller
         }
     }
 
-    public function my_compaigns()
+    public function my_compaigns(Request $request)
     {
-        $compaigns = Compaign::where('user_id',Auth()->user()->id)->orderBy('created_at', 'desc')->get();
+        $query = Compaign::where('user_id', Auth()->user()->id)->orderBy('created_at', 'desc');
+
+        if ($request->filled('customer_id')) {
+            $query->whereHas('dcpCreatives', fn($q) => $q->where('customer_id', $request->customer_id));
+        }
+
+        if ($request->filled('start_date')) {
+            $query->where('start_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('end_date', '<=', $request->end_date);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $compaigns = $query->get();
         return Response()->json(compact('compaigns'));
     }
 
@@ -581,8 +599,9 @@ class CompaignController extends Controller
         $slots = Slot::orderBy('name', 'asc')->get() ;
         $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
         $cinema_chains  = Auth()->user()->cinemaChains()->orderBy('name', 'asc')->get() ;
+        $customers = \App\Models\Customer::where('user_id', Auth()->user()->id)->orderBy('name')->get();
 
-        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains'));
+        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','customers'));
     }
 
     public function approuve(Compaign $compaign)

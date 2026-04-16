@@ -9,12 +9,30 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        return view('advertiser.customers.index');
+        $user = auth()->user();
+
+        if ($user->advertiser_type === 'direct') {
+            return redirect()->route('advertiser.profile.index');
+        }
+
+        $customers = Customer::where('user_id', $user->id)
+            ->withCount('dcpCreatives')
+            ->orderBy('name')
+            ->get();
+
+        $totalClients    = $customers->count();
+        $activeCampaigns = \App\Models\Compaign::where('user_id', $user->id)
+            ->where('status', 2)
+            ->count();
+        $outstandingAmount = \App\Models\Invoice::whereHas('compaign', fn($q) => $q->where('user_id', $user->id))
+            ->whereNotIn('status', ['paid'])
+            ->sum('total_ttc');
+
+        return view('advertiser.customers.index', compact('customers', 'totalClients', 'activeCampaigns', 'outstandingAmount'));
     }
 
     public function get()
     {
-
         $customers = Customer::where('user_id', auth()->id())->orderBy('name')->get();
         return response()->json(compact('customers'));
     }
@@ -27,6 +45,13 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
+        if (auth()->user()->advertiser_type === 'direct') {
+            $existing = Customer::where('user_id', auth()->id())->count();
+            if ($existing >= 1) {
+                return response()->json(['message' => 'Direct advertisers can only have one customer.'], 422);
+            }
+        }
+
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
@@ -74,4 +99,3 @@ class CustomerController extends Controller
         ]);
     }
 }
-

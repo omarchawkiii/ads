@@ -37,7 +37,7 @@
                             <th class="text-center">UUID</th>
                             <th class="text-center">Duration</th>
                             <th class="text-center">Category</th>
-                            <th class="text-center">Customer</th>
+                            <th class="text-center">My Client</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -111,16 +111,24 @@
                             </select>
                         </div>
 
+                        @if($isDirect)
+                            @if($autoCustomer)
+                                <input type="hidden" id="customer_id" value="{{ $autoCustomer->id }}">
+                            @else
+                                {{-- no customer yet — handled by JS popup below --}}
+                                <input type="hidden" id="customer_id" value="">
+                            @endif
+                        @else
                         <div class="mb-3">
-                            <label class="form-label">Custmers</label>
+                            <label class="form-label">My Client</label>
                             <select class="form-control" id="customer_id" required>
-                                <option value="">-- Select Customer --</option>
-
+                                <option value="">-- Select Client --</option>
                                 @foreach($customers ?? [] as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                 @endforeach
                             </select>
                         </div>
+                        @endif
 
                         <div class="d-flex gap-2">
                             <button type="submit" id="startBtn" class="btn btn-success">Start uploading</button>
@@ -171,6 +179,16 @@
             const CSRF = '{{ csrf_token() }}';
             const CHUNK_SIZE_FALLBACK = 10 * 1024 * 1024; // 10 Mo si le backend ne renvoie pas
 
+            @if($isDirect && !$autoCustomer)
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Client Found',
+                html: `You need to add your company/client information before uploading a DCP Creative.<br><br><a href="{{ route('advertiser.profile.index') }}" class="btn btn-primary btn-sm">Go to Profile</a>`,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+            });
+            @endif
+
             const uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
             const progressModal = new bootstrap.Modal(document.getElementById('progressModal'), {
                 backdrop: 'static',
@@ -203,6 +221,16 @@
                 const customer_id = $('#customer_id').val();
                 const file = $('#fileInput')[0].files[0];
                 if (!file) return;
+
+                @if($isDirect && !$autoCustomer)
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Client Found',
+                    html: `Please add your company/client information on your profile page first.<br><br><a href="{{ route('advertiser.profile.index') }}" class="btn btn-primary btn-sm">Go to Profile</a>`,
+                    showConfirmButton: false,
+                });
+                return;
+                @endif
 
                 if (!/\.(zip|tar|7z)$/i.test(file.name)) {
                     Swal.fire({

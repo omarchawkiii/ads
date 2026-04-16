@@ -39,13 +39,14 @@ class UserController extends Controller
         ]);
 
         $user = User::create([
-            'name' => $request->name ,
-            'email' => $request->email ,
-            'password' => Hash::make($request->password) ,
-            'email_verified_at' =>now() ,
-            'role' => $request->role ,
-            'username' => $request->username ,
-            'last_name'=> $request->last_name ,
+            'name'            => $request->name,
+            'email'           => $request->email,
+            'password'        => Hash::make($request->password),
+            'email_verified_at' => now(),
+            'role'            => $request->role,
+            'username'        => $request->username,
+            'last_name'       => $request->last_name,
+            'advertiser_type' => $request->role == 2 ? $request->advertiser_type : null,
         ]);
 
         return response()->json([
@@ -59,10 +60,13 @@ class UserController extends Controller
         try
         {
             $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'last_name'  => ['required', 'string', 'min:0', 'max:255'],
-                'role'  => ['required', 'integer', 'min:0'],
+                'name'            => ['required', 'string', 'max:255'],
+                'last_name'       => ['required', 'string', 'min:0', 'max:255'],
+                'role'            => ['required', 'integer', 'min:0'],
+                'advertiser_type' => ['nullable', 'in:direct,agency'],
             ]);
+
+            $validated['advertiser_type'] = $request->role == 2 ? $request->advertiser_type : null;
 
             $user->update($validated);
             return response()->json([

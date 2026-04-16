@@ -128,8 +128,17 @@
                                         <option value="3">Marketing </option>
                                     </select>
                                 </div>
+                            </div>
 
-
+                            <div class="col-md-6 d-none" id="create_advertiser_type_wrap">
+                                <div class="form-group mb-4">
+                                    <label class="mr-sm-2">Advertiser Type</label>
+                                    <select class="form-select" id="advertiser_type">
+                                        <option value="">Choose...</option>
+                                        <option value="direct">Direct Advertiser</option>
+                                        <option value="agency">Advertising Agency</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -180,7 +189,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-group mb-4">
                                     <label class="mr-sm-2" for="role">Role</label>
                                     <select class="form-select mr-sm-2" id="role" required>
@@ -188,6 +197,17 @@
                                         <option value="1">Admin </option>
                                         <option value="2">Advertiser </option>
                                         <option value="3">Marketing </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 d-none" id="edit_advertiser_type_wrap">
+                                <div class="form-group mb-4">
+                                    <label class="mr-sm-2">Advertiser Type</label>
+                                    <select class="form-select" id="edit_advertiser_type">
+                                        <option value="">Choose...</option>
+                                        <option value="direct">Direct Advertiser</option>
+                                        <option value="agency">Advertising Agency</option>
                                     </select>
                                 </div>
                             </div>
@@ -370,7 +390,13 @@
                                 if (value.role == 1) {
                                     role = "Admin"
                                 } else if (value.role == 2) {
-                                    role = "Advertiser"
+                                    var typeLabel = '';
+                                    if (value.advertiser_type === 'direct') {
+                                        typeLabel = ' <span class="badge bg-info-subtle text-white ms-1">Direct Advertiser</span>';
+                                    } else if (value.advertiser_type === 'agency') {
+                                        typeLabel = ' <span class="badge bg-info-subtle text-white ms-1" >Advertising Agency</span>';
+                                    }
+                                    role = "Advertiser" + typeLabel;
                                 } else {
                                     role = "Marketing"
                                 }
@@ -433,18 +459,41 @@
             }
             get_users();
 
+            /* Show/hide Advertiser Type field based on role selection */
+            $(document).on('change', '#create_user_modal #role', function() {
+                var wrap = $('#create_advertiser_type_wrap');
+                if ($(this).val() == 2) {
+                    wrap.removeClass('d-none');
+                } else {
+                    wrap.addClass('d-none');
+                    wrap.find('select').val('');
+                }
+            });
+
+            $(document).on('change', '#edit_user_modal #role', function() {
+                var wrap = $('#edit_advertiser_type_wrap');
+                if ($(this).val() == 2) {
+                    wrap.removeClass('d-none');
+                } else {
+                    wrap.addClass('d-none');
+                    wrap.find('select').val('');
+                }
+            });
+
             $(document).on("submit", "#create_user_form", function(event) {
                 event.preventDefault();
 
                 const $form = $(this);
 
+                const role = $form.find('#role').val();
                 const payload = {
                     name: $form.find('#name').val(),
                     last_name: $form.find('#last_name').val(),
                     username: $form.find('#username').val(),
                     email: $form.find('#email').val(),
                     password: $form.find('#password').val(),
-                    role: $form.find('#role').val(),
+                    role: role,
+                    advertiser_type: role == 2 ? $form.find('#advertiser_type').val() : null,
                     _token: "{{ csrf_token() }}",
                 };
 
@@ -555,14 +604,16 @@
                         "_token": "{{ csrf_token() }}",
                     },
                     success: function(response) {
-
+                        var u = response.user;
                         $("#wait-modal").modal('hide');
+                        $('#edit_user_modal #name').val(u.name);
+                        $('#edit_user_modal #last_name').val(u.last_name);
+                        $('#edit_user_modal #role').val(u.role).trigger('change');
+                        $('#edit_user_modal #id').val(user);
+                        if (u.role == 2) {
+                            $('#edit_user_modal #edit_advertiser_type').val(u.advertiser_type || '');
+                        }
                         $('#edit_user_modal').modal('show');
-                        $('#edit_user_modal #name').val(response.user.name)
-                        $('#edit_user_modal #last_name').val(response.user.last_name)
-                        $('#edit_user_modal #role').val(response.user.role)
-                        $('#edit_user_modal #id').val(user)
-
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.log(response);
@@ -574,10 +625,12 @@
                 event.preventDefault();
                 var id = $('#edit_user_form #id').val();
                 const $form = $(this);
+                const editRole = $form.find('#role').val();
                 const payload = {
                     name: $form.find('#name').val(),
                     last_name: $form.find('#last_name').val(),
-                    role: $form.find('#role').val(),
+                    role: editRole,
+                    advertiser_type: editRole == 2 ? $form.find('#edit_advertiser_type').val() : null,
                     _token: "{{ csrf_token() }}",
                 };
                 var url = '{{ url('') }}' + '/users/' + id;

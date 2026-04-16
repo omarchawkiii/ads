@@ -1,308 +1,360 @@
 @extends('advertiser.layouts.app')
-@section('title')
-    Customer
-@endsection
+@section('title') My Clients @endsection
+
+@php
+    $avatarColors = ['#e05d44','#2ea84f','#e07b39','#3b82c4','#9c3b9c','#3b9c8c','#c4903b','#d94f8a'];
+@endphp
 
 @section('content')
-<div class=" py-4">
 
-    <div class="card card-body py-3">
-        <div class="row align-items-center">
-            <div class="col-12">
-                <div class="d-sm-flex align-items-center justify-space-between">
-                    <h4 class="mb-4 mb-sm-0 card-title">Customers</h4>
-                    <nav aria-label="breadcrumb" class="ms-auto">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <button class="btn bg-success text-white" id="create_customer">
-                                    + New Customer
-                                </button>
-                            </li>
-                        </ol>
-                    </nav>
+{{-- ── Header ── --}}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h4 class="fw-bold mb-0">My Clients</h4>
+    <button class="btn btn-success px-4" id="create_customer">
+        + New Client
+    </button>
+</div>
+
+{{-- ── Info Banner ── --}}
+<div class="card mb-4 border-primary border-opacity-25">
+    <div class="card-body d-flex gap-3 align-items-start py-3">
+        <div class="flex-shrink-0 rounded-2 d-flex align-items-center justify-content-center bg-primary bg-opacity-10"
+             style="width:44px;height:44px;">
+            <i class="mdi mdi-domain fs-5 text-primary"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold mb-1">Agency Account — {{ auth()->user()->name }} {{ auth()->user()->last_name }}</h6>
+            <p class="mb-1 text-body-secondary">
+                You are logged in as an <strong class="text-body">Advertising Agency</strong>.
+                The "Clients" section lets you manage the brands you represent.
+                Campaigns and invoices can be scoped per client. When creating a campaign, you will select which client
+                the campaign belongs to — enabling <strong class="text-body">separate billing, analytics, and DCP creative libraries</strong> per brand.
+            </p>
+            <p class="mb-0 text-body-secondary">
+                If you are a <strong class="text-body">direct advertiser</strong> (not an agency), this section stores your own company profile used for billing and campaign attribution.
+            </p>
+        </div>
+    </div>
+</div>
+
+{{-- ── Stats Row ── --}}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-2 d-flex align-items-center justify-content-center bg-warning-subtle"
+                     style="width:44px;height:44px;">
+                    <i class="mdi mdi-account-group text-warning fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-body-secondary small">Total Clients</div>
+                    <div class="fw-bold fs-3 text-body">{{ $totalClients }}</div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="card">
-        <div class="card-body table-responsive">
-            <table id="customers-table" class="table table-striped table-bordered display text-nowrap dataTable">
-                <thead>
-                    <tr class="text-center">
-                        <th style="width:80px;"class="text-center">ID</th>
-                        <th class="text-center">Name</th>
-                        <th class="text-center">Email</th>
-                        <th class="text-center">Phone</th>
-                        <th style="width:160px;" class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-2 d-flex align-items-center justify-content-center bg-success-subtle"
+                     style="width:44px;height:44px;">
+                    <i class="mdi mdi-layers text-success fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-body-secondary small">Active Campaigns</div>
+                    <div class="fw-bold fs-3 text-body">{{ $activeCampaigns }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-2 d-flex align-items-center justify-content-center bg-info-subtle"
+                     style="width:44px;height:44px;">
+                    <i class="mdi mdi-credit-card text-info fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-body-secondary small">Outstanding Invoices</div>
+                    <div class="fw-bold fs-3 text-body">RM {{ number_format($outstandingAmount, 2) }}</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-{{-- CREATE MODAL --}}
-<div class="modal" id="create_customer_modal" tabindex="-1">
+{{-- ── Client Cards Grid ── --}}
+<div class="row g-3">
+@forelse($customers as $i => $customer)
+    @php
+        $words    = explode(' ', trim($customer->name));
+        $initials = strtoupper(substr($words[0], 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : substr($words[0], 1, 1)));
+        $color    = $avatarColors[$i % count($avatarColors)];
+    @endphp
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+
+                {{-- Client header --}}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-2 d-flex align-items-center justify-content-center fw-bold text-white fs-5 flex-shrink-0"
+                         style="width:52px;height:52px;background:{{ $color }};">
+                        {{ $initials }}
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <h6 class="fw-bold mb-0">{{ $customer->name }}</h6>
+                        <span class="text-body-secondary small">Client since {{ $customer->created_at->format('M Y') }}</span>
+                    </div>
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button class="btn btn-sm btn-outline-primary edit-client"
+                                data-id="{{ $customer->id }}"
+                                title="Edit">
+                            <i class="mdi mdi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-client"
+                                data-id="{{ $customer->id }}"
+                                data-name="{{ $customer->name }}"
+                                title="Delete">
+                            <i class="mdi mdi-delete"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Info tiles --}}
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-body-secondary">
+                            <div class="text-body-secondary" style="font-size:10px;letter-spacing:.05em;">CONTACT</div>
+                            <div class="small text-body" title="{{ $customer->email }}">{{ $customer->email ?: '—' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-body-secondary">
+                            <div class="text-body-secondary" style="font-size:10px;letter-spacing:.05em;">PHONE</div>
+                            <div class="small text-body">{{ $customer->phone ?: '—' }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-body-secondary">
+                            <div class="text-body-secondary" style="font-size:10px;letter-spacing:.05em;">DCP CREATIVES</div>
+                            <div class="small fw-semibold text-body">{{ $customer->dcp_creatives_count }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded-2 bg-body-secondary">
+                            <div class="text-body-secondary" style="font-size:10px;letter-spacing:.05em;">ADDRESS</div>
+                            <div class="small text-body" title="{{ $customer->address }}">{{ $customer->address ?: '—' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Bottom action buttons --}}
+                <div class="d-flex gap-2">
+                    <a href="{{ route('advertiser.compaigns.index') }}?customer_id={{ $customer->id }}"
+                       class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="mdi mdi-chart-bar me-1"></i>View Campaigns
+                    </a>
+                    <a href="#" class="btn btn-sm btn-outline-primary flex-fill" >
+                        <i class="mdi mdi-chart-line me-1"></i>Analytics
+                    </a>
+                    <a href="#" class="btn btn-sm btn-outline-primary flex-fill" >
+                        <i class="mdi mdi-receipt me-1"></i>Invoices
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+@empty
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5 text-body-secondary">
+                <i class="mdi mdi-account-group-outline fs-1 mb-3 d-block"></i>
+                No clients yet. Click <strong>+ New Client</strong> to add your first one.
+            </div>
+        </div>
+    </div>
+@endforelse
+</div>
+
+{{-- ── CREATE MODAL ── --}}
+<div class="modal fade" id="create_customer_modal" tabindex="-1">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
             <form id="create_customer_form">
                 <div class="modal-header bg-primary">
-                    <h4 class="modal-title text-white">Create Customer</h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h4 class="modal-title text-white">Create Client</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label>Name</label>
-                        <input type="text" class="form-control" id="name" required placeholder="Name">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="create_name" required placeholder="Client name">
                     </div>
                     <div class="mb-3">
-                        <label>Address</label>
-                        <input type="text" class="form-control" id="address" placeholder="Address">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" id="create_address" placeholder="Address">
                     </div>
                     <div class="mb-3">
-                        <label>Email</label>
-                        <input type="email" class="form-control" id="email" placeholder="Email">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="create_email" placeholder="Email">
                     </div>
                     <div class="mb-3">
-                        <label>Phone</label>
-                        <input type="text" class="form-control" id="phone" placeholder="Phone">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="create_phone" placeholder="Phone">
                     </div>
                 </div>
-
                 <div class="modal-footer">
-                    <button type="button" class="btn bg-danger-subtle text-danger" data-bs-dismiss="modal">
-                        Close
-                    </button>
-                    <button type="submit" class=" save-btn btn btn-success">
-                        Save
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success save-btn">Save</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-{{-- EDIT MODAL --}}
-<div class="modal" id="edit_customer_modal" tabindex="-1">
+{{-- ── EDIT MODAL ── --}}
+<div class="modal fade" id="edit_customer_modal" tabindex="-1">
     <div class="modal-dialog modal-md modal-dialog-centered">
         <div class="modal-content">
             <form id="edit_customer_form">
                 <div class="modal-header bg-primary">
-                    <h4 class="modal-title text-white">Edit Customer</h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h4 class="modal-title text-white">Edit Client</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
-                    <input type="hidden" id="id">
-
+                    <input type="hidden" id="edit_id">
                     <div class="mb-3">
-                        <label>Name</label>
-                        <input type="text" class="form-control" id="name" required placeholder="Name">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_name" required placeholder="Client name">
                     </div>
                     <div class="mb-3">
-                        <label>Address</label>
-                        <input type="text" class="form-control" id="address" placeholder="Address">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" id="edit_address" placeholder="Address">
                     </div>
                     <div class="mb-3">
-                        <label>Email</label>
-                        <input type="email" class="form-control" id="email" placeholder="Email">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit_email" placeholder="Email">
                     </div>
                     <div class="mb-3">
-                        <label>Phone</label>
-                        <input type="text" class="form-control" id="phone" placeholder="Phone">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="edit_phone" placeholder="Phone">
                     </div>
                 </div>
-
                 <div class="modal-footer">
-                    <button type="button" class="btn bg-danger-subtle text-danger" data-bs-dismiss="modal">
-                        Close
-                    </button>
-                    <button type="submit" class="save-btn btn btn-success">
-                        Save
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success save-btn">Save</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 @endsection
 
 @section('custom_script')
-<script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
-
 <script>
 $(function () {
+    const CSRF = '{{ csrf_token() }}';
+    const BASE = '{{ url("") }}/advertiser/customers';
 
-    $(document).on('click', '#create_customer', function () {
+    // ── OPEN CREATE ──
+    $('#create_customer').on('click', function () {
+        $('#create_customer_form')[0].reset();
         $('#create_customer_modal').modal('show');
     });
 
-    function get_customers() {
-
-        $("#customers-table").dataTable().fnDestroy();
-        let url = "{{ url('') }}/advertiser/customers/list";
-        let result = "";
-        $('#wait-modal').modal('show');
-        $.get(url, function (response) {
-
-            $.each(response.customers, function (index, value) {
-                index++;
-                result += `
-                    <tr class="text-center">
-                        <td>${index}</td>
-                        <td>${value.name}</td>
-                        <td>${value.email ?? ''}</td>
-                        <td>${value.phone ?? ''}</td>
-                        <td>
-                            <button id="${value.id}" class="edit btn btn-warning btn-rounded m-1">
-                                <i class="mdi mdi-tooltip-edit"></i>
-                            </button>
-                            <button id="${value.id}" class="delete btn btn-danger btn-rounded m-1">
-                                <i class="mdi mdi-delete"></i>
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-
-            $('#customers-table tbody').html(result);
-
-            $('#customers-table').DataTable({
-                iDisplayLength: 10,
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search..."
-                }
-            });
-            $('#wait-modal').modal('hide');
-        });
-    }
-
-    get_customers();
-
-    // CREATE
-    $(document).on("submit", "#create_customer_form", function (e) {
+    // ── CREATE ──
+    $('#create_customer_form').on('submit', function (e) {
         e.preventDefault();
-
-        let modal = $('#create_customer_modal');
-        let btn   = modal.find('.save-btn');
-
+        const btn = $(this).find('.save-btn').prop('disabled', true);
         $.ajax({
-            url: "{{ url('') }}/advertiser/customers",
-            method: "POST",
+            url: BASE,
+            method: 'POST',
             data: {
-                name: modal.find('#name').val(),
-                address: modal.find('#address').val(),
-                email: modal.find('#email').val(),
-                phone: modal.find('#phone').val(),
-                _token: "{{ csrf_token() }}"
-            },
-            beforeSend: function () {
-
-                btn.prop('disabled', true);
-                $('#wait-modal').modal('show');
-
+                name:    $('#create_name').val(),
+                address: $('#create_address').val(),
+                email:   $('#create_email').val(),
+                phone:   $('#create_phone').val(),
+                _token:  CSRF
             }
         })
         .done(function () {
-            modal.modal('hide');
-            get_customers();
-            Swal.fire("Done!", "Customer created successfully.", "success");
+            Swal.fire({ icon: 'success', title: 'Done!', text: 'Client created successfully.', timer: 1800, showConfirmButton: false })
+                .then(() => location.reload());
         })
-        .fail(function () {
-            Swal.fire("Error", "Operation failed.", "error");
-        })
-        .always(function () {
-            // 🔓 re-enable button + hide loader
+        .fail(function (xhr) {
+            const msg = xhr.responseJSON?.message || 'Operation failed.';
+            Swal.fire('Error', msg, 'error');
             btn.prop('disabled', false);
-            modal.modal('hide');
-        });
-    })
-
-    // DELETE
-    $(document).on('click', '.delete', function () {
-        let id = $(this).attr('id');
-
-        Swal.fire({
-            title: 'Delete Customer?',
-            text: 'Are you sure you want to delete this customer?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, delete it'
-        }).then((result) => {
-            if (!result.isConfirmed) return;
-
-            $.post("{{ url('') }}/advertiser/customers/" + id, {
-                _method: 'DELETE',
-                _token: "{{ csrf_token() }}"
-            })
-            .done(function () {
-                get_customers();
-                Swal.fire("Done!", "Customer deleted successfully.", "success");
-            })
-            .fail(function () {
-                Swal.fire("Error", "Deletion failed.", "error");
-            });
         });
     });
 
-    // EDIT LOAD
-    $(document).on('click', '.edit', function () {
-        let id = $(this).attr('id');
-
-        $.get("{{ url('') }}/advertiser/customers/" + id + "/show", function (response) {
-            let c = response.customer;
-            $('#edit_customer_modal #id').val(c.id);
-            $('#edit_customer_modal #name').val(c.name);
-            $('#edit_customer_modal #address').val(c.address);
-            $('#edit_customer_modal #email').val(c.email);
-            $('#edit_customer_modal #phone').val(c.phone);
-
+    // ── OPEN EDIT ──
+    $(document).on('click', '.edit-client', function () {
+        const id = $(this).data('id');
+        $.get(BASE + '/' + id + '/show', function (res) {
+            const c = res.customer;
+            $('#edit_id').val(c.id);
+            $('#edit_name').val(c.name);
+            $('#edit_address').val(c.address);
+            $('#edit_email').val(c.email);
+            $('#edit_phone').val(c.phone);
             $('#edit_customer_modal').modal('show');
         });
     });
 
-    // UPDATE
-    $(document).on("submit", "#edit_customer_form", function (e) {
+    // ── UPDATE ──
+    $('#edit_customer_form').on('submit', function (e) {
         e.preventDefault();
-        let modal = $('#edit_customer_modal');
-        let btn   = modal.find('.save-btn');
-
-        let id = $('#edit_customer_modal #id').val();
-
+        const id  = $('#edit_id').val();
+        const btn = $(this).find('.save-btn').prop('disabled', true);
         $.ajax({
-            url: "{{ url('') }}/advertiser/customers/" + id,
+            url:    BASE + '/' + id,
             method: 'PUT',
-
             data: {
-                name: $('#edit_customer_modal #name').val(),
-                address: $('#edit_customer_modal #address').val(),
-                email: $('#edit_customer_modal #email').val(),
-                phone: $('#edit_customer_modal #phone').val(),
-                _token: "{{ csrf_token() }}"
-            },
-            beforeSend: function () {
-                btn.prop('disabled', true);
-                $('#wait-modal').modal('show');
-
+                name:    $('#edit_name').val(),
+                address: $('#edit_address').val(),
+                email:   $('#edit_email').val(),
+                phone:   $('#edit_phone').val(),
+                _token:  CSRF
             }
         })
         .done(function () {
-            $('#edit_customer_modal').modal('hide');
-            get_customers();
-            Swal.fire("Done!", "Customer updated successfully.", "success");
-            modal.modal('hide');
+            Swal.fire({ icon: 'success', title: 'Done!', text: 'Client updated successfully.', timer: 1800, showConfirmButton: false })
+                .then(() => location.reload());
         })
         .fail(function () {
-            Swal.fire("Error", "Operation failed.", "error");
-        })
-        .always(function () {
-            modal.modal('hide');
+            Swal.fire('Error', 'Operation failed.', 'error');
+            btn.prop('disabled', false);
         });
     });
 
+    // ── DELETE ──
+    $(document).on('click', '.delete-client', function () {
+        const id   = $(this).data('id');
+        const name = $(this).data('name');
+        Swal.fire({
+            title: 'Delete Client?',
+            text:  `Are you sure you want to delete "${name}"?`,
+            icon:  'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            confirmButtonColor: '#dc3545'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            $.post(BASE + '/' + id, { _method: 'DELETE', _token: CSRF })
+                .done(function () {
+                    Swal.fire({ icon: 'success', title: 'Done!', text: 'Client deleted successfully.', timer: 1800, showConfirmButton: false })
+                        .then(() => location.reload());
+                })
+                .fail(function () {
+                    Swal.fire('Error', 'Deletion failed.', 'error');
+                });
+        });
+    });
 });
 </script>
 @endsection

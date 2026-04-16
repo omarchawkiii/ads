@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -r ' *)",
+      "Bash(grep -n \"customer_id\\\\|customer\" c:/laragon/www/adsamrt/database/migrations/2026_01_*compaign*.php)"
+    ]
+  }
+}

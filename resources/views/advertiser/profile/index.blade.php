@@ -79,6 +79,35 @@
 
           </div>
 
+          @if($user->advertiser_type === 'direct')
+          <hr class="my-4">
+          <h6 class="fw-semibold mb-3 text-primary">
+            <i class="mdi mdi-domain me-1"></i> Company / Client Information
+          </h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="customer_name" name="customer_name"
+                     value="{{ $customer->name ?? '' }}" placeholder="Company name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone</label>
+              <input type="text" class="form-control" id="customer_phone" name="customer_phone"
+                     value="{{ $customer->phone ?? '' }}" placeholder="Phone number">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Contact Email</label>
+              <input type="email" class="form-control" id="customer_email" name="customer_email"
+                     value="{{ $customer->email ?? '' }}" placeholder="Contact email">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Address</label>
+              <input type="text" class="form-control" id="customer_address" name="customer_address"
+                     value="{{ $customer->address ?? '' }}" placeholder="Address">
+            </div>
+          </div>
+          @endif
+
           <div class="mt-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary px-4" id="save_profile_btn">
               <span id="save_profile_spinner" class="spinner-border spinner-border-sm me-1 d-none"></span>

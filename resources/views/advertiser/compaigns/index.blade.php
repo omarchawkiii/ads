@@ -27,6 +27,49 @@
         </div>
 
 
+        <div class="card mb-3">
+            <div class="card-body py-3">
+                <div class="row g-2 align-items-end">
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold mb-1 small">Client</label>
+                        <select class="form-select form-select-sm" id="filter_customer_id">
+                            <option value="">— All Clients —</option>
+                            @foreach($customers as $c)
+                                <option value="{{ $c->id }}">{{ $c->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold mb-1 small">Start Date</label>
+                        <input type="date" class="form-control form-control-sm" id="filter_start_date">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold mb-1 small">End Date</label>
+                        <input type="date" class="form-control form-control-sm" id="filter_end_date">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold mb-1 small">Status</label>
+                        <select class="form-select form-select-sm" id="filter_status">
+                            <option value="">— All —</option>
+                            <option value="1">Pending</option>
+                            <option value="2">Approved</option>
+                            <option value="3">Draft</option>
+                            <option value="4">Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="col-auto">
+                        <button class="btn btn-sm btn-outline-secondary" id="reset_filter">Reset</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-body table-responsive">
                 <table id="compaigns-table" class="table table-striped table-bordered display text-nowrap dataTable">
@@ -821,11 +864,42 @@
                 if (step4Visible) updateReview();
             });
 
+            // ── Pre-fill filter from URL query string (e.g. coming from My Clients) ──
+            (function () {
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('customer_id')) $('#filter_customer_id').val(params.get('customer_id'));
+                if (params.get('start_date'))  $('#filter_start_date').val(params.get('start_date'));
+                if (params.get('end_date'))    $('#filter_end_date').val(params.get('end_date'));
+                if (params.get('status'))      $('#filter_status').val(params.get('status'));
+            })();
+
+            // ── Filter events ──
+            $('#filter_customer_id, #filter_status, #filter_start_date, #filter_end_date').on('change', function () { get_compaigns(); });
+            $('#reset_filter').on('click', function () {
+                $('#filter_customer_id').val('');
+                $('#filter_start_date').val('');
+                $('#filter_end_date').val('');
+                $('#filter_status').val('');
+                get_compaigns();
+            });
+
             function get_compaigns() {
                 $('#wait-modal').modal('show');
 
                 $("#compaigns-table").dataTable().fnDestroy();
-                var url = "{{ url('') }}" + '/advertiser/compaigns/list';
+
+                var params = {};
+                var customerId = $('#filter_customer_id').val();
+                var startDate  = $('#filter_start_date').val();
+                var endDate    = $('#filter_end_date').val();
+                var status     = $('#filter_status').val();
+                if (customerId) params.customer_id = customerId;
+                if (startDate)  params.start_date  = startDate;
+                if (endDate)    params.end_date     = endDate;
+                if (status)     params.status       = status;
+
+                var qs = $.param(params);
+                var url = "{{ url('') }}/advertiser/compaigns/list" + (qs ? '?' + qs : '');
                 var result = " ";
                 $.ajax({
                         url: url,
