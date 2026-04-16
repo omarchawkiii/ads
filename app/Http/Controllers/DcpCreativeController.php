@@ -468,7 +468,7 @@ class DcpCreativeController extends Controller
         return ['ok' => false, 'message' => 'No CPL XML found'];
     }
 
-    private function parseCpl(\SimpleXMLElement $xml): array
+    private function parseCpl_(\SimpleXMLElement $xml): array
     {
         // Default namespace (required for XPath with CPL)
         $namespaces = $xml->getDocNamespaces(true);
@@ -516,6 +516,63 @@ class DcpCreativeController extends Controller
             'uuid'           => $uuid,
             'name'           => $name,
             'total_duration' => $total_duration,
+        ];
+    }
+
+    private function parseCpl(\SimpleXMLElement $xml): array
+    {
+        // Default namespace (required for XPath with CPL)
+        $namespaces = $xml->getDocNamespaces(true);
+        $defaultNs  = $namespaces[''] ?? null;
+        $xml->registerXPathNamespace('cpl', $defaultNs ?: '');
+
+        // Id and Name
+        $idNode   = $xml->xpath('/cpl:CompositionPlaylist/cpl:Id');
+        $nameNode = $xml->xpath('/cpl:CompositionPlaylist/cpl:ContentTitleText');
+        if (empty($nameNode)) {
+            $nameNode = $xml->xpath('/cpl:CompositionPlaylist/cpl:AnnotationText');
+        }
+
+        $idRaw = isset($idNode[0]) ? trim((string)$idNode[0]) : null;
+        $name  = isset($nameNode[0]) ? trim((string)$nameNode[0]) : null;
+
+        // Extract UUID from "urn:uuid:xxxx-..."
+        $uuid = null;
+        if ($idRaw && preg_match('~([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})~', $idRaw, $m)) {
+            $uuid = strtolower($m[1]);
+        } else {
+            $uuid = $idRaw;
+        }
+
+        // Duration in frames (MainPicture only — MainSound has the same duration, no need to sum both)
+        $frames    = 0;
+        $editRate  = 24; // default fallback
+
+        $durationNodes = $xml->xpath('/cpl:CompositionPlaylist/cpl:ReelList/cpl:Reel/cpl:AssetList/cpl:MainPicture/cpl:Duration');
+        if (!empty($durationNodes)) {
+            $val = trim((string)$durationNodes[0]);
+            if ($val !== '' && is_numeric($val)) {
+                $frames = (int) $val;
+            }
+        }
+
+        // EditRate is expressed as "numerator denominator" (e.g. "24 1")
+        $editRateNodes = $xml->xpath('/cpl:CompositionPlaylist/cpl:ReelList/cpl:Reel/cpl:AssetList/cpl:MainPicture/cpl:EditRate');
+        if (!empty($editRateNodes)) {
+            $parts = explode(' ', trim((string)$editRateNodes[0]));
+            $numerator   = isset($parts[0]) && is_numeric($parts[0]) ? (int)$parts[0] : 24;
+            $denominator = isset($parts[1]) && is_numeric($parts[1]) && (int)$parts[1] > 0 ? (int)$parts[1] : 1;
+            $editRate = $numerator / $denominator;
+        }
+
+        // Convert frames to seconds
+        $duration_seconds = ($editRate > 0) ? round($frames / $editRate, 2) : 0;
+
+        return [
+            'uuid'             => $uuid,
+            'name'             => $name,
+            'duration_frames'  => $frames,
+            'total_duration' => $duration_seconds,
         ];
     }
 }
