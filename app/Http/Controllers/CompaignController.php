@@ -186,7 +186,6 @@ class CompaignController extends Controller
         $results = [];
 
 
-
         foreach ($chains as $chain) {
             if (empty($chain->ip_address)) {
                 $results[] = [
