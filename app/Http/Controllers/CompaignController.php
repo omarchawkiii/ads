@@ -185,6 +185,8 @@ class CompaignController extends Controller
         $chains  = $compaign->cinemaChains()->get();
         $results = [];
 
+
+
         foreach ($chains as $chain) {
             if (empty($chain->ip_address)) {
                 $results[] = [
