@@ -208,10 +208,10 @@ class CompaignController extends Controller
                     'json' => [
                         'id'      => $compaign->id,
                         'name'    => $compaign->name,
-                        'xml_url' => asset("storage/campaigns/campaign_{$compaign->id}.xml"),
+                        //'xml_url' => asset("storage/campaigns/campaign_{$compaign->id}.xml"),
                     ],
                 ]);
-
+                dd($response,json_decode($response->getBody(), true));
                 $contents = json_decode($response->getBody(), true);
 
                 $results[] = [
