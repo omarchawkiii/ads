@@ -53,10 +53,17 @@ class CustomerController extends Controller
         }
 
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'email'   => 'nullable|email',
-            'phone'   => 'nullable|string|max:30',
+            'name'       => 'required|string|max:255',
+            'brand_name' => 'nullable|string|max:255',
+            'address'    => 'nullable|string|max:255',
+            'address_2'  => 'nullable|string|max:255',
+            'city'       => 'nullable|string|max:100',
+            'state'      => 'nullable|string|max:100',
+            'postcode'   => 'nullable|string|max:20',
+            'country'    => 'nullable|string|max:100',
+            'email'      => 'nullable|email',
+            'phone'      => 'nullable|string|max:30',
+            'pic_name'   => 'nullable|string|max:255',
         ]);
 
         $validated['user_id'] = auth()->id();
@@ -72,10 +79,17 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'email'   => 'nullable|email',
-            'phone'   => 'nullable|string|max:30',
+            'name'       => 'required|string|max:255',
+            'brand_name' => 'nullable|string|max:255',
+            'address'    => 'nullable|string|max:255',
+            'address_2'  => 'nullable|string|max:255',
+            'city'       => 'nullable|string|max:100',
+            'state'      => 'nullable|string|max:100',
+            'postcode'   => 'nullable|string|max:20',
+            'country'    => 'nullable|string|max:100',
+            'email'      => 'nullable|email',
+            'phone'      => 'nullable|string|max:30',
+            'pic_name'   => 'nullable|string|max:255',
         ]);
 
         $customer->update($validated);

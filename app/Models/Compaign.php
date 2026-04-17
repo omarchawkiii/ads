@@ -69,12 +69,6 @@ class Compaign extends Model
         return $this->belongsTo(Slot::class);
     }
 
-    // many-to-many
-    public function brands()
-    {
-        return $this->belongsToMany(Brand::class, 'compaign_brand');
-    }
-
     public function locations()
     {
         return $this->belongsToMany(Location::class, 'compaign_location');

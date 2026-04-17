@@ -67,13 +67,6 @@
           </li>
 
 
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="{{ route('brands.index') }}" id="get-url" aria-expanded="false">
-
-              <i class="mdi mdi-source-branch" > </i>
-              <span class="hide-menu">Brands Management</span>
-            </a>
-          </li>
 
 
           <li class="sidebar-item">

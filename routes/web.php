@@ -97,14 +97,6 @@ Route::delete('/compaign_categories/{compaign_category}', [App\Http\Controllers\
 Route::get('/compaign_categories/{id}/show', [App\Http\Controllers\CompaignCategoryController::class, 'show'])->name('compaign_categories.show')->middleware(['auth','admin']);
 
 
-//Route::resource('brands', App\Http\Controllers\BrandController::class)->only('index', 'show')->middleware(['auth','admin']);
-
-Route::get('brands', [App\Http\Controllers\BrandController::class, 'index'])->name('brands.index')->middleware(['auth','admin']);
-Route::get('/brands/list', [App\Http\Controllers\BrandController::class, 'get'])->name('brands.list')->middleware(['auth','admin']);
-Route::post('/brands', [App\Http\Controllers\BrandController::class, 'store'])->name('brands.store')->middleware(['auth','admin']);
-Route::put('/brands/{brand}', [App\Http\Controllers\BrandController::class, 'update'])->name('brands.update')->middleware(['auth','admin']);
-Route::delete('/brands/{brand}', [App\Http\Controllers\BrandController::class, 'destroy'])->name('brands.destroy')->middleware(['auth','admin']);
-Route::get('/brands/{id}/show', [App\Http\Controllers\BrandController::class, 'show'])->name('brands.show')->middleware(['auth','admin']);
 
 
 Route::resource('langues', App\Http\Controllers\LangueController::class)->only('index', 'show')->middleware(['auth','admin']);

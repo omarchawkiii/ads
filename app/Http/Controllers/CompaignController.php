@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Brand;
 use App\Models\CinemaChain;
 use App\Models\Compaign;
 use App\Models\CompaignCategory;
@@ -36,7 +35,6 @@ class CompaignController extends Controller
     public function index()
     {
         $compaign_categories = CompaignCategory::orderBy('name', 'asc')->get() ;
-        $brands = Brand::orderBy('name', 'asc')->get() ;
         $compaign_objectives = CompaignObjective::orderBy('name', 'asc')->get() ;
         $langues = Langue::orderBy('name', 'asc')->get() ;
         $locations = Location::orderBy('name', 'asc')->get() ;
@@ -49,7 +47,7 @@ class CompaignController extends Controller
         $slots = Slot::orderBy('name', 'asc')->get() ;
         $dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
 
-        return view('admin.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives'));
+        return view('admin.compaigns.index', compact('compaign_categories','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives'));
     }
 
 
@@ -68,7 +66,6 @@ class CompaignController extends Controller
             'templateSlot:id,name',
             'slots:id,name,max_duration',
             'dcpCreatives:id,name,duration',
-            'brands:id,name',
             'locations:id,name',
             'hallTypes:id,name',
             'movieGenres:id,name',
@@ -177,59 +174,75 @@ class CompaignController extends Controller
         // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
         $noc = $this->pushCampaignToNoc($compaign);
 
-        $response = [
-            'message' => 'Compaign created successfully.',
-            'id'      => $compaign->id,
-        ];
-        if ($noc !== null) {
-            $response['noc_sent']   = $noc['sent'];
-            $response['noc_reason'] = $noc['reason'] ?? null;
-        }
-
-        return response()->json($response, 201);
+        return response()->json([
+            'message'     => 'Compaign created successfully.',
+            'id'          => $compaign->id,
+            'noc_results' => $noc,
+        ], 201);
     }
-    private function pushCampaignToNoc(Compaign $compaign): ?array
+    private function pushCampaignToNoc(Compaign $compaign): array
     {
-        try {
-            $config = Config::first();
+        $chains  = $compaign->cinemaChains()->get();
+        $results = [];
 
-            if (!$config || !$config->use_noc) {
-                return null;
+        foreach ($chains as $chain) {
+            if (empty($chain->ip_address)) {
+                $results[] = [
+                    'cinema_chain' => $chain->name,
+                    'sent'         => false,
+                    'reason'       => 'No IP/URL configured for this cinema chain.',
+                ];
+                continue;
             }
 
-            $url = rtrim($config->link, '/') . '/api/adsmart/receive_campaign';
+            try {
+                $url    = rtrim($chain->ip_address, '/') . '/api/adsmart/receive_campaign';
+                $client = new Client();
 
-            $client   = new Client();
+                $response = $client->request('POST', $url, [
+                    'connect_timeout' => 5,
+                    'query' => [
+                        'username' => $chain->username,
+                        'password' => $chain->password,
+                    ],
+                    'json' => [
+                        'id'      => $compaign->id,
+                        'name'    => $compaign->name,
+                        'xml_url' => asset("storage/campaigns/campaign_{$compaign->id}.xml"),
+                    ],
+                ]);
 
-            $response = $client->request('POST', $url, [
-                'connect_timeout' => 5,
-                'query' => [
-                    'username' => $config->user,
-                    'password' => $config->password,
-                ],
-                'json' => [
-                    'id'      => $compaign->id,
-                    'name'    => $compaign->name,
-                    'xml_url' => url("storage/app/public/campaigns/campaign_{$compaign->id}.xml"),
-                ],
-            ]);
+                $contents = json_decode($response->getBody(), true);
 
-            $contents = json_decode($response->getBody(), true);
+                $results[] = [
+                    'cinema_chain' => $chain->name,
+                    'sent'         => !empty($contents['status']),
+                    'reason'       => $contents['message'] ?? null,
+                ];
 
-            if (!$contents || empty($contents['status'])) {
-                return ['sent' => false, 'reason' => $contents['message'] ?? 'NOC returned an unsuccessful response.'];
+            } catch (RequestException $e) {
+                if ($e->hasResponse()) {
+                    $body   = (string) $e->getResponse()->getBody();
+                    $parsed = json_decode($body, true);
+                    $detail = ($parsed && isset($parsed['message'])) ? $parsed['message'] : $body;
+                } else {
+                    $detail = $e->getMessage();
+                }
+                $results[] = [
+                    'cinema_chain' => $chain->name,
+                    'sent'         => false,
+                    'reason'       => $detail,
+                ];
+            } catch (\Exception $e) {
+                $results[] = [
+                    'cinema_chain' => $chain->name,
+                    'sent'         => false,
+                    'reason'       => $e->getMessage(),
+                ];
             }
-
-            return ['sent' => true];
-
-        } catch (RequestException $e) {
-            $detail = $e->hasResponse()
-                ? (string) $e->getResponse()->getBody()
-                : $e->getMessage();
-            return ['sent' => false, 'reason' => 'NOC error: ' . $detail];
-        } catch (\Exception $e) {
-            return ['sent' => false, 'reason' => $e->getMessage()];
         }
+
+        return $results;
     }
 
     public function edit($id)
@@ -371,7 +384,6 @@ class CompaignController extends Controller
 
             // Selects
             'compaign_categories' => CompaignCategory::orderBy('name')->get(),
-            'brands'              => Brand::orderBy('name')->get(),
             'compaign_objectives' => CompaignObjective::orderBy('name')->get(),
             'langues'             => Langue::orderBy('name')->get(),
             'locations'           => Location::orderBy('name')->get(),
@@ -522,24 +534,14 @@ class CompaignController extends Controller
            // $response = $this->sendCampaignToNOC($compaign->id);
             ///$response = $this->pushCampaignToNoc($compaign);
 
-                    // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
+            // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
             $noc = $this->pushCampaignToNoc($compaign);
 
-            $response = [
-                'message' => 'Compaign updated successfully.',
-                'id'      => $compaign->id,
-            ];
-            if ($noc !== null) {
-                $response['noc_sent']   = $noc['sent'];
-                $response['noc_reason'] = $noc['reason'] ?? null;
-            }
-
-            return response()->json($response, 201);
-
-           /* return response()->json([
-                'message' => 'Compaign updated successfully.',
-                'id'      => $compaign->id,
-            ]); */
+            return response()->json([
+                'message'     => 'Compaign updated successfully.',
+                'id'          => $compaign->id,
+                'noc_results' => $noc,
+            ], 201);
         });
     }
 
@@ -586,7 +588,6 @@ class CompaignController extends Controller
     public function advertiser_index()
     {
         $compaign_categories = CompaignCategory::orderBy('name', 'asc')->get() ;
-        $brands = Brand::orderBy('name', 'asc')->get() ;
         $compaign_objectives = CompaignObjective::orderBy('name', 'asc')->get() ;
         $langues = Langue::orderBy('name', 'asc')->get() ;
         $locations = Location::orderBy('name', 'asc')->get() ;
@@ -602,7 +603,7 @@ class CompaignController extends Controller
         $customers = \App\Models\Customer::where('user_id', Auth()->user()->id)->orderBy('name')->get();
         $isDirect  = Auth()->user()->advertiser_type === 'direct';
 
-        return view('advertiser.compaigns.index', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','customers','isDirect'));
+        return view('advertiser.compaigns.index', compact('compaign_categories','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','customers','isDirect'));
     }
 
     public function approuve(Compaign $compaign)
@@ -829,7 +830,6 @@ class CompaignController extends Controller
     public function advertiser_builder_index()
     {
         $compaign_categories = CompaignCategory::orderBy('name', 'asc')->get() ;
-        $brands = Brand::orderBy('name', 'asc')->get() ;
         $compaign_objectives = CompaignObjective::orderBy('name', 'asc')->get() ;
         $langues = Langue::orderBy('name', 'asc')->get() ;
         $locations = Location::orderBy('name', 'asc')->get() ;
@@ -840,12 +840,11 @@ class CompaignController extends Controller
         $target_types = TargetType::orderBy('name', 'asc')->get() ;
         $interests = Interest::orderBy('name', 'asc')->get() ;
         $slots = Slot::orderBy('name', 'asc')->get() ;
-        //$dcp_creatives = DcpCreative::orderBy('name', 'asc')->get() ;
         $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->orderBy('name', 'asc')->get() ;
         $cinema_chains  = Auth()->user()->cinemaChains()->orderBy('name', 'asc')->get() ;
         $slot_templates = TemplateSlot::orderBy('name', 'asc')->get() ;
 
-        return view('advertiser.compaigns.index_builder', compact('compaign_categories', 'brands','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'));
+        return view('advertiser.compaigns.index_builder', compact('compaign_categories','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'));
     }
 
     public function planningSlotsPage()

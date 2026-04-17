@@ -109,17 +109,6 @@ Campaign
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="brand">Ad Brand</label>
-                                        <select class="form-select required select2" multiple="" id="brand" name="brand[]">
-                                            <option value="">Select...</option>
-                                            @foreach ($brands as $brand)
-                                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
 
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -336,8 +325,7 @@ Campaign
                                         <dd class="col-7" id="rv_objective">–</dd>
                                         <dt class="col-5">Ad Category</dt>
                                         <dd class="col-7" id="rv_category">–</dd>
-                                        <dt class="col-5">Brand</dt>
-                                        <dd class="col-7" id="rv_brand">–</dd>
+
                                         <dt class="col-5">Start</dt>
                                         <dd class="col-7" id="rv_start">–</dd>
                                         <dt class="col-5">End</dt>
@@ -451,7 +439,7 @@ Campaign
                                     <dt class="col-5 text-muted">Advertiser</dt> <dd class="col-7" id="v_user">–</dd>
                                     <dt class="col-5 text-muted">Objective</dt>  <dd class="col-7" id="v_objective">–</dd>
                                     <dt class="col-5 text-muted">Category</dt>   <dd class="col-7" id="v_category">–</dd>
-                                    <dt class="col-5 text-muted">Brand</dt>      <dd class="col-7" id="v_brands">–</dd>
+
                                     <dt class="col-5 text-muted">Start</dt>      <dd class="col-7" id="v_start">–</dd>
                                     <dt class="col-5 text-muted">End</dt>        <dd class="col-7" id="v_end">–</dd>
                                     <dt class="col-5 text-muted">Budget</dt>     <dd class="col-7" id="v_budget">–</dd>
@@ -516,8 +504,7 @@ Campaign
                         placeholder: "Select...",
                         dropdownParent: $modal, // évite le menu derrière le modal
                         width: '100%',
-                        // active "tags" seulement pour #brand
-                        tags: $sel.is('#brand')
+                        tags: false
                     });
                 });
             });
@@ -1046,7 +1033,6 @@ Campaign
                         $('#v_user').text(d.user ? (d.user.name || '') + ' ' + (d.user.last_name || '') : '–');
                         $('#v_objective').text(jn(d.compaign_objective));
                         $('#v_category').text(jn(d.compaign_category));
-                        $('#v_brands').text(jn(d.brands));
                         $('#v_start').text(fmtDate(d.start_date));
                         $('#v_end').text(fmtDate(d.end_date));
                         $('#v_budget').text(d.budget ? '$' + Number(d.budget).toLocaleString() : '–');

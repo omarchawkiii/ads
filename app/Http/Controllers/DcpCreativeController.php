@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\CompaignCategory;
+use App\Models\CompaignObjective;
 use App\Models\Customer;
 use App\Models\DcpCreative;
+use App\Models\Gender;
+use App\Models\Interest;
+use App\Models\Langue;
+use App\Models\TargetType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use RecursiveIteratorIterator;
@@ -23,6 +28,11 @@ class DcpCreativeController extends Controller
     {
         $user       = Auth()->user();
         $categories = CompaignCategory::orderBy('name')->get();
+        $objectives = CompaignObjective::orderBy('name')->get();
+        $langues    = Langue::orderBy('name')->get();
+        $genders    = Gender::orderBy('name')->get();
+        $targetTypes = TargetType::orderBy('name')->get();
+        $interests  = Interest::orderBy('name')->get();
         $isDirect   = $user->advertiser_type === 'direct';
 
         if ($isDirect) {
@@ -33,18 +43,30 @@ class DcpCreativeController extends Controller
             $customers    = Customer::where('user_id', $user->id)->orderBy('name')->get();
         }
 
-        return view('advertiser.dcp_creatives.index', compact('categories', 'customers', 'isDirect', 'autoCustomer'));
+        return view('advertiser.dcp_creatives.index', compact(
+            'categories', 'objectives', 'langues', 'genders', 'targetTypes', 'interests',
+            'customers', 'isDirect', 'autoCustomer'
+        ));
     }
 
     public function show(Request $request)
     {
-        $dcp_creative = DcpCreative::findOrFail($request->id);
+        $dcp_creative = DcpCreative::with(
+            'compaignCategory',
+            'compaignObjective',
+            'langue',
+            'gender',
+            'targetTypes',
+            'interests',
+            'customer'
+        )->where('user_id', auth()->id())->findOrFail($request->id);
+
         return Response()->json(compact('dcp_creative'));
     }
 
     public function get()
     {
-        $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->with('compaignCategory','customer')->orderBy('name', 'asc')->get() ;
+        $dcp_creatives = DcpCreative::where('user_id',Auth()->user()->id)->with('compaignCategory','customer','compaignObjective','langue','gender','targetTypes','interests')->orderBy('name', 'asc')->get() ;
         //$dcp_creatives = DcpCreative::with('compaignCategory')->orderBy('name', 'asc')->get();
         return Response()->json(compact('dcp_creatives'));
     }
@@ -233,7 +255,14 @@ class DcpCreativeController extends Controller
             'upload_id'  => 'required|string',
             'total'      => 'required|integer|min:1',
             'file_name'  => 'required|string',
-            'compaign_category_id' => ['required', 'exists:compaign_categories,id'],
+            'compaign_category_id'    => ['required', 'exists:compaign_categories,id'],
+            'compaign_objective_id'   => ['nullable', 'exists:compaign_objectives,id'],
+            'langue_id'               => ['nullable', 'exists:langues,id'],
+            'gender_id'               => ['nullable', 'exists:genders,id'],
+            'target_type_ids'         => ['nullable', 'array'],
+            'target_type_ids.*'       => ['exists:target_types,id'],
+            'interest_ids'            => ['nullable', 'array'],
+            'interest_ids.*'          => ['exists:interests,id'],
         ], $customerRules));
 
         if ($isDirect) {
@@ -368,14 +397,20 @@ class DcpCreativeController extends Controller
         $creative = DcpCreative::updateOrCreate([
             'uuid' => $meta['uuid']
         ], [
-            'uuid'                => $meta['uuid'],
-            'name'                => $meta['name'],
-            'duration'            => $meta['total_duration'],
-            'path'                => $finalPath,
-            'user_id'             => Auth()->user()->id,
-            'compaign_category_id' => $request->compaign_category_id,
-            'customer_id' => $customerId,
+            'uuid'                   => $meta['uuid'],
+            'name'                   => $meta['name'],
+            'duration'               => $meta['total_duration'],
+            'path'                   => $finalPath,
+            'user_id'                => Auth()->user()->id,
+            'compaign_category_id'   => $request->compaign_category_id,
+            'compaign_objective_id'  => $request->compaign_objective_id ?: null,
+            'langue_id'              => $request->langue_id ?: null,
+            'gender_id'              => $request->gender_id ?: null,
+            'customer_id'            => $customerId,
         ]);
+
+        $creative->targetTypes()->sync($request->input('target_type_ids', []));
+        $creative->interests()->sync($request->input('interest_ids', []));
 
         return response()->json([
             'ok'       => true,

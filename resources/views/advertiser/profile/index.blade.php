@@ -86,9 +86,53 @@
           </h6>
           <div class="row g-3">
             <div class="col-md-6">
+              <label class="form-label fw-semibold">Brand Name</label>
+              <input type="text" class="form-control" id="customer_brand_name" name="customer_brand_name"
+                     value="{{ $customer->brand_name ?? '' }}" placeholder="Brand name">
+            </div>
+            <div class="col-md-6">
               <label class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="customer_name" name="customer_name"
                      value="{{ $customer->name ?? '' }}" placeholder="Company name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Address 1</label>
+              <input type="text" class="form-control" id="customer_address" name="customer_address"
+                     value="{{ $customer->address ?? '' }}" placeholder="Address line 1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Address 2</label>
+              <input type="text" class="form-control" id="customer_address_2" name="customer_address_2"
+                     value="{{ $customer->address_2 ?? '' }}" placeholder="Address line 2">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">City</label>
+              <input type="text" class="form-control" id="customer_city" name="customer_city"
+                     value="{{ $customer->city ?? '' }}" placeholder="City">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">State</label>
+              <input type="text" class="form-control" id="customer_state" name="customer_state"
+                     value="{{ $customer->state ?? '' }}" placeholder="State">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Postcode</label>
+              <input type="text" class="form-control" id="customer_postcode" name="customer_postcode"
+                     value="{{ $customer->postcode ?? '' }}" placeholder="Postcode">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Country</label>
+              <select class="form-select" id="customer_country" name="customer_country">
+                @include('advertiser.partiels.country_options')
+              </select>
+              @if($customer?->country)
+              <script>document.getElementById('customer_country').value = "{{ $customer->country }}";</script>
+              @endif
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">E-Mail</label>
+              <input type="email" class="form-control" id="customer_email" name="customer_email"
+                     value="{{ $customer->email ?? '' }}" placeholder="Contact email">
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Phone</label>
@@ -96,14 +140,9 @@
                      value="{{ $customer->phone ?? '' }}" placeholder="Phone number">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Contact Email</label>
-              <input type="email" class="form-control" id="customer_email" name="customer_email"
-                     value="{{ $customer->email ?? '' }}" placeholder="Contact email">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Address</label>
-              <input type="text" class="form-control" id="customer_address" name="customer_address"
-                     value="{{ $customer->address ?? '' }}" placeholder="Address">
+              <label class="form-label fw-semibold">Name of PIC</label>
+              <input type="text" class="form-control" id="customer_pic_name" name="customer_pic_name"
+                     value="{{ $customer->pic_name ?? '' }}" placeholder="Person in charge">
             </div>
           </div>
           @endif

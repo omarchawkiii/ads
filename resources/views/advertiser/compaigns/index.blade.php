@@ -150,19 +150,6 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label" for="brand">Ad Brand</label>
-                                        <select class="form-select required select2" multiple="" id="brand"
-                                            name="brand[]">
-
-                                            <option value="__all__">Select All</option>
-                                            @foreach ($brands as $brand)
-                                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
 
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -390,8 +377,7 @@
                                         <dd class="col-7" id="rv_objective">–</dd>
                                         <dt class="col-5">Ad Category</dt>
                                         <dd class="col-7" id="rv_category">–</dd>
-                                        <dt class="col-5">Brand</dt>
-                                        <dd class="col-7" id="rv_brand">–</dd>
+
                                         <dt class="col-5">Start</dt>
                                         <dd class="col-7" id="rv_start">–</dd>
                                         <dt class="col-5">End</dt>
@@ -466,8 +452,7 @@
                                     <dd class="col-7" id="v_objective">–</dd>
                                     <dt class="col-5">Category</dt>
                                     <dd class="col-7" id="v_category">–</dd>
-                                    <dt class="col-5">Brands</dt>
-                                    <dd class="col-7" id="v_brands">–</dd>
+
                                     <dt class="col-5">Start</dt>
                                     <dd class="col-7" id="v_start">–</dd>
                                     <dt class="col-5">End</dt>
@@ -562,7 +547,6 @@
                 });
             }
             $(document).ready(function () {
-                initSelect2WithSelectAll('#brand');
                 initSelect2WithSelectAll('#location');
                 initSelect2WithSelectAll('#hall_type');
                 initSelect2WithSelectAll('#movie_genre');
@@ -674,8 +658,7 @@
                         allowClear: true,
                         dropdownParent: $modal, // évite le menu derrière le modal
                         width: '100%',
-                        // active "tags" seulement pour #brand
-                        tags: $sel.is('#brand')
+                        tags: false
                     });
                 });
 
@@ -835,7 +818,6 @@
                 $('#rv_name').text(getVal('#name'));
                 $('#rv_objective').text(getSelectText('#compaign_objective'));
                 $('#rv_category').text(getSelectText('#compaign_category'));
-                $('#rv_brand').text(getSelectText('#brand'));
                 $('#rv_start').text(getVal('#start_date'));
                 $('#rv_end').text(getVal('#end_date'));
                 $('#rv_budget').text(fmtBudget(getVal('#budget')));
@@ -991,7 +973,6 @@
                         $('#v_name').text(jv(data.name));
                         $('#v_objective').text(jn(data.compaign_objective));
                         $('#v_category').text(jn(data.compaign_category));
-                        $('#v_brands').text(jn(data.brands));
                         $('#v_start').text(jv(formatDateEN(data.start_date, { locale: 'en-US', variant: 'short' })));
                         $('#v_end').text(jv(formatDateEN(data.end_date, { locale: 'en-US', variant: 'short' })));
                         $('#v_budget').text(data.budget ? Number(data.budget).toLocaleString() : '–');
@@ -1170,7 +1151,6 @@
                 $('#ev_name').text(txtInput('#e_name'));
                 $('#ev_objective').text(txtSelect('#e_compaign_objective'));
                 $('#ev_category').text(txtSelect('#e_compaign_category'));
-                $('#ev_brands').text(txtSelect('#e_brand'));
                 $('#ev_start').text(txtInput('#e_start_date'));
                 $('#ev_end').text(txtInput('#e_end_date'));
                 $('#ev_budget').text(fmtNum($('#e_budget').val()));
@@ -1217,7 +1197,6 @@
 
                     // helper ids
                     const ids = (arrOrObj) => Array.isArray(arrOrObj) ? arrOrObj.map(x=>x?.id).filter(Boolean) : (arrOrObj?.id?[arrOrObj.id]:[]);
-                    $('#e_brand').val(ids(data.brands)).trigger('change');
                     $('#e_location').val(ids(data.locations)).trigger('change');
                     $('#e_hall_type').val(ids(data.hall_types || data.hallTypes)).trigger('change');
                     $('#e_movie_genre').val(ids(data.movie_genres || data.movieGenres)).trigger('change');

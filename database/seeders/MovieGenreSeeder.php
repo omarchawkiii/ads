@@ -16,9 +16,14 @@ class MovieGenreSeeder extends Seeder
     {
         $now = Carbon::now();
         DB::table('movie_genres')->insert([
-            ['name' => 'Action',  'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Romance', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Horror',  'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Biographical',             'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Family',                   'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Anime',                    'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Foreign Language / Arthouse', 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Religious / Inspirational','created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Malay / Local Film',       'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Chinese Film',             'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Indian / Tamil Film',      'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 }

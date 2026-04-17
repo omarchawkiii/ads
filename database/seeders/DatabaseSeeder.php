@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
             LangueSeeder::class,
             CompaignCategorySeeder::class,
             CompaignObjectiveSeeder::class,
-            BrandSeeder::class,
             LocationSeeder::class,
             HallTypeSeeder::class,
             MovieGenreSeeder::class,

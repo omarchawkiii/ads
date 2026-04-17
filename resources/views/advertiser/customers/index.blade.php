@@ -179,9 +179,62 @@
 @endforelse
 </div>
 
+@php
+$clientFields = function(string $prefix) { ?>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Brand Name</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_brand_name" placeholder="Brand name">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Company Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_name" required placeholder="Company name">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Address 1</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_address" placeholder="Address line 1">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Address 2</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_address_2" placeholder="Address line 2">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_city" placeholder="City">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">State</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_state" placeholder="State">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Postcode</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_postcode" placeholder="Postcode">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Country</label>
+            <select class="form-select" id="<?= $prefix ?>_country">
+                <?php echo view('advertiser.partiels.country_options')->render(); ?>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">E-Mail</label>
+            <input type="email" class="form-control" id="<?= $prefix ?>_email" placeholder="Email">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_phone" placeholder="Phone">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Name of PIC</label>
+            <input type="text" class="form-control" id="<?= $prefix ?>_pic_name" placeholder="Person in charge">
+        </div>
+    </div>
+<?php }
+@endphp
+
 {{-- ── CREATE MODAL ── --}}
 <div class="modal fade" id="create_customer_modal" tabindex="-1">
-    <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <form id="create_customer_form">
                 <div class="modal-header bg-primary">
@@ -189,22 +242,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="create_name" required placeholder="Client name">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Address</label>
-                        <input type="text" class="form-control" id="create_address" placeholder="Address">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" id="create_email" placeholder="Email">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-control" id="create_phone" placeholder="Phone">
-                    </div>
+                    @php $clientFields('create') @endphp
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -217,7 +255,7 @@
 
 {{-- ── EDIT MODAL ── --}}
 <div class="modal fade" id="edit_customer_modal" tabindex="-1">
-    <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <form id="edit_customer_form">
                 <div class="modal-header bg-primary">
@@ -226,22 +264,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="edit_id">
-                    <div class="mb-3">
-                        <label class="form-label">Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="edit_name" required placeholder="Client name">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Address</label>
-                        <input type="text" class="form-control" id="edit_address" placeholder="Address">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" id="edit_email" placeholder="Email">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="text" class="form-control" id="edit_phone" placeholder="Phone">
-                    </div>
+                    @php $clientFields('edit') @endphp
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -274,11 +297,18 @@ $(function () {
             url: BASE,
             method: 'POST',
             data: {
-                name:    $('#create_name').val(),
-                address: $('#create_address').val(),
-                email:   $('#create_email').val(),
-                phone:   $('#create_phone').val(),
-                _token:  CSRF
+                name:       $('#create_name').val(),
+                brand_name: $('#create_brand_name').val(),
+                address:    $('#create_address').val(),
+                address_2:  $('#create_address_2').val(),
+                city:       $('#create_city').val(),
+                state:      $('#create_state').val(),
+                postcode:   $('#create_postcode').val(),
+                country:    $('#create_country').val(),
+                email:      $('#create_email').val(),
+                phone:      $('#create_phone').val(),
+                pic_name:   $('#create_pic_name').val(),
+                _token:     CSRF
             }
         })
         .done(function () {
@@ -299,9 +329,16 @@ $(function () {
             const c = res.customer;
             $('#edit_id').val(c.id);
             $('#edit_name').val(c.name);
+            $('#edit_brand_name').val(c.brand_name);
             $('#edit_address').val(c.address);
+            $('#edit_address_2').val(c.address_2);
+            $('#edit_city').val(c.city);
+            $('#edit_state').val(c.state);
+            $('#edit_postcode').val(c.postcode);
+            $('#edit_country').val(c.country || '');
             $('#edit_email').val(c.email);
             $('#edit_phone').val(c.phone);
+            $('#edit_pic_name').val(c.pic_name);
             $('#edit_customer_modal').modal('show');
         });
     });
@@ -315,11 +352,18 @@ $(function () {
             url:    BASE + '/' + id,
             method: 'PUT',
             data: {
-                name:    $('#edit_name').val(),
-                address: $('#edit_address').val(),
-                email:   $('#edit_email').val(),
-                phone:   $('#edit_phone').val(),
-                _token:  CSRF
+                name:       $('#edit_name').val(),
+                brand_name: $('#edit_brand_name').val(),
+                address:    $('#edit_address').val(),
+                address_2:  $('#edit_address_2').val(),
+                city:       $('#edit_city').val(),
+                state:      $('#edit_state').val(),
+                postcode:   $('#edit_postcode').val(),
+                country:    $('#edit_country').val(),
+                email:      $('#edit_email').val(),
+                phone:      $('#edit_phone').val(),
+                pic_name:   $('#edit_pic_name').val(),
+                _token:     CSRF
             }
         })
         .done(function () {

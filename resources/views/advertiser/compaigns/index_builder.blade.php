@@ -988,16 +988,25 @@
                 .done(function(res){
                     $('#page-loader').hide();
 
-                    var nocLine = '';
-                    if (res.hasOwnProperty('noc_sent')) {
-                        nocLine = res.noc_sent
-                            ? '<br><small class="text-success"><i class="mdi mdi-check-circle"></i> Campaign sent to NOC successfully.</small>'
-                            : '<br><small class="text-warning"><i class="mdi mdi-alert-circle"></i> NOC not notified: ' + (res.noc_reason || 'unknown reason') + '</small>';
+                    var nocHtml = '';
+                    if (res.noc_results && res.noc_results.length > 0) {
+                        nocHtml += '<div class="mt-2 text-start" style="font-size:0.85em;">';
+                        nocHtml += '<strong>NOC Push Results:</strong><ul class="mb-0 mt-1 ps-3">';
+                        res.noc_results.forEach(function(r) {
+                            if (r.sent) {
+                                nocHtml += '<li class="text-success"><i class="mdi mdi-check-circle"></i> '
+                                    + r.cinema_chain + ': sent successfully.</li>';
+                            } else {
+                                nocHtml += '<li class="text-danger"><i class="mdi mdi-close-circle"></i> '
+                                    + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
+                            }
+                        });
+                        nocHtml += '</ul></div>';
                     }
 
                     Swal.fire({
                         title: 'Done!',
-                        html: 'Campaign created successfully.' + nocLine,
+                        html: 'Campaign created successfully.' + nocHtml,
                         icon: 'success',
                         confirmButtonText: 'Continue'
                     });
