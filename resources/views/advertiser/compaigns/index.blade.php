@@ -996,9 +996,19 @@
                         if (res.noc_results && res.noc_results.length > 0) {
                             nocHtml = '<ul class="text-start mt-2 mb-0 ps-3" style="font-size:0.85em;">';
                             res.noc_results.forEach(function(r) {
-                                nocHtml += r.sent
-                                    ? '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.</li>'
-                                    : '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
+                                if (r.sent) {
+                                    nocHtml += '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.';
+                                } else {
+                                    nocHtml += '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '.';
+                                }
+                                if (r.missing_cpls && r.missing_cpls.length > 0) {
+                                    nocHtml += '<ul class="mt-1">';
+                                    r.missing_cpls.forEach(function(m) {
+                                        nocHtml += '<li class="text-warning"><i class="mdi mdi-alert"></i> Missing CPL: <strong>' + m.cpl + '</strong> (slot: ' + m.slot + ')</li>';
+                                    });
+                                    nocHtml += '</ul>';
+                                }
+                                nocHtml += '</li>';
                             });
                             nocHtml += '</ul>';
                         }

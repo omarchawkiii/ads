@@ -251,6 +251,7 @@ class CompaignController extends Controller
                     'cinema_chain' => $chain->name,
                     'sent'         => !empty($contents['status']),
                     'reason'       => $contents['message'] ?? null,
+                    'missing_cpls' => $contents['planner']['missing_cpls'] ?? [],
                 ];
 
             } catch (RequestException $e) {

@@ -950,9 +950,19 @@
                 if (!nocResults || !nocResults.length) return '';
                 var html = '<div class="mt-2 text-start" style="font-size:0.85em;"><strong>NOC Push Results:</strong><ul class="mb-0 mt-1 ps-3">';
                 nocResults.forEach(function(r) {
-                    html += r.sent
-                        ? '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.</li>'
-                        : '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
+                    if (r.sent) {
+                        html += '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.';
+                    } else {
+                        html += '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '.';
+                    }
+                    if (r.missing_cpls && r.missing_cpls.length > 0) {
+                        html += '<ul class="mt-1">';
+                        r.missing_cpls.forEach(function(m) {
+                            html += '<li class="text-warning"><i class="mdi mdi-alert"></i> Missing CPI: <strong>' + m.cpl + '</strong> (slot: ' + m.slot + ')</li>';
+                        });
+                        html += '</ul>';
+                    }
+                    html += '</li>';
                 });
                 return html + '</ul></div>';
             }
