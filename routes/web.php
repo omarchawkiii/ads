@@ -223,6 +223,7 @@ Route::put('profile', [App\Http\Controllers\ProfileController::class, 'update'])
     Route::get('/available-slots-month', [App\Http\Controllers\CompaignController::class, 'getAvailableSlotsMonth'])->name('compaigns.slots.month');
 
     Route::get('compaigns_builder', [App\Http\Controllers\CompaignController::class, 'advertiser_builder_index'])->name('compaigns.index_builder');
+    Route::post('/compaigns/{id}/send-to-noc', [App\Http\Controllers\CompaignController::class, 'sendToNoc'])->name('compaigns.send_to_noc');
 
 
 

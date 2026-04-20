@@ -32,12 +32,14 @@ class Compaign extends Model
         'status', // 1-pendign 2-approve  3-drafts  4-rejected
         'user_id',
         'template_slot_id',
+        'noc_sent',
+        'noc_note',
     ];
 
     protected $casts = [
-
         'budget'      => 'integer',
         'ad_duration' => 'integer',
+        'noc_sent'    => 'boolean',
     ];
 
 

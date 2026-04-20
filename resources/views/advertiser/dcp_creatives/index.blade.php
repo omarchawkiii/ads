@@ -123,7 +123,7 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Campaign Objective</label>
+                                <label class="form-label fw-semibold"> Objective</label>
                                 <select class="form-select" id="compaign_objective_id">
                                     <option value="">-- Select Objective --</option>
                                     @foreach($objectives ?? [] as $obj)

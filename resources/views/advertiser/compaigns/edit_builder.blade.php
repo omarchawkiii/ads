@@ -172,7 +172,7 @@
                         <div class="row mt-4">
                             <div class="col text-end">
                                 <button id="btn-save-campaign" class="btn btn-success">
-                                    {{ $isEdit ? '💾 Update Campaign' : '💾 Save Campaign' }}
+                                    <i class="mdi mdi-content-save"></i> {{ $isEdit ? 'Update' : 'Save' }}
                                 </button>
                             </div>
                         </div>
@@ -297,8 +297,11 @@
 
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button id="confirm-save-campaign" class="btn btn-primary">
-                        Confirm
+                    <button id="confirm-save-only" class="btn btn-outline-secondary">
+                        <i class="mdi mdi-content-save"></i> Save only
+                    </button>
+                    <button id="confirm-save-campaign" class="btn btn-success">
+                        <i class="mdi mdi-send"></i> {{ $isEdit ? 'Update &amp; Send to NOC' : 'Save &amp; Send to NOC' }}
                     </button>
                 </div>
 
@@ -952,111 +955,70 @@
             /* =====================================================
                 *  SAVE / UPDATE CAMPAIGN
             * ===================================================== */
-            $('#confirm-save-campaign').on('click', function () {
+            function buildNocHtml(nocResults) {
+                if (!nocResults || !nocResults.length) return '';
+                var html = '<div class="mt-2 text-start" style="font-size:0.85em;"><strong>NOC Push Results:</strong><ul class="mb-0 mt-1 ps-3">';
+                nocResults.forEach(function(r) {
+                    html += r.sent
+                        ? '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.</li>'
+                        : '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
+                });
+                return html + '</ul></div>';
+            }
 
+            function doUpdateCampaign(sendToNoc) {
                 let slotsData = [];
-
                 $('.slot-box').each(function(){
-                    let $slot = $(this);
-                    let slotId = $slot.data('slot');
-
+                    let slotId = $(this).data('slot');
                     let dcps = [];
-
-                    // 🔹 On récupère les DCP par position, on ignore les positions vides
-                    $slot.find('.slot-position').each(function(){
-                        let $pos = $(this);
-                        let $assigned = $pos.find('.assigned');
-
-                        if($assigned.length){ // ⚡ ignorer les positions vides
+                    $(this).find('.slot-position').each(function(){
+                        let $assigned = $(this).find('.assigned');
+                        if ($assigned.length) {
                             let $dcp = $assigned.first();
-                            dcps.push({
-                                dcp_id: $dcp.data('dcp'),
-                                duration: $dcp.data('duration'),
-                                position: $dcp.data('position'),
-
-                            });
+                            dcps.push({ dcp_id: $dcp.data('dcp'), duration: $dcp.data('duration'), position: $dcp.data('position') });
                         }
                     });
-
-                    if(dcps.length > 0){ // ⚡ n'envoyer que les slots qui ont au moins 1 DCP
-                        slotsData.push({
-                            slot_id: slotId,
-                            dcps: dcps
-                        });
-                    }
+                    if (dcps.length > 0) slotsData.push({ slot_id: slotId, dcps: dcps });
                 });
 
                 let payload = {
                     _token: "{{ csrf_token() }}",
-                    _method: 'PUT', // 🔹 IMPORTANT pour Laravel
-
+                    _method: 'PUT',
+                    send_to_noc: sendToNoc ? 1 : 0,
                     compaign_name: $('#compaign_name').val(),
-                    template_slot_id: $('#template_slot').val(), // 🔹 OBLIGATOIRE
-
+                    template_slot_id: $('#template_slot').val(),
                     start_date: $('#start_date').val(),
                     end_date: $('#end_date').val(),
-
                     cinema_chain_id: $('#cinema_chain').val(),
-
                     location_id: $('#location').val() ?? [],
                     budget: $('#budget').val() ?? 0,
-                    langue: $('#langue').val() ,
-                    gender: $('#gender').val() ,
-                    target_type: $('#target_type').val() ,
-                    interest: $('#interest').val() ,
-
+                    langue: $('#langue').val(),
+                    gender: $('#gender').val(),
+                    target_type: $('#target_type').val(),
+                    interest: $('#interest').val(),
                     movie_genre_id: $('#movie_genre').val() ?? [],
                     hall_type_id: $('#hall_type').val() ?? [],
                     movie_id: $('#movie').val() ?? [],
-
                     slots: slotsData
                 };
-
-
 
                 $('#saveCampaignModal').modal('hide');
                 $('#page-loader').css('display', 'flex');
 
-                $.ajax({
-                    url: "{{ url('advertiser/compaigns/'.$compaign->id).'/update' }}",
-                    type: 'POST', // POST + _method=PUT
-                    data: payload
-                })
+                $.ajax({ url: "{{ url('advertiser/compaigns/'.$compaign->id).'/update' }}", type: 'POST', data: payload })
                 .done(function(res) {
                     $('#page-loader').hide();
-
-                    var nocHtml = '';
-                    if (res.noc_results && res.noc_results.length > 0) {
-                        nocHtml += '<div class="mt-2 text-start" style="font-size:0.85em;">';
-                        nocHtml += '<strong>NOC Push Results:</strong><ul class="mb-0 mt-1 ps-3">';
-                        res.noc_results.forEach(function(r) {
-                            if (r.sent) {
-                                nocHtml += '<li class="text-success"><i class="mdi mdi-check-circle"></i> '
-                                    + r.cinema_chain + ': sent successfully.</li>';
-                            } else {
-                                nocHtml += '<li class="text-danger"><i class="mdi mdi-close-circle"></i> '
-                                    + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
-                            }
-                        });
-                        nocHtml += '</ul></div>';
-                    }
-
-                    Swal.fire({
-                        title: 'Success',
-                        html: 'Campaign updated successfully.' + nocHtml,
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
+                    Swal.fire({ title: 'Success', html: 'Campaign updated successfully.' + buildNocHtml(res.noc_results), icon: 'success', confirmButtonText: 'OK' });
                 })
                 .fail(function(xhr) {
                     $('#page-loader').hide();
-                    console.error(xhr.responseText);
-                    var msg = (xhr.responseJSON && xhr.responseJSON.message)
-                        ? xhr.responseJSON.message
-                        : 'Error while saving campaign';
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error while saving campaign';
                     Swal.fire('Error', msg, 'error');
                 });
-            });
+            }
+
+            $('#confirm-save-campaign').on('click', function () { doUpdateCampaign(true); });
+            $('#confirm-save-only').on('click', function () { doUpdateCampaign(false); });
 
 
 

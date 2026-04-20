@@ -152,7 +152,7 @@
                         <div class="row mt-4">
                             <div class="col text-end">
                                 <button id="btn-save-campaign" class="btn btn-success">
-                                    💾 Save Campaign
+                                    <i class="mdi mdi-content-save"></i> Save
                                 </button>
                             </div>
                         </div>
@@ -267,8 +267,11 @@
 
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button id="confirm-save-campaign" class="btn btn-primary">
-                        Confirm
+                    <button id="confirm-save-only" class="btn btn-outline-secondary">
+                        <i class="mdi mdi-content-save"></i> Save only
+                    </button>
+                    <button id="confirm-save-campaign" class="btn btn-success">
+                        <i class="mdi mdi-send"></i> Save &amp; Send to NOC
                     </button>
                 </div>
 
@@ -852,113 +855,65 @@
                 $item.remove();
             });
 
-            $('#btn-save-campaign').on('click', function(){
-                initSelect2WithSelectAll('#interest')
-                initSelect2WithSelectAll('#target_type')
+            function openSaveCampaignModal() {
+                initSelect2WithSelectAll('#interest');
+                initSelect2WithSelectAll('#target_type');
 
                 $('#compaign_name').val('');
-                $('#compaign_category').val('');
                 $('#budget').val('');
                 $('#langue').val('');
-                $('#target_type').val('');
-                $('#interest').val('');
-
+                $('#target_type').val(null).trigger('change.select2');
+                $('#interest').val(null).trigger('change.select2');
 
                 const startDate = $('#start_date').val();
                 const endDate   = $('#end_date').val();
                 const locations = $('#location').val();
                 const genres    = $('#movie_genre').val();
 
-                // 🔍 Front validation
-                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0 ) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Missing information',
-                        text: 'Please select start date, end date, location and movie genre before loading slots.'
-                    });
-                    return;
+                if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0) {
+                    Swal.fire({ icon: 'warning', title: 'Missing information',
+                        text: 'Please select start date, end date, location and movie genre before loading slots.' });
+                    return false;
                 }
 
-                let slotsData = [];
+                let hasSlots = false;
                 $('.slot-box').each(function(){
-                    let $slot = $(this);
-                    let slotId = $slot.data('id');
-
-                    let dcps = [];
-                    $slot.find('.assigned').each(function(){
-                        dcps.push({
-                            dcp_id: $(this).data('dcp'),
-                            duration: $(this).data('duration')
-                        });
-                    });
-
-                    if(dcps.length > 0){
-                        slotsData.push({
-                            slot_id: slotId,
-                            dcps: dcps
-                        });
-                    }
+                    if ($(this).find('.assigned').length) { hasSlots = true; return false; }
                 });
-                if(!slotsData.length)
-                {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Missing DCP creative',
-                        text: 'No DCP creative has been assigned to any slot yet..'
-                    });
-                    return;
+                if (!hasSlots) {
+                    Swal.fire({ icon: 'warning', title: 'Missing DCP creative',
+                        text: 'No DCP creative has been assigned to any slot yet.' });
+                    return false;
                 }
 
                 $('#saveCampaignModal').modal('show');
-            });
+                return true;
+            }
 
-            $('#confirm-save-campaign').on('click', function(){
+            $('#btn-save-campaign').on('click', function(){ openSaveCampaignModal(); });
 
+            function doSaveCampaign(sendToNoc) {
                 let campaignName = $('#compaign_name').val().trim();
-
-                if(!campaignName){
-                    showError("Please enter a campaign name.");
-                    return;
-                }
+                if (!campaignName) { showError("Please enter a campaign name."); return; }
 
                 let slotsData = [];
-
                 $('.slot-box').each(function(){
-                    let $slot = $(this);
-                    let slotId = $slot.data('slot');
-
+                    let slotId = $(this).data('slot');
                     let dcps = [];
-
-                    // 🔹 On récupère les DCP par position, on ignore les positions vides
-                    $slot.find('.slot-position').each(function(){
-                        let $pos = $(this);
-                        let $assigned = $pos.find('.assigned');
-
-                        if($assigned.length){ // ⚡ ignorer les positions vides
+                    $(this).find('.slot-position').each(function(){
+                        let $assigned = $(this).find('.assigned');
+                        if ($assigned.length) {
                             let $dcp = $assigned.first();
-                            dcps.push({
-                                dcp_id: $dcp.data('dcp'),
-                                duration: $dcp.data('duration'),
-                                position: $dcp.data('position'),
-
-                            });
+                            dcps.push({ dcp_id: $dcp.data('dcp'), duration: $dcp.data('duration'), position: $dcp.data('position') });
                         }
                     });
-
-                    if(dcps.length > 0){ // ⚡ n'envoyer que les slots qui ont au moins 1 DCP
-                        slotsData.push({
-                            slot_id: slotId,
-                            dcps: dcps
-                        });
-                    }
+                    if (dcps.length > 0) slotsData.push({ slot_id: slotId, dcps: dcps });
                 });
 
                 let payload = {
                     _token: "{{ csrf_token() }}",
-
                     compaign_name: campaignName,
-
-                    // filters
+                    send_to_noc: sendToNoc ? 1 : 0,
                     start_date: $('#start_date').val(),
                     end_date: $('#end_date').val(),
                     cinema_chain_id: $('#cinema_chain').val(),
@@ -973,49 +928,37 @@
                     movie_id: $('#movie').val(),
                     target_type: $('#target_type').val(),
                     interest: $('#interest').val(),
-
                     slots: slotsData
                 };
 
                 $('#saveCampaignModal').modal('hide');
                 $('#page-loader').css('display', 'flex');
 
-                $.ajax({
-                    url: "{{ url('advertiser/compaigns') }}",
-                    method: "POST",
-                    data: payload,
-                })
+                $.ajax({ url: "{{ url('advertiser/compaigns') }}", method: "POST", data: payload })
                 .done(function(res){
                     $('#page-loader').hide();
-
-                    var nocHtml = '';
-                    if (res.noc_results && res.noc_results.length > 0) {
-                        nocHtml += '<div class="mt-2 text-start" style="font-size:0.85em;">';
-                        nocHtml += '<strong>NOC Push Results:</strong><ul class="mb-0 mt-1 ps-3">';
-                        res.noc_results.forEach(function(r) {
-                            if (r.sent) {
-                                nocHtml += '<li class="text-success"><i class="mdi mdi-check-circle"></i> '
-                                    + r.cinema_chain + ': sent successfully.</li>';
-                            } else {
-                                nocHtml += '<li class="text-danger"><i class="mdi mdi-close-circle"></i> '
-                                    + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
-                            }
-                        });
-                        nocHtml += '</ul></div>';
-                    }
-
-                    Swal.fire({
-                        title: 'Done!',
-                        html: 'Campaign created successfully.' + nocHtml,
-                        icon: 'success',
-                        confirmButtonText: 'Continue'
-                    });
+                    var nocHtml = buildNocHtml(res.noc_results);
+                    Swal.fire({ title: 'Done!', html: 'Campaign created successfully.' + nocHtml, icon: 'success', confirmButtonText: 'Continue' });
                 })
                 .fail(function(){
                     $('#page-loader').hide();
                     showError("Error while saving campaign.");
                 });
-            });
+            }
+
+            function buildNocHtml(nocResults) {
+                if (!nocResults || !nocResults.length) return '';
+                var html = '<div class="mt-2 text-start" style="font-size:0.85em;"><strong>NOC Push Results:</strong><ul class="mb-0 mt-1 ps-3">';
+                nocResults.forEach(function(r) {
+                    html += r.sent
+                        ? '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.</li>'
+                        : '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
+                });
+                return html + '</ul></div>';
+            }
+
+            $('#confirm-save-campaign').on('click', function(){ doSaveCampaign(true); });
+            $('#confirm-save-only').on('click', function(){ doSaveCampaign(false); });
 
 
             $(document).on('change', '#dcp-category-filter', function () {

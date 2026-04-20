@@ -82,7 +82,8 @@
                             <th class="text-center">Start Date</th>
                             <th class="text-center">End Date</th>
                             <th class="text-center">Status</th>
-                            <th class="text-center" style="width:160px;">Actions</th>
+                            <th class="text-center">NOC</th>
+                            <th class="text-center" style="width:200px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -905,19 +906,27 @@
                                         value.end_date + ' </td>' +
                                     '<td class="text-center align-middle">' +
                                         getStatusText(value.status) + '</td>' +
+                                    '<td class="text-center align-middle">' +
+                                        getNocBadge(value) +
+                                    '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    '<button id="' + value.id +
-                                    '" type="button" class="view  ustify-content-center btn mb-1 btn-rounded btn-success  m-1" >' +
-                                    '<i class="mdi mdi-magnify "></i>' +
+                                    '<button data-id="' + value.id +
+                                    '" type="button" class="view justify-content-center btn mb-1 btn-rounded btn-success m-1">' +
+                                    '<i class="mdi mdi-magnify"></i>' +
                                     '</button>' +
 
                                     (value.start_date > new Date().toISOString().slice(0,10) ?
-                                    '<a href="{{ url('') }}/advertiser/compaigns/'+ value.id +'/edit" id="' + value.id +
-                                    '"  class=" ustify-content-center btn mb-1 btn-rounded btn-warning  m-1" >' +
-                                    '<i class="mdi mdi-tooltip-edit "></i>' +
+                                    '<a href="{{ url('') }}/advertiser/compaigns/'+ value.id +'/edit" ' +
+                                    'class="justify-content-center btn mb-1 btn-rounded btn-warning m-1">' +
+                                    '<i class="mdi mdi-tooltip-edit"></i>' +
                                     '</a>' : '') +
 
-                                    '<button id="' + value.id +
+                                    '<button data-id="' + value.id +
+                                    '" type="button" class="btn-send-noc justify-content-center btn mb-1 btn-rounded btn-info m-1" title="Send to NOC">' +
+                                    '<i class="mdi mdi-send"></i>' +
+                                    '</button>' +
+
+                                    '<button data-id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
                                     '<i class="mdi mdi-delete"></i>' +
                                     '</button>' +
@@ -949,8 +958,63 @@
             }
             get_compaigns();
 
+            function getNocBadge(value) {
+                if (value.noc_sent) {
+                    return '<span class="badge bg-success"><i class="mdi mdi-check-circle"></i> Sent</span>';
+                }
+                if (value.noc_note) {
+                    return '<span class="badge bg-danger" title="' + value.noc_note.replace(/"/g,'&quot;') + '" style="cursor:pointer;" data-bs-toggle="tooltip">' +
+                           '<i class="mdi mdi-close-circle"></i> Failed</span>';
+                }
+                return '<span class="badge bg-secondary">Not sent</span>';
+            }
+
+            $(document).on('click', '.btn-send-noc', function() {
+                var id = $(this).data('id');
+                var $btn = $(this);
+
+                Swal.fire({
+                    title: 'Send to NOC?',
+                    text: 'Are you sure you want to send this campaign to the NOC?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, send it',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#0dcaf0'
+                }).then(function(result) {
+                    if (!result.isConfirmed) return;
+
+                    $btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i>');
+
+                    $.ajax({
+                        url: "{{ url('') }}/advertiser/compaigns/" + id + '/send-to-noc',
+                        method: 'POST',
+                        data: { _token: "{{ csrf_token() }}" }
+                    })
+                    .done(function(res) {
+                        var nocHtml = '';
+                        if (res.noc_results && res.noc_results.length > 0) {
+                            nocHtml = '<ul class="text-start mt-2 mb-0 ps-3" style="font-size:0.85em;">';
+                            res.noc_results.forEach(function(r) {
+                                nocHtml += r.sent
+                                    ? '<li class="text-success"><i class="mdi mdi-check-circle"></i> ' + r.cinema_chain + ': sent successfully.</li>'
+                                    : '<li class="text-danger"><i class="mdi mdi-close-circle"></i> ' + r.cinema_chain + ': ' + (r.reason || 'failed') + '</li>';
+                            });
+                            nocHtml += '</ul>';
+                        }
+                        Swal.fire({ title: 'NOC Push', html: res.message + nocHtml, icon: 'info', confirmButtonText: 'OK' });
+                        get_compaigns();
+                    })
+                    .fail(function(xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to send to NOC.';
+                        Swal.fire('Error', msg, 'error');
+                        $btn.prop('disabled', false).html('<i class="mdi mdi-cloud-upload"></i>');
+                    });
+                }); // end Swal.then
+            });
+
             $(document).on('click', '.view', function() {
-                const id = $(this).attr('id');
+                const id = $(this).data('id');
                 const url = "{{ url('') }}/advertiser/compaigns/" + encodeURIComponent(id) + '/show';
 
                 // reset + loader
@@ -1082,7 +1146,7 @@
             })
 
             $(document).on('click', '.delete', function() {
-                var id = $(this).attr('id');
+                var id = $(this).data('id');
                 console.log(id)
 
                 const url = '{{ url('') }}' + '/advertiser/compaigns/' + encodeURIComponent(id);

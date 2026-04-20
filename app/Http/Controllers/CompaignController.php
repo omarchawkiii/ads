@@ -171,8 +171,17 @@ class CompaignController extends Controller
             return $compaign;
         });
 
-        // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
-        $noc = $this->pushCampaignToNoc($compaign);
+        // 6️⃣ Push vers NOC si demandé
+        $noc = [];
+        if ($request->boolean('send_to_noc')) {
+            $noc = $this->pushCampaignToNoc($compaign);
+            $allSent  = count($noc) > 0 && collect($noc)->every(fn($r) => $r['sent']);
+            $failNote = collect($noc)->where('sent', false)->map(fn($r) => $r['cinema_chain'].': '.($r['reason'] ?? 'failed'))->implode(' | ');
+            $compaign->update([
+                'noc_sent' => $allSent,
+                'noc_note' => $allSent ? null : ($failNote ?: null),
+            ]);
+        }
 
         return response()->json([
             'message'     => 'Compaign created successfully.',
@@ -180,6 +189,29 @@ class CompaignController extends Controller
             'noc_results' => $noc,
         ], 201);
     }
+    public function sendToNoc($id)
+    {
+        $compaign = Compaign::findOrFail($id);
+
+        if ($compaign->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $noc      = $this->pushCampaignToNoc($compaign);
+        $allSent  = count($noc) > 0 && collect($noc)->every(fn($r) => $r['sent']);
+        $failNote = collect($noc)->where('sent', false)->map(fn($r) => $r['cinema_chain'].': '.($r['reason'] ?? 'failed'))->implode(' | ');
+
+        $compaign->update([
+            'noc_sent' => $allSent,
+            'noc_note' => $allSent ? null : ($failNote ?: null),
+        ]);
+
+        return response()->json([
+            'message'     => $allSent ? 'Campaign sent to NOC successfully.' : 'Campaign sent with errors.',
+            'noc_results' => $noc,
+        ]);
+    }
+
     private function pushCampaignToNoc(Compaign $compaign): array
     {
         $chains  = $compaign->cinemaChains()->get();
@@ -535,8 +567,17 @@ class CompaignController extends Controller
            // $response = $this->sendCampaignToNOC($compaign->id);
             ///$response = $this->pushCampaignToNoc($compaign);
 
-            // 6️⃣ Push vers NOC — hors transaction pour ne pas la bloquer
-            $noc = $this->pushCampaignToNoc($compaign);
+            // 6️⃣ Push vers NOC si demandé
+            $noc = [];
+            if ($request->boolean('send_to_noc')) {
+                $noc = $this->pushCampaignToNoc($compaign);
+                $allSent  = count($noc) > 0 && collect($noc)->every(fn($r) => $r['sent']);
+                $failNote = collect($noc)->where('sent', false)->map(fn($r) => $r['cinema_chain'].': '.($r['reason'] ?? 'failed'))->implode(' | ');
+                $compaign->update([
+                    'noc_sent' => $allSent,
+                    'noc_note' => $allSent ? null : ($failNote ?: null),
+                ]);
+            }
 
             return response()->json([
                 'message'     => 'Compaign updated successfully.',
