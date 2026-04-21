@@ -26,6 +26,11 @@ class CinemaChain extends Model
         )->withTimestamps();
     }
 
+    public function movies()
+    {
+        return $this->hasMany(Movie::class);
+    }
+
     public function locations()
     {
         return $this->hasMany(Location::class);

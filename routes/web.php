@@ -113,10 +113,24 @@ Route::get('/halls/{id}/show', [App\Http\Controllers\HallTypeController::class, 
 //Route::resource('movies', App\Http\Controllers\MovieController::class)->only('index', 'show')->middleware(['auth','admin']);
 Route::get('movies', [App\Http\Controllers\MovieController::class, 'index'])->name('movies.index')->middleware(['auth','admin']);
 Route::get('/movies/list', [App\Http\Controllers\MovieController::class, 'get'])->name('movies.list')->middleware(['auth','admin']);
+Route::post('/movies/sync', [App\Http\Controllers\MovieController::class, 'sync'])->name('movies.sync')->middleware(['auth','admin']);
 Route::post('/movies', [App\Http\Controllers\MovieController::class, 'store'])->name('movies.store')->middleware(['auth','admin']);
 Route::put('/movies/{movie}', [App\Http\Controllers\MovieController::class, 'update'])->name('movies.update')->middleware(['auth','admin']);
 Route::delete('/movies/{movie}', [App\Http\Controllers\MovieController::class, 'destroy'])->name('movies.destroy')->middleware(['auth','admin']);
 Route::get('/movies/{id}/show', [App\Http\Controllers\MovieController::class, 'show'])->name('movies.show')->middleware(['auth','admin']);
+
+// Master Movies
+Route::middleware(['auth','admin'])->group(function () {
+    Route::get('/master-movies/list',         [App\Http\Controllers\MasterMovieController::class, 'get'])->name('master_movies.list');
+    Route::get('/master-movies/linked',       [App\Http\Controllers\MasterMovieController::class, 'getLinked'])->name('master_movies.linked');
+    Route::get('/master-movies/unlinked',     [App\Http\Controllers\MasterMovieController::class, 'getUnlinked'])->name('master_movies.unlinked');
+    Route::get('/master-movies/{id}/show',    [App\Http\Controllers\MasterMovieController::class, 'show'])->name('master_movies.show');
+    Route::post('/master-movies',             [App\Http\Controllers\MasterMovieController::class, 'store'])->name('master_movies.store');
+    Route::post('/master-movies/{id}/update', [App\Http\Controllers\MasterMovieController::class, 'update'])->name('master_movies.update');
+    Route::delete('/master-movies/{id}',      [App\Http\Controllers\MasterMovieController::class, 'destroy'])->name('master_movies.destroy');
+    Route::post('/master-movies/link',        [App\Http\Controllers\MasterMovieController::class, 'link'])->name('master_movies.link');
+    Route::delete('/master-movies/unlink/{movieId}', [App\Http\Controllers\MasterMovieController::class, 'unlink'])->name('master_movies.unlink');
+});
 
 
 

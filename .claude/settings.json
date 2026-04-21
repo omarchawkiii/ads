@@ -5,7 +5,9 @@
       "Bash(grep -n \"customer_id\\\\|customer\" c:/laragon/www/adsamrt/database/migrations/2026_01_*compaign*.php)",
       "Bash(cmd /c \"dir C:\\\\laragon\\\\www\\\\adsamrt\\\\public\\\\assets\\\\libs\\\\select2 /s /b\")",
       "Bash(php -l app/Http/Controllers/CompaignController.php)",
-      "Bash(php -l app/Models/Compaign.php)"
+      "Bash(php -l app/Models/Compaign.php)",
+      "PowerShell(cmd /c mklink /J \"C:\\\\laragon\\\\www\\\\adsamrt\\\\public\\\\storage\" \"C:\\\\laragon\\\\www\\\\adsamrt\\\\storage\\\\app\\\\public\")",
+      "Read(//c/laragon/etc/apache2/sites-enabled/**)"
     ]
   }
 }

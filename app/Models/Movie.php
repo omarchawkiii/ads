@@ -13,11 +13,6 @@ class Movie extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'uuid',
@@ -25,17 +20,21 @@ class Movie extends Model
         'langue_id',
         'runtime',
         'status',
-        //'play_at',
+        'moviescods_id',
+        'code',
+        'title',
+        'titleShort',
+        'spl_uuid',
+        'exist_inPos',
+        'date_linking',
+        'master_movie_id',
+        'cinema_chain_id',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
-        'id' => 'integer',
-       // 'play_at' => 'datetime',
+        'id'           => 'integer',
+        'exist_inPos'  => 'boolean',
+        'date_linking' => 'date',
     ];
 
 
@@ -53,5 +52,15 @@ class Movie extends Model
     public function langue()
     {
         return $this->belongsTo(Langue::class, 'langue_id');
+    }
+
+    public function masterMovie()
+    {
+        return $this->belongsTo(MasterMovie::class, 'master_movie_id');
+    }
+
+    public function cinemaChain()
+    {
+        return $this->belongsTo(CinemaChain::class, 'cinema_chain_id');
     }
 }
