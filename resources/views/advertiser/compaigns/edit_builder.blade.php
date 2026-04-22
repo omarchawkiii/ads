@@ -134,14 +134,14 @@
                             </div>
 
                             <div class="col-md-10">
-                                <label>Movies</label>
-                                <select id="movie" class="form-select select2" multiple>
+                                <label>Master Movies</label>
+                                <select id="master_movie" class="form-select select2" multiple>
                                     <option value="__all__">Select All</option>
-                                    @foreach ($movies as $movie)
-                                        <option value="{{ $movie->id }}"
-                                                data-genre="{{ $movie->movie_genre_id }}"
-                                            @selected($isEdit && $compaign->movies->contains($movie->id))>
-                                            {{ $movie->name }}
+                                    @foreach ($master_movies as $mm)
+                                        <option value="{{ $mm->id }}"
+                                                data-genre="{{ $mm->genres->pluck('id')->join(',') }}"
+                                            @selected($isEdit && $compaign->masterMovies->contains($mm->id))>
+                                            {{ $mm->title }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -602,7 +602,7 @@
             initSelect2WithSelectAll('#hall_type');
             initSelect2WithSelectAll('#location');
             initSelect2WithSelectAll('#movie_genre');
-            initSelect2WithSelectAll('#movie');
+            initSelect2WithSelectAll('#master_movie');
             initSelect2WithSelectAll('#cinema_chain');
             //initSelect2WithSelectAll('#interest');
 
@@ -656,26 +656,27 @@
             });
 
             /* =====================================================
-                *  FILTER MOVIES BY GENRE
+                *  FILTER MASTER MOVIES BY GENRE
                 * ===================================================== */
             $('#movie_genre').on('change', function () {
 
                 const selected = $(this).val() || [];
 
-                $('#movie option').each(function () {
+                $('#master_movie option').each(function () {
 
                     if ($(this).val() === '__all__') return;
 
-                    const genre = $(this).data('genre');
+                    const genreIds = String($(this).data('genre')).split(',');
+                    const matches = selected.includes('__all__') || selected.some(g => genreIds.includes(g));
 
-                    if (selected.includes('__all__') || selected.includes(String(genre))) {
+                    if (matches) {
                         $(this).prop('disabled', false).show();
                     } else {
                         $(this).prop('disabled', true).hide().prop('selected', false);
                     }
                 });
 
-                $('#movie').trigger('change.select2');
+                $('#master_movie').trigger('change.select2');
             });
 
             /* =====================================================
@@ -690,12 +691,12 @@
                 *  LOAD SLOTS
             * ===================================================== */
 
-            $('#start_date,#end_date,#location,#movie_genre,#template_slot ,#hall_type,#movie').on('change', function () {
+            $('#start_date,#end_date,#location,#movie_genre,#template_slot,#hall_type,#master_movie').on('change', function () {
                 const startDate = $('#start_date').val();
                 const endDate   = $('#end_date').val();
                 const locations = $('#location').val();
                 const genres    = $('#movie_genre').val();
-                const movie    = $('#movie').val();
+                const movie    = $('#master_movie').val();
                 const compaign_category = $('#compaign_category').val()
                 const hall_type_id = $('#hall_type').val()
                 if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0|| movie.length === 0) {
@@ -736,7 +737,7 @@
                     template_slot_id: $('#template_slot').val(),
                     cinema_chain_id: getCleanSelectValues('#cinema_chain'),
                     location_id: getCleanSelectValues('#location'),
-                    movie_id: getCleanSelectValues('#movie'),
+                    master_movie_id: getCleanSelectValues('#master_movie'),
                     movie_genre_id: getCleanSelectValues('#movie_genre'),
                     hall_type_id: getCleanSelectValues('#hall_type'),
                     compaign_id: COMPAIGN_ID // 🟢 MODE EDIT
@@ -1008,7 +1009,7 @@
                     interest: $('#interest').val(),
                     movie_genre_id: $('#movie_genre').val() ?? [],
                     hall_type_id: $('#hall_type').val() ?? [],
-                    movie_id: $('#movie').val() ?? [],
+                    master_movie_id: getCleanSelectValues('#master_movie'),
                     slots: slotsData
                 };
 

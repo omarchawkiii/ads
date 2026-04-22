@@ -116,13 +116,13 @@
                                 </select>
                             </div>
                             <div class="col-md-10">
-                                <label for="movie"> Select Movies : </label>
-                                <select class="form-select select2" multiple id="movie" name="movie[]" >
+                                <label for="master_movie">Select Master Movies :</label>
+                                <select class="form-select select2" multiple id="master_movie" name="master_movie[]">
                                     <option value="__all__">Select All</option>
-                                    @foreach ($movies as $movie)
-                                        <option value="{{ $movie->id }}"
-                                                data-genre="{{ $movie->movie_genre_id }}">
-                                            {{ $movie->name }}
+                                    @foreach ($master_movies as $mm)
+                                        <option value="{{ $mm->id }}"
+                                                data-genre="{{ $mm->genres->pluck('id')->join(',') }}">
+                                            {{ $mm->title }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -296,43 +296,32 @@
             $(document).ready(function () {
 
                 const $genreSelect = $('#movie_genre');
-                const $movieSelect = $('#movie');
+                const $masterMovieSelect = $('#master_movie');
 
-                function filterMoviesByGenre() {
+                function filterMasterMoviesByGenre() {
                     const selectedGenres = $genreSelect.val() || [];
-                    if (
-                        selectedGenres.length === 0 ||
-                        selectedGenres.includes('__all__')
-                    ) {
-                        $movieSelect.find('option').each(function () {
+                    if (selectedGenres.length === 0 || selectedGenres.includes('__all__')) {
+                        $masterMovieSelect.find('option').each(function () {
                             $(this).prop('disabled', false).show();
                         });
-
-                        $movieSelect.trigger('change.select2');
+                        $masterMovieSelect.trigger('change.select2');
                         return;
                     }
 
-                    // sinon filtrer par genre
-                    $movieSelect.find('option').each(function () {
-                        const genreId = $(this).data('genre');
-
-                        // garder "Select All"
+                    $masterMovieSelect.find('option').each(function () {
                         if ($(this).val() === '__all__') {
                             $(this).prop('disabled', false).show();
                             return;
                         }
-
-                        if (selectedGenres.includes(String(genreId))) {
-                            $(this).prop('disabled', false).show();
-                        } else {
-                            $(this).prop('disabled', true).hide();
-                            $(this).prop('selected', false);
-                        }
+                        const genreIds = String($(this).data('genre')).split(',');
+                        const matches = selectedGenres.some(g => genreIds.includes(g));
+                        $(this).prop('disabled', !matches).prop('selected', matches ? $(this).prop('selected') : false);
+                        if (matches) $(this).show(); else $(this).hide();
                     });
 
-                    $movieSelect.trigger('change.select2');
+                    $masterMovieSelect.trigger('change.select2');
                 }
-                $genreSelect.on('change', filterMoviesByGenre);
+                $genreSelect.on('change', filterMasterMoviesByGenre);
             });
 
             function initSelect2WithSelectAll(selector, parent = null) {
@@ -371,7 +360,7 @@
                 initSelect2WithSelectAll('#location');
                 initSelect2WithSelectAll('#hall_type');
                 initSelect2WithSelectAll('#movie_genre');
-                initSelect2WithSelectAll('#movie');
+                initSelect2WithSelectAll('#master_movie');
                 initSelect2WithSelectAll('#cinema_chain');
 
                 //initSelect2WithSelectAll('#interest');
@@ -446,12 +435,12 @@
 
             $('#btn-load-slots').on('click', function() {
                 loadAvailableSlots();
-                $('#start_date,#end_date,#location,#movie_genre,#template_slot ,#hall_type,#movie').on('change', function () {
+                $('#start_date,#end_date,#location,#movie_genre,#template_slot,#hall_type,#master_movie').on('change', function () {
                     const startDate = $('#start_date').val();
                     const endDate   = $('#end_date').val();
                     const locations = $('#location').val();
                     const genres    = $('#movie_genre').val();
-                    const movie    = $('#movie').val();
+                    const movie    = $('#master_movie').val();
                     const compaign_category = $('#compaign_category').val()
                     const hall_type_id = $('#hall_type').val()
                     if (!startDate || !endDate || !locations || locations.length === 0 || !genres || genres.length === 0 || movie.length === 0) {
@@ -489,7 +478,7 @@
                     template_slot_id: $('#template_slot').val(),
                     cinema_chain_id: $('#cinema_chain').val(),
                     location_id: locations,
-                    movie_id: getCleanSelectValues('#movie'),
+                    master_movie_id: getCleanSelectValues('#master_movie'),
                     movie_genre_id: getCleanSelectValues('#movie_genre'),
                     hall_type_id: $('#hall_type').val(),
                     compaign_category_id: $('#compaign_category').val(),
@@ -925,7 +914,7 @@
                     compaign_category_id: $('#compaign_category').val(),
                     template_slot_id: $('#template_slot').val(),
                     hall_type_id: $('#hall_type').val(),
-                    movie_id: $('#movie').val(),
+                    master_movie_id: getCleanSelectValues('#master_movie'),
                     target_type: $('#target_type').val(),
                     interest: $('#interest').val(),
                     slots: slotsData

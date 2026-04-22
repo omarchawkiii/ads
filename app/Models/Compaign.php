@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\MasterMovie;
 
 class Compaign extends Model
 {
@@ -60,6 +61,14 @@ class Compaign extends Model
         return $this->belongsToMany(
             Movie::class,
             'compaign_movie'
+        )->withTimestamps();
+    }
+
+    public function masterMovies()
+    {
+        return $this->belongsToMany(
+            MasterMovie::class,
+            'compaign_master_movie'
         )->withTimestamps();
     }
     public function gender()

@@ -350,8 +350,8 @@ class SlotController extends Controller
             'cinema_chain_id.*' => 'integer|exists:cinema_chains,id',
             'location_id'       => 'required|array|min:1',
             'location_id.*'     => 'integer|exists:locations,id',
-            'movie_id'          => 'nullable|array',
-            'movie_id.*'        => 'integer|exists:movies,id',
+            'master_movie_id'    => 'nullable|array',
+            'master_movie_id.*'  => 'integer|exists:master_movies,id',
             'movie_genre_id'    => 'nullable|array',
             'movie_genre_id.*'  => 'integer|exists:movie_genres,id',
             'hall_type_id'      => 'nullable|array',
@@ -782,8 +782,8 @@ class SlotController extends Controller
             'location_id'          => 'required|array|min:1',
             'location_id.*'        => 'integer|exists:locations,id',
 
-            'movie_id'             => 'nullable|array',
-            'movie_id.*'           => 'integer|exists:movies,id',
+            'master_movie_id'      => 'nullable|array',
+            'master_movie_id.*'    => 'integer|exists:master_movies,id',
 
             'movie_genre_id'       => 'nullable|array',
             'movie_genre_id.*'     => 'integer|exists:movie_genres,id',

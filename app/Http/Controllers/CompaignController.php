@@ -13,6 +13,7 @@ use App\Models\HallType;
 use App\Models\Interest;
 use App\Models\Langue;
 use App\Models\Location;
+use App\Models\MasterMovie;
 use App\Models\Movie;
 use App\Models\MovieGenre;
 use App\Models\Slot;
@@ -58,10 +59,7 @@ class CompaignController extends Controller
             'compaignObjective:id,name',
             'compaignCategory:id,name',
             'langue:id,name',
-            'movies' => function ($q) {
-                $q->withTrashed()
-                  ->select('movies.id', 'movies.name');
-            },
+            'masterMovies:id,title',
             'gender:id,name',
             'templateSlot:id,name',
             'slots:id,name,max_duration',
@@ -99,8 +97,8 @@ class CompaignController extends Controller
             'location_id.*'        => 'integer|exists:locations,id',
             'movie_genre_id'       => 'array',
             'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
-            'movie_id'             => 'nullable|array|min:1',
-            'movie_id.*'           => 'integer|exists:movies,id',
+            'master_movie_id'      => 'nullable|array',
+            'master_movie_id.*'    => 'integer|exists:master_movies,id',
             'hall_type_id'         => 'array',
             'hall_type_id.*'       => 'integer|exists:hall_types,id',
             'slots'                    => 'required|array|min:1',
@@ -138,7 +136,7 @@ class CompaignController extends Controller
             $ids = fn ($key) => array_values(array_filter(Arr::wrap($request->input($key))));
 
             // 2️⃣ Relations
-            $compaign->movies()->sync($ids('movie_id'));
+            $compaign->masterMovies()->sync($ids('master_movie_id'));
 
             if ($request->has('cinema_chain_id')) $compaign->cinemaChains()->sync($ids('cinema_chain_id'));
             if ($request->has('location_id'))     $compaign->locations()->sync($ids('location_id'));
@@ -232,6 +230,10 @@ class CompaignController extends Controller
                 $url    = rtrim($chain->ip_address, '/') . '/api/adsmart/receive_campaign';
                 $client = new Client();
 
+                $xmlPath    = "campaigns/campaign_{$compaign->id}.xml";
+                $xmlContent = \Illuminate\Support\Facades\Storage::disk('public')->exists($xmlPath)
+                    ? \Illuminate\Support\Facades\Storage::disk('public')->get($xmlPath)
+                    : null;
                 $response = $client->request('POST', $url, [
                     'connect_timeout' => 5,
                     'query' => [
@@ -239,9 +241,9 @@ class CompaignController extends Controller
                         'password' => $chain->password,
                     ],
                     'json' => [
-                        'id'      => $compaign->id,
-                        'name'    => $compaign->name,
-                        //'xml_url' => asset("storage/campaigns/campaign_{$compaign->id}.xml"),
+                        'id'          => $compaign->id,
+                        'name'        => $compaign->name,
+                        'xml_content' => $xmlContent,
                     ],
                 ]);
 
@@ -285,7 +287,7 @@ class CompaignController extends Controller
         | 0️⃣ Charger la campagne
         ===================================================== */
         $compaign = Compaign::with([
-            'movies:id',
+            'masterMovies:id',
             'locations:id',
             'movieGenres:id',
             'hallTypes:id',
@@ -422,7 +424,7 @@ class CompaignController extends Controller
             'langues'             => Langue::orderBy('name')->get(),
             'locations'           => Location::orderBy('name')->get(),
             'hall_types'          => HallType::orderBy('name')->get(),
-            'movies'              => Movie::orderBy('name')->get(),
+            'master_movies'       => MasterMovie::with('genres')->orderBy('title')->get(),
             'movie_genres'        => MovieGenre::orderBy('name')->get(),
             'genders'             => Gender::orderBy('name')->get(),
             'target_types'        => TargetType::orderBy('name')->get(),
@@ -453,8 +455,8 @@ class CompaignController extends Controller
             'movie_genre_id'       => 'array',
             'movie_genre_id.*'     => 'integer|exists:movie_genres,id',
 
-            'movie_id'             => 'nullable|array|min:1',
-            'movie_id.*'           => 'integer|exists:movies,id',
+            'master_movie_id'      => 'nullable|array',
+            'master_movie_id.*'    => 'integer|exists:master_movies,id',
 
             'hall_type_id'         => 'array',
             'hall_type_id.*'       => 'integer|exists:hall_types,id',
@@ -513,7 +515,7 @@ class CompaignController extends Controller
             /* -------------------------------------------------
             | 3️⃣ relations many-to-many
             -------------------------------------------------*/
-            $compaign->movies()->sync($ids('movie_id'));
+            $compaign->masterMovies()->sync($ids('master_movie_id'));
 
             $request->has('cinema_chain_id')
                 ? $compaign->cinemaChains()->sync($ids('cinema_chain_id'))
@@ -877,7 +879,7 @@ class CompaignController extends Controller
         $langues = Langue::orderBy('name', 'asc')->get() ;
         $locations = Location::orderBy('name', 'asc')->get() ;
         $hall_types = HallType::orderBy('name', 'asc')->get() ;
-        $movies = Movie::orderBy('name', 'asc')->get() ;
+        $master_movies = MasterMovie::with('genres')->orderBy('title', 'asc')->get() ;
         $movie_genres = MovieGenre::orderBy('name', 'asc')->get() ;
         $genders = Gender::orderBy('name', 'asc')->get() ;
         $target_types = TargetType::orderBy('name', 'asc')->get() ;
@@ -887,7 +889,7 @@ class CompaignController extends Controller
         $cinema_chains  = Auth()->user()->cinemaChains()->orderBy('name', 'asc')->get() ;
         $slot_templates = TemplateSlot::orderBy('name', 'asc')->get() ;
 
-        return view('advertiser.compaigns.index_builder', compact('compaign_categories','compaign_objectives','langues','locations','hall_types','movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'));
+        return view('advertiser.compaigns.index_builder', compact('compaign_categories','compaign_objectives','langues','locations','hall_types','master_movies','movie_genres','genders','target_types','interests','slots','dcp_creatives','cinema_chains','slot_templates'));
     }
 
     public function planningSlotsPage()

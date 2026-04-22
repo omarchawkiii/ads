@@ -41,7 +41,7 @@ class CampaignXmlGenerator
         self::addCollection($filters, 'cinema_chains', 'cinema_chain', $compaign->cinemaChains);
         self::addCollection($filters, 'locations', 'location', $compaign->locations);
         self::addCollection($filters, 'movie_genres', 'genre', $compaign->movieGenres);
-        self::addMovies($filters, 'movies', $compaign->movies);
+        self::addMasterMovies($filters, $compaign->masterMovies()->with('movies')->get());
         self::addCollection($filters, 'hall_types', 'hall', $compaign->hallTypes);
         self::addCollection($filters, 'target_types', 'target', $compaign->targetTypes);
         self::addCollection($filters, 'interests', 'interest', $compaign->interests);
@@ -49,8 +49,8 @@ class CampaignXmlGenerator
         /* ================= BRANDS ================= */
         self::addCollection($xml, 'brands', 'brand', $compaign->brands);
 
-        /* ================= MOVIES ================= */
-        self::addMovies($xml, 'movies', $compaign->movies);
+        /* ================= MASTER MOVIES ================= */
+        self::addMasterMovies($xml, $compaign->masterMovies()->with('movies')->get());
 
         /* ================= SLOTS + DCP ================= */
         if ($compaign->slots->isNotEmpty()) {
@@ -126,6 +126,33 @@ class CampaignXmlGenerator
             $node->addAttribute('id', $movie->id);
             $node->addAttribute('uuid', $movie->uuid ?? '');
             $node->addAttribute('name', $movie->name ?? '');
+        }
+    }
+
+    private static function addMasterMovies($parent, $masterMovies)
+    {
+        if (!$masterMovies || $masterMovies->isEmpty()) return;
+
+        $wrapper = $parent->addChild('master_movies');
+
+        foreach ($masterMovies as $mm) {
+            $mmNode = $wrapper->addChild('master_movie');
+            $mmNode->addAttribute('id', $mm->id);
+            $mmNode->addAttribute('title', $mm->title ?? '');
+            $mmNode->addAttribute('year', $mm->year ?? '');
+
+            if ($mm->movies && $mm->movies->isNotEmpty()) {
+                $moviesNode = $mmNode->addChild('movies');
+                foreach ($mm->movies as $movie) {
+                    $node = $moviesNode->addChild('movie');
+                    $node->addAttribute('id', $movie->id);
+                    $node->addAttribute('uuid', $movie->uuid ?? '');
+                    $node->addAttribute('spl_uuid', $movie->spl_uuid ?? '');
+                    $node->addAttribute('name', $movie->name ?? '');
+                    $node->addAttribute('code', $movie->code ?? '');
+                    $node->addAttribute('titleShort', $movie->titleShort ?? '');
+                }
+            }
         }
     }
 

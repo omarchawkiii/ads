@@ -7,7 +7,9 @@
       "Bash(php -l app/Http/Controllers/CompaignController.php)",
       "Bash(php -l app/Models/Compaign.php)",
       "PowerShell(cmd /c mklink /J \"C:\\\\laragon\\\\www\\\\adsamrt\\\\public\\\\storage\" \"C:\\\\laragon\\\\www\\\\adsamrt\\\\storage\\\\app\\\\public\")",
-      "Read(//c/laragon/etc/apache2/sites-enabled/**)"
+      "Read(//c/laragon/etc/apache2/sites-enabled/**)",
+      "Bash(php -l app/Http/Controllers/SlotController.php)",
+      "Bash(php -l app/Services/CampaignXmlGenerator.php)"
     ]
   }
 }
