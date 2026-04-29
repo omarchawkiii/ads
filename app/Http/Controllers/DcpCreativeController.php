@@ -292,7 +292,9 @@ class DcpCreativeController extends Controller
         }
 
         // Final name and folder
-        $safeName = substr(preg_replace('/[^A-Za-z0-9._-]/', '_', $original), 0, 180);
+        $safeName = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'
+            ? substr(preg_replace('/[^A-Za-z0-9._-]/', '_', $original), 0, 180)
+            : substr(preg_replace('/[^\x20-\x7E]/', '_', $original), 0, 180);
         $finalDir = storage_path('app/uploads/final');
         if (!is_dir($finalDir)) {
             @mkdir($finalDir, 0775, true);
@@ -400,6 +402,7 @@ class DcpCreativeController extends Controller
             'uuid'                   => $meta['uuid'],
             'name'                   => $meta['name'],
             'duration'               => $meta['total_duration'],
+            'edit_rate'              => $meta['edit_rate'] ?? null,
             'path'                   => $finalPath,
             'user_id'                => Auth()->user()->id,
             'compaign_category_id'   => $request->compaign_category_id,
@@ -580,8 +583,9 @@ class DcpCreativeController extends Controller
         }
 
         // Duration in frames (MainPicture only — MainSound has the same duration, no need to sum both)
-        $frames    = 0;
-        $editRate  = 24; // default fallback
+        $frames       = 0;
+        $editRateRaw  = null; // stored as-is: e.g. "24 1"
+        $editRateNum  = 24;   // computed for duration conversion
 
         $durationNodes = $xml->xpath('/cpl:CompositionPlaylist/cpl:ReelList/cpl:Reel/cpl:AssetList/cpl:MainPicture/cpl:Duration');
         if (!empty($durationNodes)) {
@@ -594,20 +598,22 @@ class DcpCreativeController extends Controller
         // EditRate is expressed as "numerator denominator" (e.g. "24 1")
         $editRateNodes = $xml->xpath('/cpl:CompositionPlaylist/cpl:ReelList/cpl:Reel/cpl:AssetList/cpl:MainPicture/cpl:EditRate');
         if (!empty($editRateNodes)) {
-            $parts = explode(' ', trim((string)$editRateNodes[0]));
+            $editRateRaw = trim((string)$editRateNodes[0]); // "24 1" → stored as-is
+            $parts       = explode(' ', $editRateRaw);
             $numerator   = isset($parts[0]) && is_numeric($parts[0]) ? (int)$parts[0] : 24;
             $denominator = isset($parts[1]) && is_numeric($parts[1]) && (int)$parts[1] > 0 ? (int)$parts[1] : 1;
-            $editRate = $numerator / $denominator;
+            $editRateNum = $numerator / $denominator;
         }
 
         // Convert frames to seconds
-        $duration_seconds = ($editRate > 0) ? round($frames / $editRate, 2) : 0;
+        $duration_seconds = ($editRateNum > 0) ? round($frames / $editRateNum, 2) : 0;
 
         return [
-            'uuid'             => $uuid,
-            'name'             => $name,
-            'duration_frames'  => $frames,
-            'total_duration' => $duration_seconds,
+            'uuid'            => $uuid,
+            'name'            => $name,
+            'duration_frames' => $frames,
+            'total_duration'  => $duration_seconds,
+            'edit_rate'       => $editRateRaw, // "24 1" comme dans le XML
         ];
     }
 }

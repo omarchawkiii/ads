@@ -14,6 +14,7 @@ class DcpCreative extends Model
         'uuid',
         'name',
         'duration',
+        'edit_rate',
         'path',
         'compaign_category_id',
         'compaign_objective_id',
