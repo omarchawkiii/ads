@@ -66,7 +66,7 @@ class CampaignXmlGenerator
                     $dcpNode->addAttribute('id', $dcp->id);
                     $dcpNode->addAttribute('name', $dcp->name);
                     $dcpNode->addAttribute('position', $dcp->pivot->position);
-                    $dcpNode->addAttribute('duration', $dcp->pivot->duration ?? 0);
+                    $dcpNode->addAttribute('duration', $dcp->duration ?? 0);
                     $dcpNode->addAttribute('edit_rate', $dcp->edit_rate ?? '');
                 }
             }
