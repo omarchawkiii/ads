@@ -404,6 +404,8 @@ class DcpCreativeController extends Controller
             'duration'               => $meta['total_duration'],
             'edit_rate'              => $meta['edit_rate'] ?? null,
             'path'                   => $finalPath,
+            'extract_path'           => $extractDir,
+            'preview_status'         => 'pending',
             'user_id'                => Auth()->user()->id,
             'compaign_category_id'   => $request->compaign_category_id,
             'compaign_objective_id'  => $request->compaign_objective_id ?: null,
@@ -414,6 +416,8 @@ class DcpCreativeController extends Controller
 
         $creative->targetTypes()->sync($request->input('target_type_ids', []));
         $creative->interests()->sync($request->input('interest_ids', []));
+
+        \App\Jobs\GenerateDcpPreview::dispatch($creative);
 
         return response()->json([
             'ok'       => true,

@@ -126,7 +126,8 @@
                                         <option value="1">Admin </option>
                                         <option value="2">Advertiser </option>
                                         <option value="3">Marketing </option>
-                                    </select>
+ 
+                                        <option value="4">Content Approval </option>                                   </select>
                                 </div>
                             </div>
 
@@ -197,7 +198,8 @@
                                         <option value="1">Admin </option>
                                         <option value="2">Advertiser </option>
                                         <option value="3">Marketing </option>
-                                    </select>
+ 
+                                        <option value="4">Content Approval </option>                                   </select>
                                 </div>
                             </div>
 
@@ -397,6 +399,8 @@
                                         typeLabel = ' <span class="badge bg-info-subtle text-white ms-1" >Advertising Agency</span>';
                                     }
                                     role = "Advertiser" + typeLabel;
+                                } else if (value.role == 4) {
+                                    role = "Content Approval"
                                 } else {
                                     role = "Marketing"
                                 }

@@ -63,7 +63,7 @@ class CompaignController extends Controller
             'gender:id,name',
             'templateSlot:id,name',
             'slots:id,name,max_duration',
-            'dcpCreatives:id,name,duration',
+            'dcpCreatives:id,name,duration,status',
             'locations:id,name',
             'hallTypes:id,name',
             'movieGenres:id,name',

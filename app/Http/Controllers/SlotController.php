@@ -58,10 +58,12 @@ class SlotController extends Controller
         try
         {
             $request->validate([
-                'template_name' => 'required|string|max:255',
-                'slots' => 'required|array|min:1',
-                'slots.*.name' => 'required|string|max:255',
-                'slots.*.max_duration' => 'required|integer|min:1',
+                'template_name'          => 'required|string|max:255',
+                'slots'                  => 'required|array|min:1',
+                'slots.*.type'           => 'nullable|in:ads,segment',
+                'slots.*.name'           => 'required_if:slots.*.type,ads|nullable|string|max:255',
+                'slots.*.max_duration'   => 'required_if:slots.*.type,ads|nullable|integer|min:1',
+                'slots.*.segment_select' => 'required_if:slots.*.type,segment|nullable|string',
             ]);
 
             $template = TemplateSlot::create([
@@ -69,19 +71,23 @@ class SlotController extends Controller
             ]);
 
             foreach ($request->slots as $slotData) {
+                $slotType  = $slotData['type'] ?? 'ads';
+                $isSegment = $slotType === 'segment';
+
                 $slot = Slot::create([
                     'template_slot_id' => $template->id,
-                    'segment_name' => $slotData['segment_name'] ?? null,
-                    'name' => $slotData['name'],
-                    'max_duration' => $slotData['max_duration'],
-                    'cpm' => 0,
-                    'max_ad_slot' => $slotData['max_ad_slot'] ?? 1,
+                    'type'             => $slotType,
+                    'segment_name'     => !$isSegment ? ($slotData['segment_name'] ?? null) : null,
+                    'name'             => $isSegment ? ($slotData['segment_select'] ?? 'Segment 1') : $slotData['name'],
+                    'max_duration'     => !$isSegment ? ($slotData['max_duration'] ?? 0) : 0,
+                    'cpm'              => 0,
+                    'max_ad_slot'      => !$isSegment ? ($slotData['max_ad_slot'] ?? 1) : 0,
                 ]);
 
-                foreach ($slotData['ad_slot_types'] as $type) {
-                    $slot->positions()->create([
-                        'type' => $type
-                    ]);
+                if (!$isSegment) {
+                    foreach ($slotData['ad_slot_types'] ?? [] as $posType) {
+                        $slot->positions()->create(['type' => $posType]);
+                    }
                 }
             }
             return response()->json([
@@ -89,10 +95,10 @@ class SlotController extends Controller
                 'data' => $slot,
             ], 201);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'Validation failed.', 'errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'Operation failed.',
-            ], 500);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
@@ -100,10 +106,12 @@ class SlotController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'template_name' => 'required|string|max:255',
-            'slots' => 'required|array|min:1',
-            'slots.*.name' => 'required|string|max:255',
-            'slots.*.max_duration' => 'required|integer|min:1',
+            'template_name'          => 'required|string|max:255',
+            'slots'                  => 'required|array|min:1',
+            'slots.*.type'           => 'nullable|in:ads,segment',
+            'slots.*.name'           => 'required_if:slots.*.type,ads|nullable|string|max:255',
+            'slots.*.max_duration'   => 'required_if:slots.*.type,ads|nullable|integer|min:1',
+            'slots.*.segment_select' => 'required_if:slots.*.type,segment|nullable|string',
         ]);
 
         $template = TemplateSlot::findOrFail($id);
@@ -123,44 +131,48 @@ class SlotController extends Controller
                             ->first();
 
                 if ($slot) {
+                    $slotType  = $slotData['type'] ?? 'ads';
+                    $isSegment = $slotType === 'segment';
 
                     $slot->update([
-                        'segment_name' => $slotData['segment_name'] ?? null,
-                        'name' => $slotData['name'],
-                        'max_duration' => $slotData['max_duration'],
-                        'max_ad_slot' => $slotData['max_ad_slot'] ?? 1,
+                        'type'         => $slotType,
+                        'segment_name' => !$isSegment ? ($slotData['segment_name'] ?? null) : null,
+                        'name'         => $isSegment ? ($slotData['segment_select'] ?? 'Segment 1') : $slotData['name'],
+                        'max_duration' => !$isSegment ? ($slotData['max_duration'] ?? 0) : 0,
+                        'max_ad_slot'  => !$isSegment ? ($slotData['max_ad_slot'] ?? 1) : 0,
                     ]);
 
                     $sentSlotIds[] = $slot->id;
 
                     $slot->positions()->delete();
-                    foreach ($slotData['ad_slot_types'] as $type) {
-                        $slot->positions()->create([
-                            'type' => $type
-                        ]);
+                    if (!$isSegment) {
+                        foreach ($slotData['ad_slot_types'] ?? [] as $posType) {
+                            $slot->positions()->create(['type' => $posType]);
+                        }
                     }
-
                 }
 
             } else {
+                $slotType  = $slotData['type'] ?? 'ads';
+                $isSegment = $slotType === 'segment';
 
                 $newSlot = Slot::create([
                     'template_slot_id' => $template->id,
-                    'segment_name' => $slotData['segment_name'] ?? null,
-                    'name' => $slotData['name'],
-                    'max_duration' => $slotData['max_duration'],
-                    'cpm' => 0,
-                    'max_ad_slot' => $slotData['max_ad_slot'] ?? 1,
+                    'type'             => $slotType,
+                    'segment_name'     => !$isSegment ? ($slotData['segment_name'] ?? null) : null,
+                    'name'             => $isSegment ? ($slotData['segment_select'] ?? 'Segment 1') : $slotData['name'],
+                    'max_duration'     => !$isSegment ? ($slotData['max_duration'] ?? 0) : 0,
+                    'cpm'              => 0,
+                    'max_ad_slot'      => !$isSegment ? ($slotData['max_ad_slot'] ?? 1) : 0,
                 ]);
 
                 $sentSlotIds[] = $newSlot->id;
 
-                foreach ($slotData['ad_slot_types'] as $type) {
-                    $newSlot->positions()->create([
-                        'type' => $type
-                    ]);
+                if (!$isSegment) {
+                    foreach ($slotData['ad_slot_types'] ?? [] as $posType) {
+                        $newSlot->positions()->create(['type' => $posType]);
+                    }
                 }
-
             }
         }
 
@@ -229,6 +241,7 @@ class SlotController extends Controller
         -------------------------------------------------*/
         $slots = Slot::with('positions')
             ->where('template_slot_id', $v['template_slot_id'])
+            ->where('type', 'ads')
             ->select('id', 'name', 'max_duration', 'max_ad_slot')
             ->get();
 
@@ -365,6 +378,7 @@ class SlotController extends Controller
         // 1️⃣ Slots avec positions
         $slots = Slot::with('positions')
             ->where('template_slot_id', $v['template_slot_id'])
+            ->where('type', 'ads')
             ->select('id', 'name', 'max_duration', 'max_ad_slot')
             ->get();
 
@@ -623,6 +637,7 @@ class SlotController extends Controller
 
         // 1️⃣ Slots du template
         $slots = Slot::where('template_slot_id', $v['template_slot_id'])
+            ->where('type', 'ads')
             ->select('id', 'name', 'max_duration', 'max_ad_slot')
             ->get();
 
@@ -800,6 +815,7 @@ class SlotController extends Controller
         // 1️⃣ Slots du template
         $slots = Slot::with('positions')
             ->where('template_slot_id', $v['template_slot_id'])
+            ->where('type', 'ads')
             ->select('id', 'name', 'max_duration', 'max_ad_slot')
             ->get();
 

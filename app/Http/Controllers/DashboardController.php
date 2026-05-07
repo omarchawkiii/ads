@@ -62,6 +62,23 @@ class DashboardController extends Controller
         ));
     }
 
+    public function contentApproval()
+    {
+        $pendingDcps  = DcpCreative::where('status', 'pending')->count();
+        $approvedDcps = DcpCreative::where('status', 'approved')->count();
+        $rejectedDcps = DcpCreative::where('status', 'rejected')->count();
+        $totalDcps    = DcpCreative::count();
+
+        $recentDcps = DcpCreative::with('customer')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('content_approval.welcome', compact(
+            'pendingDcps', 'approvedDcps', 'rejectedDcps', 'totalDcps', 'recentDcps'
+        ));
+    }
+
     public function advertiser()
     {
         $userId = Auth::id();

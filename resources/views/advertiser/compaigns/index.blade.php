@@ -921,10 +921,15 @@
                                     '<i class="mdi mdi-tooltip-edit"></i>' +
                                     '</a>' : '') +
 
+                                    (value.status == 2 ?
                                     '<button data-id="' + value.id +
                                     '" type="button" class="btn-send-noc justify-content-center btn mb-1 btn-rounded btn-info m-1" title="Send to NOC">' +
                                     '<i class="mdi mdi-send"></i>' +
-                                    '</button>' +
+                                    '</button>' :
+                                    '<button data-id="' + value.id +
+                                    '" type="button" class="btn-send-noc-disabled justify-content-center btn mb-1 btn-rounded btn-secondary m-1" title="Send to NOC" style="opacity:0.55;cursor:not-allowed;">' +
+                                    '<i class="mdi mdi-send"></i>' +
+                                    '</button>') +
 
                                     '<button data-id="' + value.id +
                                     '" type="button" class="delete justify-content-center btn mb-1 btn-rounded btn-danger m-1">' +
@@ -1021,6 +1026,15 @@
                         $btn.prop('disabled', false).html('<i class="mdi mdi-cloud-upload"></i>');
                     });
                 }); // end Swal.then
+            });
+
+            $(document).on('click', '.btn-send-noc-disabled', function() {
+                Swal.fire({
+                    title: 'Campaign not approved',
+                    text: 'This campaign has not been approved yet. You can only send it to the NOC once it has been approved by the admin.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                });
             });
 
             $(document).on('click', '.view', function() {

@@ -19,6 +19,9 @@ Route::get('/', function () {
     if (Auth::user()->role == 1) {
         return app(\App\Http\Controllers\DashboardController::class)->admin();
     }
+    if (Auth::user()->role == 4) {
+        return redirect()->route('content_approval.dashboard');
+    }
     return app(\App\Http\Controllers\DashboardController::class)->advertiser();
 })->name('dashboard')->middleware(['auth']);
 
@@ -270,6 +273,25 @@ Route::put('profile', [App\Http\Controllers\ProfileController::class, 'update'])
 });
 
 
+
+/* ************ Content Approval route ********** */
+Route::middleware(['auth', 'content_approval'])->prefix('content-approval')->name('content_approval.')->group(function () {
+
+    Route::get('/', function () {
+        return app(\App\Http\Controllers\DashboardController::class)->contentApproval();
+    })->name('dashboard');
+
+    Route::get('dcp_creatives', [App\Http\Controllers\ContentApprovalController::class, 'index'])->name('dcp_creatives.index');
+    Route::get('dcp_creatives/list', [App\Http\Controllers\ContentApprovalController::class, 'get'])->name('dcp_creatives.list');
+    Route::get('dcp_creatives/{id}/show', [App\Http\Controllers\ContentApprovalController::class, 'show'])->name('dcp_creatives.show');
+    Route::put('dcp_creatives/{id}/approve', [App\Http\Controllers\ContentApprovalController::class, 'approve'])->name('dcp_creatives.approve');
+    Route::put('dcp_creatives/{id}/reject', [App\Http\Controllers\ContentApprovalController::class, 'reject'])->name('dcp_creatives.reject');
+    Route::get('dcp_creatives/{id}/preview-status', [App\Http\Controllers\ContentApprovalController::class, 'previewStatus'])->name('dcp_creatives.preview_status');
+    Route::post('dcp_creatives/{id}/retry-preview', [App\Http\Controllers\ContentApprovalController::class, 'retryPreview'])->name('dcp_creatives.retry_preview');
+
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+});
 
 /* ***** Auth route **** */
 

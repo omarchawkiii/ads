@@ -640,6 +640,13 @@ Campaign
                 const localDate = new Date(`${year}-${month}-${day}`);
                 return formatDateEN(localDate, { variant: 'short' });
             }
+            function dcpStatusBadge(status) {
+                if (status === 'pending')  return '<span class="badge bg-warning text-dark">Pending</span>';
+                if (status === 'approved') return '<span class="badge bg-success">Approved</span>';
+                if (status === 'rejected') return '<span class="badge bg-danger">Rejected</span>';
+                return '<span class="badge bg-secondary">—</span>';
+            }
+
             window.get_compaigns = function get_compaigns() {
                 $('#wait-modal').modal('show');
 
@@ -903,33 +910,53 @@ Campaign
             /* -------- APPROVE -------- */
             $(document).on('click', '.approuve', function () {
                 var id  = $(this).closest('[id]').attr('id');
-                var url = "{{ url('') }}" + '/compaigns/approuve/' + id;
-                Swal.fire({
-                    title: 'Approve this campaign?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#198754',
-                    confirmButtonText: 'Yes, approve',
-                }).then(function (result) {
-                    if (!result.isConfirmed) return;
-                    $('#page-loader').css('display', 'flex');
-                    $.ajax({
-                        url: url,
-                        type: 'POST',
-                        data: { _method: 'PUT', _token: "{{ csrf_token() }}" },
-                        headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
-                        success: function () {
-                             get_compaigns();
-                            $('#page-loader').hide();
-                            Swal.fire('Approved!', 'Campaign has been approved.', 'success')
+                var approveUrl = "{{ url('') }}" + '/compaigns/approuve/' + id;
+                var showUrl    = "{{ url('') }}" + '/compaigns/' + id + '/show';
 
-                        },
-                        error: function (xhr) {
-                            $('#page-loader').hide();
-                            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Operation failed.';
-                            Swal.fire('Error', msg, 'error');
-                        }
+                // Check for pending DCPs before showing confirm
+                $.ajax({ url: showUrl, type: 'GET' })
+                .done(function (data) {
+                    var pendingDcps = (data.dcp_creatives || []).filter(function (d) {
+                        return d.status === 'pending';
                     });
+                    if (pendingDcps.length > 0) {
+                        Swal.fire({
+                            title: 'DCPs need approval',
+                            text: 'Some DCPs attached to this campaign are still pending approval. Please approve all DCPs before approving the campaign.',
+                            icon: 'warning',
+                            confirmButtonText: 'OK',
+                        });
+                        return;
+                    }
+                    Swal.fire({
+                        title: 'Approve this campaign?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#198754',
+                        confirmButtonText: 'Yes, approve',
+                    }).then(function (result) {
+                        if (!result.isConfirmed) return;
+                        $('#page-loader').css('display', 'flex');
+                        $.ajax({
+                            url: approveUrl,
+                            type: 'POST',
+                            data: { _method: 'PUT', _token: "{{ csrf_token() }}" },
+                            headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                            success: function () {
+                                get_compaigns();
+                                $('#page-loader').hide();
+                                Swal.fire('Approved!', 'Campaign has been approved.', 'success');
+                            },
+                            error: function (xhr) {
+                                $('#page-loader').hide();
+                                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Operation failed.';
+                                Swal.fire('Error', msg, 'error');
+                            }
+                        });
+                    });
+                })
+                .fail(function () {
+                    Swal.fire('Error', 'Could not verify campaign details.', 'error');
                 });
             });
 
@@ -1061,7 +1088,7 @@ Campaign
                                 });
                                 if (dcps.length) {
                                     dcps.forEach(function(dcp){
-                                        html += '<li>' + dcp.name + ' – ' + dcp.duration + 's</li>';
+                                        html += '<li>' + dcp.name + ' – ' + dcp.duration + 's ' + dcpStatusBadge(dcp.status) + '</li>';
                                     });
                                 } else {
                                     html += '<li class="text-muted">No DCP assigned</li>';

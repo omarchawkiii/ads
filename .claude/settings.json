@@ -9,7 +9,15 @@
       "PowerShell(cmd /c mklink /J \"C:\\\\laragon\\\\www\\\\adsamrt\\\\public\\\\storage\" \"C:\\\\laragon\\\\www\\\\adsamrt\\\\storage\\\\app\\\\public\")",
       "Read(//c/laragon/etc/apache2/sites-enabled/**)",
       "Bash(php -l app/Http/Controllers/SlotController.php)",
-      "Bash(php -l app/Services/CampaignXmlGenerator.php)"
+      "Bash(php -l app/Services/CampaignXmlGenerator.php)",
+      "Bash(Get-ChildItem -Path \"c:\\\\laragon\\\\www\\\\adsamrt\\\\resources\\\\views\\\\admin\" -Recurse -Include \"*slot*\", \"*template*\" -Name)",
+      "Bash(php -l c:/laragon/www/adsamrt/app/Http/Controllers/SlotController.php)",
+      "Bash(Get-ChildItem -Path c:\\\\laragon\\\\www\\\\adsamrt -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(ffmpeg -version)",
+      "Bash(php -l app/Jobs/GenerateDcpPreview.php)",
+      "Bash(php -l app/Http/Controllers/ContentApprovalController.php)",
+      "Bash(powershell -Command \"Get-Content storage\\\\logs\\\\laravel.log -Tail 60\")"
     ]
   }
 }

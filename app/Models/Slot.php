@@ -18,6 +18,7 @@ class Slot extends Model
      * @var array
      */
     protected $fillable = [
+        'type',
         'name',
         'cpm',
         'max_duration',

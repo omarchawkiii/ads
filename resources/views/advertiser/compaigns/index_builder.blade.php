@@ -270,7 +270,7 @@
                     <button id="confirm-save-only" class="btn btn-outline-secondary">
                         <i class="mdi mdi-content-save"></i> Save only
                     </button>
-                    <button id="confirm-save-campaign" class="btn btn-success">
+                    <button id="confirm-save-campaign" class="btn btn-success d-none">
                         <i class="mdi mdi-send"></i> Save &amp; Send to NOC
                     </button>
                 </div>

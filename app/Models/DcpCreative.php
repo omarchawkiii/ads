@@ -16,6 +16,9 @@ class DcpCreative extends Model
         'duration',
         'edit_rate',
         'path',
+        'extract_path',
+        'preview_path',
+        'preview_status',
         'compaign_category_id',
         'compaign_objective_id',
         'langue_id',
@@ -23,6 +26,7 @@ class DcpCreative extends Model
         'user_id',
         'customer_id',
         'status',
+        'approval_note',
     ];
     public function compaigns()
     {

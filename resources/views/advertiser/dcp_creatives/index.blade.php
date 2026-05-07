@@ -38,6 +38,7 @@
                             <th class="text-center">Duration</th>
                             <th class="text-center">Category</th>
                             <th class="text-center">My Client</th>
+                            <th class="text-center">Status</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -281,6 +282,13 @@
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
 
     <script>
+        function dcpStatusBadge(status) {
+            if (status === 'pending')  return '<span class="badge bg-warning text-dark">Pending</span>';
+            if (status === 'approved') return '<span class="badge bg-success">Approved</span>';
+            if (status === 'rejected') return '<span class="badge bg-danger">Rejected</span>';
+            return '<span class="badge bg-secondary">—</span>';
+        }
+
         $(function() {
             const CSRF = '{{ csrf_token() }}';
             const CHUNK_SIZE_FALLBACK = 10 * 1024 * 1024; // 10 Mo si le backend ne renvoie pas
@@ -614,11 +622,7 @@
                                     formatHMS(value.duration) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.compaign_category ? value.compaign_category.name : '-') + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.customer ? value.customer.name : '-') + '</td>' +
-                                    /*'<td class="text-body align-middle fw-medium text-decoration-none">' + (
-                                        value.status == 1 ? '<span class="badge bg-warning-subtle text-warning">Pending</span> ' :
-                                        value.status == 2 ? '<span class="badge bg-success-subtle text-success">Approved</span>' :
-                                        value.status == 3 ? '<span class="badge bg-danger-subtle text-danger">Rejected</span>': '-'
-                                    ) + '</td>' +*/
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + dcpStatusBadge(value.status) + '</td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         '<button data-id="' + value.id + '" type="button" class="  ustify-content-center btn mbtn-rounded btn-success  view-dcp m-1" title="View details">' +
                                         '<i class="mdi mdi-eye"></i>' +
@@ -696,6 +700,9 @@
                                             <td>${d.compaign_category ? d.compaign_category.name : '—'}</td></tr>
                                         <tr><td class="text-muted pe-3">My Client</td>
                                             <td>${d.customer ? d.customer.name : '—'}</td></tr>
+                                        <tr><td class="text-muted pe-3">Status</td>
+                                            <td>${dcpStatusBadge(d.status)}</td></tr>
+                                        ${d.approval_note ? `<tr><td class="text-muted pe-3 align-top">Note</td><td class="text-wrap">${d.approval_note}</td></tr>` : ''}
                                     </table>
                                 </div>
                             </div>

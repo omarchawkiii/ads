@@ -17,6 +17,10 @@ class ProfileController extends Controller
             return view('admin.profile.index', compact('user'));
         }
 
+        if ($user->role == 4) {
+            return view('content_approval.profile.index', compact('user'));
+        }
+
         if ($user->advertiser_type === 'direct') {
             $customer = Customer::where('user_id', $user->id)->first();
         }

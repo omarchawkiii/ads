@@ -224,35 +224,63 @@ Playlist Template Builder
             get_slots();
 
 
+            function segmentOptions(selected = '') {
+                return Array.from({length: 10}, (_, i) => {
+                    const val = `Segment ${i + 1}`;
+                    return `<option value="${val}" ${selected === val ? 'selected' : ''}>${val}</option>`;
+                }).join('');
+            }
+
             function slotRow(slot = {}) {
+                const type       = slot.type ?? 'ads';
+                const isSegment  = type === 'segment';
+                const segmentVal = isSegment ? (slot.name ?? '') : '';
+
                 return `
                 <div class="row g-2 slot-row mb-2 align-items-stretch mb-1">
-                    <div class="col-md-4">
-                        <label>Segment Name:</label>
-                        <input type="text" class="form-control segment_name" placeholder="Segment" value="${slot.segment_name ?? ''}">
-                    </div>
-                    <div class="col-md-4">
-                        <label>Slot Name:</label>
-                        <input type="text" class="form-control slot_name" placeholder="Slot Name" value="${slot.name ?? ''}" required>
-                    </div>
-                    <div class="col-md">
-                        <label>Max Duration (sec):</label>
-                        <input type="number" min="1" class="form-control max_duration" placeholder="Duration" value="${slot.max_duration ?? ''}" required>
-                    </div>
-                    <div class="col-md">
-                        <label>Max Ad Slots:</label>
-                        <select class="form-select max_ad_slot">
-                            ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${slot.max_ad_slot == n ? 'selected' : ''}>${n}</option>`).join('')}
-                        </select>
 
+                    {{-- Type toggle --}}
+                    <div class="col-md-2">
+                        <label>Slot Type:</label>
+                        <select class="form-select slot_type">
+                            <option value="ads"     ${!isSegment ? 'selected' : ''}>Ads Slot</option>
+                            <option value="segment" ${isSegment  ? 'selected' : ''}>Segment Slot</option>
+                        </select>
+                    </div>
+
+                    {{-- ADS fields --}}
+                    <div class="ads-fields m-0 col-md-9 row g-2 ${isSegment ? 'd-none' : ''}">
+                        <div class="col-md-4">
+                            <label>Slot Name:</label>
+                            <input type="text" class="form-control slot_name" placeholder="Slot Name" value="${!isSegment ? (slot.name ?? '') : ''}">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Max Duration (sec):</label>
+                            <input type="number" min="1" class="form-control max_duration" placeholder="Duration" value="${!isSegment ? (slot.max_duration ?? '') : ''}">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Max Ad Slots:</label>
+                            <select class="form-select max_ad_slot">
+                                ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${slot.max_ad_slot == n ? 'selected' : ''}>${n}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- SEGMENT fields --}}
+                    <div class="segment-fields col-md-9 ${!isSegment ? 'd-none' : ''}">
+                        <label>Segment:</label>
+                        <select class="form-select segment_select">
+                            ${segmentOptions(segmentVal)}
+                        </select>
                     </div>
 
                     <div class="col-md-1 d-flex justify-content-center align-items-center">
                         <button type="button" class="btn btn-danger btn-sm remove_slot_row mt-3">✕</button>
                     </div>
 
-                    <div class="ad_slot_types mt-2 row"></div>
+                    <div class="ad_slot_types mt-2 row ${isSegment ? 'd-none' : ''}"></div>
 
+                    <input type="hidden" class="slot_id" value="${slot.id ?? ''}">
                 </div>`;
             }
 
@@ -286,6 +314,14 @@ Playlist Template Builder
                 }
             }
 
+            $(document).on('change', '.slot_type', function() {
+                const $row       = $(this).closest('.slot-row');
+                const isSegment  = $(this).val() === 'segment';
+                $row.find('.ads-fields').toggleClass('d-none', isSegment);
+                $row.find('.segment-fields').toggleClass('d-none', !isSegment);
+                $row.find('.ad_slot_types').toggleClass('d-none', isSegment).html('');
+            });
+
             $(document).on('input', '.max_ad_slot', function() {
                 let $row = $(this).closest('.slot-row');
                 let count = parseInt($(this).val()) || 0;
@@ -309,11 +345,13 @@ Playlist Template Builder
 
                 $('#slots_container .slot-row').each(function() {
                     slots.push({
-                        segment_name: $(this).find('.segment_name').val(),
-                        name: $(this).find('.slot_name').val(),
-                        max_duration: $(this).find('.max_duration').val(),
-                        max_ad_slot: $(this).find('.max_ad_slot').val(),
-                        ad_slot_types: $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
+                        type:           $(this).find('.slot_type').val(),
+                        segment_name:   $(this).find('.segment_name').val(),
+                        name:           $(this).find('.slot_name').val(),
+                        max_duration:   $(this).find('.max_duration').val(),
+                        max_ad_slot:    $(this).find('.max_ad_slot').val(),
+                        segment_select: $(this).find('.segment_select').val(),
+                        ad_slot_types:  $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });
                 });
 
@@ -446,39 +484,13 @@ Playlist Template Builder
 
                         if (template.slots.length > 0) {
                             $.each(template.slots, function(i, slot) {
-                                $('#edit_slots_container').append(`
-                                    <div class="row g-2 slot-row mb-2 align-items-stretch mb-1">
-                                        <input type="hidden" class="slot_id" value="${slot.id}">
-                                        <div class="col-md-4">
-                                            <label>Segment Name:</label>
-                                            <input type="text" class="form-control segment_name" value="${slot.segment_name ?? ''}" placeholder="Segment">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label>Slot Name:</label>
-                                            <input type="text" class="form-control slot_name" value="${slot.name}" placeholder="Slot Name" required>
-                                        </div>
-                                        <div class="col-md">
-                                            <label>Max Duration (sec):</label>
-                                            <input type="number" min="1" class="form-control max_duration" value="${slot.max_duration}" placeholder="Duration" required>
-                                        </div>
-                                        <div class="col-md">
-                                            <label>Max Ad Slots:</label>
-                                            <select class="form-select max_ad_slot">
-                                                ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${slot.max_ad_slot == n ? 'selected' : ''}>${n}</option>`).join('')}
-                                            </select>
-                                        </div>
-                                        <div class="col-md-1 d-flex justify-content-center align-items-center">
-                                            <button type="button" class="btn btn-danger btn-sm remove_slot_row">✕</button>
-                                        </div>
-                                        <div class="ad_slot_types mt-2 row"></div>
-                                    </div>
-                                `);
+                                $('#edit_slots_container').append(slotRow(slot));
 
-                                // Générer les selects Intelligent / Manual
-                                var row = $('#edit_slots_container .slot-row').last();
-                                var adContainer = row.find('.ad_slot_types');
-
-                                generateAdSlotTypes(adContainer, slot.max_ad_slot, slot.ad_slot_types);
+                                if ((slot.type ?? 'ads') === 'ads') {
+                                    var row         = $('#edit_slots_container .slot-row').last();
+                                    var adContainer = row.find('.ad_slot_types');
+                                    generateAdSlotTypes(adContainer, slot.max_ad_slot, slot.ad_slot_types);
+                                }
                             });
                         } else {
                             $('#edit_slots_container').append(slotRow());
@@ -500,12 +512,14 @@ Playlist Template Builder
 
                 $('#edit_slots_container .slot-row').each(function() {
                     slots.push({
-                        id: $(this).find('.slot_id').val(), // peut être vide
-                        segment_name: $(this).find('.segment_name').val(),
-                        name: $(this).find('.slot_name').val(),
-                        max_duration: $(this).find('.max_duration').val(),
-                        max_ad_slot: $(this).find('.max_ad_slot').val(),
-                        ad_slot_types: $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
+                        id:             $(this).find('.slot_id').val(),
+                        type:           $(this).find('.slot_type').val(),
+                        segment_name:   $(this).find('.segment_name').val(),
+                        name:           $(this).find('.slot_name').val(),
+                        max_duration:   $(this).find('.max_duration').val(),
+                        max_ad_slot:    $(this).find('.max_ad_slot').val(),
+                        segment_select: $(this).find('.segment_select').val(),
+                        ad_slot_types:  $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });
                 });
 
