@@ -166,12 +166,13 @@ class GenerateDcpPreview implements ShouldQueue
                 'C:\\laragon\\bin\\ffmpeg\\ffmpeg.exe',
             ];
         } else {
-            $candidates = [
+            $home = $_SERVER['HOME'] ?? getenv('HOME') ?? '';
+            $candidates = array_filter([
                 'ffmpeg',
                 '/usr/bin/ffmpeg',
                 '/usr/local/bin/ffmpeg',
-                $_SERVER['HOME'] . '/bin/ffmpeg',
-            ];
+                $home !== '' ? $home . '/bin/ffmpeg' : null,
+            ]);
         }
 
         foreach ($candidates as $bin) {
