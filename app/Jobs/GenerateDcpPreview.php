@@ -39,7 +39,6 @@ class GenerateDcpPreview implements ShouldQueue
             return;
         }
 
-        // DCI DCP has separate video (j2c_*.mxf) and audio (pcm_*.mxf) files
         $files = $this->scanMxfFiles($dcp->extract_path);
 
         if (empty($files['video'])) {
@@ -55,14 +54,13 @@ class GenerateDcpPreview implements ShouldQueue
 
         $previewFile = "{$previewDir}/{$dcp->id}.mp4";
 
-        // Build FFmpeg command: video + optional audio
-        $inputs = '-i ' . escapeshellarg($files['video']);
+        $inputs   = '-i ' . escapeshellarg($files['video']);
         $audioMap = '';
         if (!empty($files['audio'])) {
             $inputs   .= ' -i ' . escapeshellarg($files['audio']);
             $audioMap  = '-map 0:v:0 -map 1:a:0 -c:a aac -b:a 128k ';
         } else {
-            $audioMap = '-an '; // no audio
+            $audioMap = '-an ';
         }
 
         $cmd = sprintf(
@@ -75,7 +73,7 @@ class GenerateDcpPreview implements ShouldQueue
 
         Log::info("GenerateDcpPreview: running FFmpeg", ['cmd' => $cmd, 'dcp_id' => $dcp->id]);
 
-        \exec($cmd . ' 2>&1', $output, $code);
+        [$output, $code] = $this->runCommand($cmd);
 
         if ($code === 0 && file_exists($previewFile) && filesize($previewFile) > 0) {
             $dcp->update([
@@ -88,9 +86,43 @@ class GenerateDcpPreview implements ShouldQueue
             Log::error("GenerateDcpPreview: FFmpeg failed", [
                 'dcp_id' => $dcp->id,
                 'code'   => $code,
-                'output' => implode("\n", array_slice($output, -20)), // last 20 lines
+                'output' => implode("\n", array_slice($output, -20)),
             ]);
         }
+    }
+
+    /**
+     * Run a shell command using proc_open (works even when exec/shell_exec are disabled).
+     * Returns [output_lines[], exit_code].
+     */
+    private function runCommand(string $cmd): array
+    {
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = \proc_open($cmd, $descriptors, $pipes);
+
+        if (!is_resource($process)) {
+            return [['proc_open failed'], -1];
+        }
+
+        fclose($pipes[0]);
+
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $code   = \proc_close($process);
+        $output = array_merge(
+            $stdout ? explode("\n", rtrim($stdout)) : [],
+            $stderr ? explode("\n", rtrim($stderr)) : []
+        );
+
+        return [$output, $code];
     }
 
     private function scanMxfFiles(string $dir): array
@@ -108,7 +140,6 @@ class GenerateDcpPreview implements ShouldQueue
 
             $name = strtolower($file->getFilename());
 
-            // DCI DCP naming: j2c_* or j2k_* = JPEG2000 video; pcm_* = PCM audio
             if (str_starts_with($name, 'j2c_') || str_starts_with($name, 'j2k_')) {
                 $result['video'] = $file->getPathname();
             } elseif (str_starts_with($name, 'pcm_')) {
@@ -118,7 +149,6 @@ class GenerateDcpPreview implements ShouldQueue
             }
         }
 
-        // Fallback: if no j2c/j2k found, take the first MXF as video
         if (!$result['video'] && !empty($result['other'])) {
             $result['video'] = array_shift($result['other']);
         }
@@ -128,8 +158,6 @@ class GenerateDcpPreview implements ShouldQueue
 
     private function ffmpegBinary(): ?string
     {
-        $candidates = ['ffmpeg'];
-
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             $candidates = [
                 'ffmpeg',
@@ -138,14 +166,19 @@ class GenerateDcpPreview implements ShouldQueue
                 'C:\\laragon\\bin\\ffmpeg\\ffmpeg.exe',
             ];
         } else {
-            $candidates = ['ffmpeg', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'];
+            $candidates = [
+                'ffmpeg',
+                '/usr/bin/ffmpeg',
+                '/usr/local/bin/ffmpeg',
+                $_SERVER['HOME'] . '/bin/ffmpeg',
+            ];
         }
 
         foreach ($candidates as $bin) {
-            $out  = [];
-            $code = -1;
-            @\exec(escapeshellarg($bin) . ' -version 2>&1', $out, $code);
-            // Only trust exit code 0 — the error message itself contains "ffmpeg" on Windows
+            if (!is_executable($bin) && $bin !== 'ffmpeg') {
+                continue;
+            }
+            [, $code] = $this->runCommand(escapeshellarg($bin) . ' -version 2>&1');
             if ($code === 0) {
                 return $bin;
             }
