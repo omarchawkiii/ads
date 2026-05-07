@@ -75,7 +75,7 @@ class GenerateDcpPreview implements ShouldQueue
 
         Log::info("GenerateDcpPreview: running FFmpeg", ['cmd' => $cmd, 'dcp_id' => $dcp->id]);
 
-        exec($cmd . ' 2>&1', $output, $code);
+        \exec($cmd . ' 2>&1', $output, $code);
 
         if ($code === 0 && file_exists($previewFile) && filesize($previewFile) > 0) {
             $dcp->update([
@@ -144,7 +144,7 @@ class GenerateDcpPreview implements ShouldQueue
         foreach ($candidates as $bin) {
             $out  = [];
             $code = -1;
-            @exec(escapeshellarg($bin) . ' -version 2>&1', $out, $code);
+            @\exec(escapeshellarg($bin) . ' -version 2>&1', $out, $code);
             // Only trust exit code 0 — the error message itself contains "ffmpeg" on Windows
             if ($code === 0) {
                 return $bin;
