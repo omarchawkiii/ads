@@ -226,7 +226,7 @@ Playlist Template Builder
 
             function segmentOptions(selected = '') {
                 return Array.from({length: 10}, (_, i) => {
-                    const val = `Segment ${i + 1}`;
+                    const val = `Trailers ${i + 1}`;
                     return `<option value="${val}" ${selected === val ? 'selected' : ''}>${val}</option>`;
                 }).join('');
             }

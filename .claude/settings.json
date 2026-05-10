@@ -17,7 +17,8 @@
       "Bash(ffmpeg -version)",
       "Bash(php -l app/Jobs/GenerateDcpPreview.php)",
       "Bash(php -l app/Http/Controllers/ContentApprovalController.php)",
-      "Bash(powershell -Command \"Get-Content storage\\\\logs\\\\laravel.log -Tail 60\")"
+      "Bash(powershell -Command \"Get-Content storage\\\\logs\\\\laravel.log -Tail 60\")",
+      "Bash(xargs cat)"
     ]
   }
 }

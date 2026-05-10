@@ -164,6 +164,9 @@ class CompaignController extends Controller
             }
 
             // 5️⃣ Génération XML
+            $compaign->load(['templateSlot.slots', 'slots', 'dcpCreatives', 'invoices',
+                'compaignObjective', 'compaignCategory', 'langue', 'gender', 'user',
+                'cinemaChains', 'locations', 'movieGenres', 'hallTypes', 'targetTypes', 'interests']);
             CampaignXmlGenerator::generate($compaign);
 
             return $compaign;
@@ -304,8 +307,7 @@ class CompaignController extends Controller
         /* =====================================================
         | 1️⃣ DCP disponibles pour l’utilisateur
         ===================================================== */
-        $dcp_creatives = DcpCreative::where('status', 1)
-            ->where('user_id', auth()->id())
+        $dcp_creatives = DcpCreative::where('user_id', auth()->id())
             ->orderBy('name')
             ->get();
 
@@ -566,6 +568,9 @@ class CompaignController extends Controller
             /* -------------------------------------------------
             | 6️⃣ regen XML
             -------------------------------------------------*/
+            $compaign->load(['templateSlot.slots', 'slots', 'dcpCreatives', 'invoices',
+                'compaignObjective', 'compaignCategory', 'langue', 'gender', 'user',
+                'cinemaChains', 'locations', 'movieGenres', 'hallTypes', 'targetTypes', 'interests']);
             CampaignXmlGenerator::generate($compaign);
            // $response = $this->sendCampaignToNOC($compaign->id);
             ///$response = $this->pushCampaignToNoc($compaign);
@@ -925,7 +930,7 @@ class CompaignController extends Controller
     {
         $compaign->load([
             'slots:id,name',
-            'dcpCreatives:id,name,duration',
+            'dcpCreatives:id,name,duration,status',
             'movieGenres:id'
         ]);
 
@@ -961,10 +966,10 @@ class CompaignController extends Controller
             }
 
             $grouped[$slotId]['dcps'][] = [
-                'id'        => $dcp->id,
-                'name'      => $dcp->name ?? ('DCP #' . $dcp->id),
-                'duration'  => $dcp->duration,
-               // 'play_at'   => $playDates, // 👈 toutes les dates possibles
+                'id'       => $dcp->id,
+                'name'     => $dcp->name ?? ('DCP #' . $dcp->id),
+                'duration' => $dcp->duration,
+                'status'   => $dcp->status ?? 'pending',
             ];
         }
 

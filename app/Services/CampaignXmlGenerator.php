@@ -46,28 +46,37 @@ class CampaignXmlGenerator
         self::addCollection($filters, 'target_types', 'target', $compaign->targetTypes);
         self::addCollection($filters, 'interests', 'interest', $compaign->interests);
 
-        /* ================= BRANDS ================= */
-        self::addCollection($xml, 'brands', 'brand', $compaign->brands);
-
         /* ================= MASTER MOVIES ================= */
         self::addMasterMovies($xml, $compaign->masterMovies()->with('movies')->get());
 
         /* ================= SLOTS + DCP ================= */
-        if ($compaign->slots->isNotEmpty()) {
+        // All slots from the chosen template (ads + segment)
+        $templateSlots = $compaign->templateSlot
+            ? $compaign->templateSlot->slots()->orderBy('id')->get()
+            : collect();
+
+        if ($templateSlots->isNotEmpty()) {
             $slotsNode = $xml->addChild('slots');
 
-            foreach ($compaign->slots as $slot) {
+            foreach ($templateSlots as $slot) {
                 $slotNode = $slotsNode->addChild('slot');
-                $slotNode->addAttribute('id', $slot->id);
-                $slotNode->addAttribute('name', $slot->name);
+                $slotNode->addAttribute('id',           $slot->id);
+                $slotNode->addAttribute('name',         $slot->name);
+                $slotNode->addAttribute('type',         $slot->type ?? 'ads');
+                $slotNode->addAttribute('segment_name', $slot->segment_name ?? '');
+                $slotNode->addAttribute('max_duration', $slot->max_duration ?? 0);
+                $slotNode->addAttribute('max_ad_slot',  $slot->max_ad_slot ?? 1);
+                $slotNode->addAttribute('cpm',          $slot->cpm ?? 0);
 
+                // DCPs assigned to this slot in the campaign
                 foreach ($compaign->dcpCreatives->where('pivot.slot_id', $slot->id) as $dcp) {
                     $dcpNode = $slotNode->addChild('dcp');
-                    $dcpNode->addAttribute('id', $dcp->id);
-                    $dcpNode->addAttribute('name', $dcp->name);
-                    $dcpNode->addAttribute('position', $dcp->pivot->position);
-                    $dcpNode->addAttribute('duration', $dcp->duration ?? 0);
+                    $dcpNode->addAttribute('id',        $dcp->id);
+                    $dcpNode->addAttribute('name',      $dcp->name);
+                    $dcpNode->addAttribute('position',  $dcp->pivot->position);
+                    $dcpNode->addAttribute('duration',  $dcp->duration ?? 0);
                     $dcpNode->addAttribute('edit_rate', $dcp->edit_rate ?? '');
+                    $dcpNode->addAttribute('status',    $dcp->status ?? 'pending');
                 }
             }
         }
@@ -94,7 +103,7 @@ class CampaignXmlGenerator
 
 
     /* ================= HELPERS ================= */
-    private static function addNode($parent, string $name, $model = null)
+    private static function addNode(SimpleXMLElement $parent, string $name, $model = null): void
     {
         if (!$model) return;
 
@@ -103,7 +112,7 @@ class CampaignXmlGenerator
         $node->addAttribute('name', $model->name ?? '');
     }
 
-    private static function addCollection($parent, string $wrapper, string $nodeName, $collection)
+    private static function addCollection(SimpleXMLElement $parent, string $wrapper, string $nodeName, $collection): void
     {
         if (!$collection || $collection->isEmpty()) return;
 
@@ -116,21 +125,7 @@ class CampaignXmlGenerator
         }
     }
 
-    private static function addMovies($parent, string $wrapper, $collection)
-    {
-        if (!$collection || $collection->isEmpty()) return;
-
-        $wrapperNode = $parent->addChild($wrapper);
-
-        foreach ($collection as $movie) {
-            $node = $wrapperNode->addChild('movie');
-            $node->addAttribute('id', $movie->id);
-            $node->addAttribute('uuid', $movie->uuid ?? '');
-            $node->addAttribute('name', $movie->name ?? '');
-        }
-    }
-
-    private static function addMasterMovies($parent, $masterMovies)
+    private static function addMasterMovies(SimpleXMLElement $parent, $masterMovies): void
     {
         if (!$masterMovies || $masterMovies->isEmpty()) return;
 

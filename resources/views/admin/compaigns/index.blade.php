@@ -824,34 +824,29 @@ Campaign
                         } else {
                             res.slots.forEach(slot => {
                                 html += `
-                                    <table class="table table-sm table-bordered">
+                                    <h6 class="fw-semibold mb-2">${slot.slot_name}</h6>
+                                    <table class="table table-sm table-bordered mb-4">
                                         <thead>
                                             <tr>
                                                 <th>DCP</th>
-                                                <th>Duration (s)</th>
-                                                <th>Play At</th>
+                                                <th class="text-center">Duration (s)</th>
+                                                <th class="text-center">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>`;
 
                                         slot.dcps.forEach(dcp => {
-                                            let dates = '-';
-                                            if (dcp.play_at && dcp.play_at.length) {
-                                                dates = dcp.play_at.map(dt => formatDateTime(dt)).join('<br>');
-                                            }
-
                                             html += `
                                                 <tr>
                                                     <td>${dcp.name}</td>
                                                     <td class="text-center">${dcp.duration}</td>
-
+                                                    <td class="text-center">${dcpStatusBadge(dcp.status)}</td>
                                                 </tr>`;
                                         });
 
                                 html += `
-                                            </tbody>
-                                        </table>
-                                    </div>`;
+                                        </tbody>
+                                    </table>`;
                             });
                         }
 
@@ -913,16 +908,24 @@ Campaign
                 var approveUrl = "{{ url('') }}" + '/compaigns/approuve/' + id;
                 var showUrl    = "{{ url('') }}" + '/compaigns/' + id + '/show';
 
-                // Check for pending DCPs before showing confirm
+                // Check for unvalidated DCPs before showing confirm
                 $.ajax({ url: showUrl, type: 'GET' })
                 .done(function (data) {
-                    var pendingDcps = (data.dcp_creatives || []).filter(function (d) {
-                        return d.status === 'pending';
+                    var invalidDcps = (data.dcp_creatives || []).filter(function (d) {
+                        return d.status !== 'approved';
                     });
-                    if (pendingDcps.length > 0) {
+                    if (invalidDcps.length > 0) {
+                        var listHtml = '<ul class="text-start mt-2 mb-0 ps-3">';
+                        invalidDcps.forEach(function (d) {
+                            var badge = d.status === 'rejected'
+                                ? '<span class="badge bg-danger ms-1">Rejected</span>'
+                                : '<span class="badge bg-warning text-dark ms-1">Pending</span>';
+                            listHtml += '<li>' + (d.name || 'DCP #' + d.id) + badge + '</li>';
+                        });
+                        listHtml += '</ul>';
                         Swal.fire({
-                            title: 'DCPs need approval',
-                            text: 'Some DCPs attached to this campaign are still pending approval. Please approve all DCPs before approving the campaign.',
+                            title: 'DCPs not validated',
+                            html: 'The following DCPs must be approved before approving this campaign:' + listHtml,
                             icon: 'warning',
                             confirmButtonText: 'OK',
                         });
