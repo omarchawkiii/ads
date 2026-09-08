@@ -16,6 +16,7 @@ class MasterMovie extends Model
         'runtime',
         'plot',
         'image',
+        'imdb_id',
     ];
 
     public function genres()

@@ -10,6 +10,9 @@
                 <button class="btn btn-outline-info btn-sm" id="btn-sync-movies">
                     <i class="mdi mdi-sync"></i> Sync from NOC
                 </button>
+                <button class="btn btn-outline-danger btn-sm" id="btn-omdb-search">
+                    <i class="mdi mdi-movie-search"></i> Import from OMDB
+                </button>
                 <button class="btn btn-success btn-sm" id="btn-create-master-movie">
                     <i class="mdi mdi-plus"></i> New Master Movie
                 </button>
@@ -241,8 +244,8 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Year</label>
-                                    <input type="text" class="form-control" id="cm_year" maxlength="10">
+                                    <label class="form-label">Release date</label>
+                                    <input type="date" class="form-control" id="cm_year">
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Rating</label>
@@ -306,8 +309,8 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Year</label>
-                                    <input type="text" class="form-control" id="em_year" maxlength="10">
+                                    <label class="form-label">Release date</label>
+                                    <input type="date" class="form-control" id="em_year">
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Rating</label>
@@ -350,6 +353,58 @@
     </div>
 </div>
 
+{{-- OMDB Search / Import Modal --}}
+<div class="modal" id="omdb_modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title text-white"><i class="mdi mdi-movie-search"></i> Import from OMDB</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="min-height:300px;">
+
+                {{-- Search view --}}
+                <div id="omdb_search_view">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="omdb_query" placeholder="Search a movie by title...">
+                        <button class="btn btn-danger" id="omdb_query_btn" type="button"><i class="mdi mdi-magnify"></i> Search</button>
+                    </div>
+                    <div id="omdb_results" class="row g-2"></div>
+                </div>
+
+                {{-- Detail view --}}
+                <div id="omdb_detail_view" class="d-none">
+                    <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="omdb_back_btn">
+                        <i class="mdi mdi-arrow-left"></i> Back to results
+                    </button>
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <img id="omdb_d_poster" src="" alt="" class="img-fluid rounded mb-2" style="max-height:280px;">
+                        </div>
+                        <div class="col-md-8">
+                            <h4 id="omdb_d_title" class="mb-1"></h4>
+                            <div class="text-muted mb-2" id="omdb_d_subtitle"></div>
+                            <div class="mb-2">
+                                <span class="badge bg-secondary me-1" id="omdb_d_rated"></span>
+                                <span class="badge bg-warning text-dark me-1" id="omdb_d_imdb"></span>
+                            </div>
+                            <div class="mb-2"><strong>Genre:</strong> <span id="omdb_d_genre"></span></div>
+                            <p id="omdb_d_plot" class="mb-3"></p>
+                            <div id="omdb_already_imported" class="alert alert-info d-none py-2">
+                                <i class="mdi mdi-information"></i> This movie has already been imported.
+                            </div>
+                            <button type="button" class="btn btn-success" id="omdb_import_btn">
+                                <i class="mdi mdi-download"></i> Import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Link Movie Modal --}}
 <div class="modal" id="link_movie_modal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -366,7 +421,14 @@
                     <select class="form-select" id="lm_master_movie_id">
                         <option value="">-- Select --</option>
                         @foreach($masterMovies ?? [] as $mm)
-                            <option value="{{ $mm->id }}">{{ $mm->title }} {{ $mm->year ? '('.$mm->year.')' : '' }}</option>
+                            @php
+                                $mmDate = null;
+                                if ($mm->year) {
+                                    try { $mmDate = \Carbon\Carbon::parse($mm->year)->format('j F Y'); }
+                                    catch (\Exception $e) { $mmDate = $mm->year; }
+                                }
+                            @endphp
+                            <option value="{{ $mm->id }}">{{ $mm->title }} {{ $mmDate ? '('.$mmDate.')' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -491,10 +553,20 @@ $(function () {
         $.get(BASE + '/master-movies/list', function (res) {
             var opts = '<option value="">-- Select --</option>';
             $.each(res.masterMovies, function (i, m) {
-                opts += '<option value="' + m.id + '">' + m.title + (m.year ? ' (' + m.year + ')' : '') + '</option>';
+                opts += '<option value="' + m.id + '">' + m.title + (m.year ? ' (' + formatReleaseDate(m.year) + ')' : '') + '</option>';
             });
             $('#lm_master_movie_id').html(opts);
         });
+    }
+
+    // Formats an ISO date (YYYY-MM-DD) as "10 September 2026". Falls back to the raw value
+    // when it isn't a parseable date (e.g. legacy records that only stored a plain year).
+    function formatReleaseDate(value) {
+        if (!value) return '';
+        var d = new Date(value + 'T00:00:00');
+        if (isNaN(d.getTime())) return value;
+        var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
     }
 
     // =============================================
@@ -512,7 +584,7 @@ $(function () {
 
         var genres = m.genres.map(function(g){ return g.name; }).join('/') || '';
         var parts = [];
-        if (m.year)    parts.push(m.year);
+        if (m.year)    parts.push(formatReleaseDate(m.year));
         if (genres)    parts.push(genres);
         if (m.runtime) parts.push(m.runtime + ' min');
         var subtitle = parts.join(' • ');
@@ -622,6 +694,114 @@ $(function () {
         $('#create_master_modal').modal('show');
     });
 
+    // =============================================
+    //  OMDB SEARCH / IMPORT
+    // =============================================
+    var _omdbImportedIds = [];
+
+    function omdbShowSearchView() {
+        $('#omdb_detail_view').addClass('d-none');
+        $('#omdb_search_view').removeClass('d-none');
+    }
+    function omdbShowDetailView() {
+        $('#omdb_search_view').addClass('d-none');
+        $('#omdb_detail_view').removeClass('d-none');
+    }
+
+    $(document).on('click', '#btn-omdb-search', function () {
+        $('#omdb_query').val('');
+        $('#omdb_results').html('');
+        omdbShowSearchView();
+        $('#omdb_modal').modal('show');
+        $('#omdb_query').trigger('focus');
+    });
+
+    function omdbRunSearch() {
+        var q = $('#omdb_query').val().trim();
+        if (!q) return;
+        $('#omdb_results').html('<div class="col-12 text-center text-muted py-4">' + SPIN + ' Searching...</div>');
+        $.get(BASE + '/master-movies/omdb/search', { q: q })
+            .done(function (res) {
+                _omdbImportedIds = res.imported_ids || [];
+                if (!res.results || res.results.length === 0) {
+                    $('#omdb_results').html('<div class="col-12 text-center text-muted py-4">' + (res.message || 'No results found.') + '</div>');
+                    return;
+                }
+                var html = '';
+                $.each(res.results, function (i, r) {
+                    var poster = (r.Poster && r.Poster !== 'N/A') ? r.Poster : null;
+                    var imported = _omdbImportedIds.indexOf(r.imdbID) !== -1;
+                    html += '<div class="col-md-3 col-sm-4 col-6">'
+                        + '<div class="omdb-result-card border rounded p-2 h-100" data-imdb="' + r.imdbID + '" style="cursor:pointer;position:relative;">'
+                        + (imported ? '<span class="badge bg-success" style="position:absolute;top:6px;right:6px;">Imported</span>' : '')
+                        + (poster
+                            ? '<img src="' + poster + '" class="w-100 rounded mb-1" style="height:180px;object-fit:cover;">'
+                            : '<div class="mm-placeholder w-100 rounded mb-1" style="height:180px;display:flex;align-items:center;justify-content:center;">No image</div>')
+                        + '<div class="small fw-bold text-truncate" title="' + r.Title + '">' + r.Title + '</div>'
+                        + '<div class="small text-muted">' + (r.Year || '') + '</div>'
+                        + '</div>'
+                        + '</div>';
+                });
+                $('#omdb_results').html(html);
+            })
+            .fail(function (xhr) {
+                $('#omdb_results').html('<div class="col-12 text-center text-danger py-4">' + (xhr.responseJSON?.message || 'Search failed.') + '</div>');
+            });
+    }
+    $('#omdb_query_btn').on('click', omdbRunSearch);
+    $('#omdb_query').on('keypress', function (e) { if (e.which === 13) { e.preventDefault(); omdbRunSearch(); } });
+
+    // Click a result → show detail
+    $(document).on('click', '.omdb-result-card', function () {
+        var imdbId = $(this).data('imdb');
+        omdbShowDetailView();
+        $('#omdb_d_title').text('Loading...');
+        $('#omdb_d_subtitle, #omdb_d_genre').text('');
+        $('#omdb_d_plot').text('');
+        $('#omdb_d_rated, #omdb_d_imdb').addClass('d-none');
+        $('#omdb_d_poster').addClass('d-none');
+        $('#omdb_already_imported').addClass('d-none');
+        $('#omdb_import_btn').data('imdb', imdbId).prop('disabled', true);
+
+        $.get(BASE + '/master-movies/omdb/' + imdbId)
+            .done(function (res) {
+                var m = res.movie;
+                $('#omdb_d_title').text(m.Title || '');
+                $('#omdb_d_subtitle').text([m.Year, m.Runtime].filter(Boolean).join(' • '));
+                $('#omdb_d_genre').text(m.Genre && m.Genre !== 'N/A' ? m.Genre : '—');
+                $('#omdb_d_plot').text(m.Plot && m.Plot !== 'N/A' ? m.Plot : '');
+                if (m.Rated && m.Rated !== 'N/A') $('#omdb_d_rated').text(m.Rated).removeClass('d-none');
+                if (m.imdbRating && m.imdbRating !== 'N/A') $('#omdb_d_imdb').html('<i class="mdi mdi-star"></i> ' + m.imdbRating).removeClass('d-none');
+                if (m.Poster && m.Poster !== 'N/A') $('#omdb_d_poster').attr('src', m.Poster).removeClass('d-none');
+                $('#omdb_already_imported').toggleClass('d-none', !m.already_imported);
+                $('#omdb_import_btn').prop('disabled', false).toggle(!m.already_imported);
+            })
+            .fail(function (xhr) {
+                $('#omdb_d_title').text('Error');
+                $('#omdb_d_plot').text(xhr.responseJSON?.message || 'Failed to load details.');
+            });
+    });
+
+    $('#omdb_back_btn').on('click', omdbShowSearchView);
+
+    // Import → create master movie, then open edit modal for fine-tuning
+    $('#omdb_import_btn').on('click', function () {
+        var $btn = $(this);
+        var imdbId = $btn.data('imdb');
+        btnLoad($btn);
+        $.ajax({ url: BASE + '/master-movies/omdb/import', method: 'POST', data: { _token: CSRF, imdb_id: imdbId } })
+            .done(function (res) {
+                $('#omdb_modal').modal('hide');
+                get_master_movies(); get_unlinked(); refresh_master_dropdown();
+                Swal.fire('Imported!', res.message || 'Movie imported.', 'success');
+                openEditMasterModal(res.masterMovie.id);
+            })
+            .fail(function (xhr) {
+                Swal.fire('Error', xhr.responseJSON?.message || 'Import failed.', 'error');
+            })
+            .always(function () { btnReset($btn); });
+    });
+
     // Image preview (create)
     $('#cm_image').on('change', function () {
         previewImage(this, '#cm_preview_img', '#cm_no_image');
@@ -663,8 +843,7 @@ $(function () {
     });
 
     // Edit master movie — load data
-    $(document).on('click', '.btn-edit-master', function () {
-        var id = $(this).data('id');
+    function openEditMasterModal(id) {
         var $modal = $('#edit_master_modal');
         $modal.modal('show');
         modalLoading($modal);
@@ -681,6 +860,9 @@ $(function () {
                 $('#em_preview_img').attr('src', m.image ? STORAGE_URL + '/' + m.image : '').toggleClass('d-none', !m.image);
             })
             .always(function () { modalLoaded($modal); });
+    }
+    $(document).on('click', '.btn-edit-master', function () {
+        openEditMasterModal($(this).data('id'));
     });
 
     // Submit edit master

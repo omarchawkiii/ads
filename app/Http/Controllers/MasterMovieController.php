@@ -6,7 +6,9 @@ use App\Models\MasterMovie;
 use App\Models\Movie;
 use App\Models\MovieGenre;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MasterMovieController extends Controller
 {
@@ -42,7 +44,7 @@ class MasterMovieController extends Controller
     {
         $validated = $request->validate([
             'title'            => 'required|string|max:255',
-            'year'             => 'nullable|string|max:10',
+            'year'             => 'nullable|date',
             'rating'           => 'nullable|string|max:20',
             'runtime'          => 'nullable|integer|min:1',
             'plot'             => 'nullable|string',
@@ -76,7 +78,7 @@ class MasterMovieController extends Controller
 
         $validated = $request->validate([
             'title'            => 'required|string|max:255',
-            'year'             => 'nullable|string|max:10',
+            'year'             => 'nullable|date',
             'rating'           => 'nullable|string|max:20',
             'runtime'          => 'nullable|integer|min:1',
             'plot'             => 'nullable|string',
@@ -129,6 +131,202 @@ class MasterMovieController extends Controller
     {
         Movie::findOrFail($movieId)->update(['master_movie_id' => null]);
         return response()->json(['message' => 'Movie unlinked successfully.']);
+    }
+
+    /**
+     * Search movies on OMDB by title. GET /master-movies/omdb/search?s=...&page=1
+     */
+    public function omdbSearch(Request $request)
+    {
+        $request->validate([
+            'q'    => 'required|string|min:1|max:255',
+            'page' => 'nullable|integer|min:1',
+        ]);
+
+        $apiKey = config('services.omdb.key');
+        if (!$apiKey) {
+            return response()->json(['message' => 'OMDB API key is not configured on the server.'], 500);
+        }
+
+        $response = Http::get('https://www.omdbapi.com/', [
+            'apikey' => $apiKey,
+            's'      => $request->input('q'),
+            'type'   => 'movie',
+            'page'   => $request->input('page', 1),
+        ]);
+
+        $data = $response->json();
+
+        if (!$response->ok() || ($data['Response'] ?? 'False') === 'False') {
+            return response()->json([
+                'message' => $data['Error'] ?? 'No results found.',
+                'results' => [],
+            ], 200);
+        }
+
+        return response()->json([
+            'results'     => $data['Search'] ?? [],
+            'total'       => (int) ($data['totalResults'] ?? 0),
+            'imported_ids'=> MasterMovie::whereNotNull('imdb_id')->pluck('imdb_id'),
+        ]);
+    }
+
+    /**
+     * Fetch full details for one title from OMDB. GET /master-movies/omdb/{imdbId}
+     */
+    public function omdbShow($imdbId)
+    {
+        $apiKey = config('services.omdb.key');
+        if (!$apiKey) {
+            return response()->json(['message' => 'OMDB API key is not configured on the server.'], 500);
+        }
+
+        $response = Http::get('https://www.omdbapi.com/', [
+            'apikey' => $apiKey,
+            'i'      => $imdbId,
+            'plot'   => 'full',
+        ]);
+
+        $data = $response->json();
+
+        if (!$response->ok() || ($data['Response'] ?? 'False') === 'False') {
+            return response()->json(['message' => $data['Error'] ?? 'Movie not found.'], 404);
+        }
+
+        $data['already_imported'] = MasterMovie::where('imdb_id', $imdbId)->exists();
+
+        return response()->json(['movie' => $data]);
+    }
+
+    /**
+     * Import a title from OMDB straight into the master_movies table.
+     * POST /master-movies/omdb/import  { imdb_id: "tt1234567" }
+     */
+    public function omdbImport(Request $request)
+    {
+        $request->validate([
+            'imdb_id' => 'required|string|max:20',
+        ]);
+
+        $imdbId = $request->input('imdb_id');
+
+        $existing = MasterMovie::where('imdb_id', $imdbId)->first();
+        if ($existing) {
+            return response()->json([
+                'message'     => 'This movie has already been imported.',
+                'masterMovie' => $existing->load('genres'),
+            ], 200);
+        }
+
+        $apiKey = config('services.omdb.key');
+        if (!$apiKey) {
+            return response()->json(['message' => 'OMDB API key is not configured on the server.'], 500);
+        }
+
+        $response = Http::get('https://www.omdbapi.com/', [
+            'apikey' => $apiKey,
+            'i'      => $imdbId,
+            'plot'   => 'full',
+        ]);
+
+        $data = $response->json();
+        if (!$response->ok() || ($data['Response'] ?? 'False') === 'False') {
+            return response()->json(['message' => $data['Error'] ?? 'Movie not found.'], 404);
+        }
+
+        $masterMovie = MasterMovie::create([
+            'imdb_id' => $imdbId,
+            'title'   => $data['Title'] ?? '',
+            'year'    => $this->parseOmdbDate($data['Released'] ?? null, $data['Year'] ?? null),
+            'rating'  => (($data['Rated'] ?? 'N/A') !== 'N/A') ? $data['Rated'] : null,
+            'runtime' => $this->parseOmdbRuntime($data['Runtime'] ?? null),
+            'plot'    => (($data['Plot'] ?? 'N/A') !== 'N/A') ? $data['Plot'] : null,
+        ]);
+
+        $posterUrl = $data['Poster'] ?? null;
+        if ($posterUrl && $posterUrl !== 'N/A') {
+            $imagePath = $this->downloadImage($posterUrl);
+            if ($imagePath) {
+                $masterMovie->update(['image' => $imagePath]);
+            }
+        }
+
+        if (!empty($data['Genre']) && $data['Genre'] !== 'N/A') {
+            $genreIds = [];
+            foreach (explode(',', $data['Genre']) as $name) {
+                $name = trim($name);
+                if ($name === '') continue;
+                $genre = MovieGenre::whereRaw('LOWER(name) = ?', [strtolower($name)])->first()
+                    ?? MovieGenre::create(['name' => $name]);
+                $genreIds[] = $genre->id;
+            }
+            $masterMovie->genres()->sync($genreIds);
+        }
+
+        return response()->json([
+            'message'     => 'Movie imported successfully.',
+            'masterMovie' => $masterMovie->load('genres'),
+        ], 201);
+    }
+
+    /**
+     * OMDB "Released" is like "10 Sep 2026", "Year" is like "2026" or "2019–2021".
+     * Returns a Y-m-d string usable by the date input, or null.
+     */
+    private function parseOmdbDate(?string $released, ?string $year): ?string
+    {
+        if ($released && $released !== 'N/A') {
+            try {
+                return \Carbon\Carbon::createFromFormat('d M Y', $released)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // fall through to year-only handling below
+            }
+        }
+
+        if ($year) {
+            $year = substr(trim($year), 0, 4);
+            if (ctype_digit($year)) {
+                return $year . '-01-01';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * OMDB "Runtime" is like "142 min".
+     */
+    private function parseOmdbRuntime(?string $runtime): ?int
+    {
+        if ($runtime && preg_match('/(\d+)/', $runtime, $m)) {
+            return (int) $m[1];
+        }
+        return null;
+    }
+
+    private function downloadImage(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(15)->get($url);
+            if (!$response->ok()) return null;
+
+            $dest = storage_path('app/public/master_movies');
+            if (!is_dir($dest)) {
+                mkdir($dest, 0755, true);
+            }
+
+            $ext = 'jpg';
+            if (preg_match('/\.(jpe?g|png|webp)(\?|$)/i', $url, $m)) {
+                $ext = strtolower($m[1]);
+            }
+
+            $filename = Str::uuid() . '.' . $ext;
+            file_put_contents($dest . DIRECTORY_SEPARATOR . $filename, $response->body());
+
+            return 'master_movies/' . $filename;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function saveImage($file): string

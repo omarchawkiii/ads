@@ -133,6 +133,11 @@ Route::middleware(['auth','admin'])->group(function () {
     Route::delete('/master-movies/{id}',      [App\Http\Controllers\MasterMovieController::class, 'destroy'])->name('master_movies.destroy');
     Route::post('/master-movies/link',        [App\Http\Controllers\MasterMovieController::class, 'link'])->name('master_movies.link');
     Route::delete('/master-movies/unlink/{movieId}', [App\Http\Controllers\MasterMovieController::class, 'unlink'])->name('master_movies.unlink');
+
+    // OMDB search / import
+    Route::get('/master-movies/omdb/search',  [App\Http\Controllers\MasterMovieController::class, 'omdbSearch'])->name('master_movies.omdb_search');
+    Route::get('/master-movies/omdb/{imdbId}',[App\Http\Controllers\MasterMovieController::class, 'omdbShow'])->name('master_movies.omdb_show');
+    Route::post('/master-movies/omdb/import', [App\Http\Controllers\MasterMovieController::class, 'omdbImport'])->name('master_movies.omdb_import');
 });
 
 

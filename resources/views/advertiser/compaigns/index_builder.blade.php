@@ -202,7 +202,10 @@
                             <div class="mb-3">
                                 <label class="form-label" for="budget">Desired Budget</label> <span
                                     class="danger">(RM)</span>
-                                <input type="number" class="form-control" id="budget" name="budget" />
+                                <div class="input-group">
+                                    <span class="input-group-text">RM</span>
+                                    <input type="text" inputmode="numeric" class="form-control" id="budget" name="budget" placeholder="0" />
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -371,6 +374,16 @@
                 let values = $(selector).val() || [];
                 return values.filter(v => v !== '__all__');
             }
+
+            // Desired Budget — live "1,234" formatting (digits only, backend expects an integer).
+            function rawBudgetValue() {
+                return ($('#budget').val() || '').replace(/[^0-9]/g, '');
+            }
+            $('#budget').on('input', function () {
+                let digits = rawBudgetValue();
+                $(this).val(digits ? Number(digits).toLocaleString('en-US') : '');
+            });
+
             const today = new Date().toISOString().split('T')[0];
             $('#start_date').attr('min', today);
             $('#end_date').attr('min', today);
@@ -906,7 +919,7 @@
                     start_date: $('#start_date').val(),
                     end_date: $('#end_date').val(),
                     cinema_chain_id: $('#cinema_chain').val(),
-                    budget: $('#budget').val() ?? 0,
+                    budget: rawBudgetValue() || 0,
                     langue: $('#langue').val(),
                     gender: $('#gender').val(),
                     location_id: $('#location').val(),
