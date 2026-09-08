@@ -240,15 +240,19 @@
                                 <input type="text" class="form-control" id="cm_title" required>
                             </div>
                             <div class="row">
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Release date</label>
                                     <input type="date" class="form-control" id="cm_year">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Rating</label>
                                     <input type="text" class="form-control" id="cm_rating" maxlength="20" placeholder="PG-13, R...">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Note IMDB (/10)</label>
+                                    <input type="number" class="form-control" id="cm_imdb_rating" min="0" max="10" step="0.1" placeholder="7.8">
+                                </div>
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Runtime (min)</label>
                                     <input type="number" class="form-control" id="cm_runtime" min="1">
                                 </div>
@@ -260,6 +264,30 @@
                                         <option value="{{ $genre->id }}">{{ $genre->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Country</label>
+                                    <select class="form-select" id="cm_country" multiple></select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Language</label>
+                                    <select class="form-select" id="cm_language" multiple></select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Director</label>
+                                    <input type="text" class="form-control" id="cm_director" placeholder="e.g. Christopher Nolan">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Writer</label>
+                                    <input type="text" class="form-control" id="cm_writer" placeholder="e.g. Christopher Nolan">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Actors</label>
+                                <input type="text" class="form-control" id="cm_actors" placeholder="e.g. Leonardo DiCaprio, Joseph Gordon-Levitt">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Plot</label>
@@ -305,15 +333,19 @@
                                 <input type="text" class="form-control" id="em_title" required>
                             </div>
                             <div class="row">
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Release date</label>
                                     <input type="date" class="form-control" id="em_year">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Rating</label>
                                     <input type="text" class="form-control" id="em_rating" maxlength="20">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Note IMDB (/10)</label>
+                                    <input type="number" class="form-control" id="em_imdb_rating" min="0" max="10" step="0.1" placeholder="7.8">
+                                </div>
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label">Runtime (min)</label>
                                     <input type="number" class="form-control" id="em_runtime" min="1">
                                 </div>
@@ -325,6 +357,30 @@
                                         <option value="{{ $genre->id }}">{{ $genre->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Country</label>
+                                    <select class="form-select" id="em_country" multiple></select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Language</label>
+                                    <select class="form-select" id="em_language" multiple></select>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Director</label>
+                                    <input type="text" class="form-control" id="em_director" placeholder="e.g. Christopher Nolan">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Writer</label>
+                                    <input type="text" class="form-control" id="em_writer" placeholder="e.g. Christopher Nolan">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Actors</label>
+                                <input type="text" class="form-control" id="em_actors" placeholder="e.g. Leonardo DiCaprio, Joseph Gordon-Levitt">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Plot</label>
@@ -346,6 +402,49 @@
                     <button type="submit" class="btn btn-warning">Update</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- View Master Movie Modal (read-only) --}}
+<div class="modal" id="view_master_modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white">Master Movie Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="min-height:300px;">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img id="vm_poster" src="" alt="" class="img-fluid rounded mb-2 d-none" style="max-height:280px;">
+                        <div id="vm_no_image" class="mm-placeholder rounded mb-2" style="height:200px;display:flex;align-items:center;justify-content:center;">No image</div>
+                    </div>
+                    <div class="col-md-8">
+                        <h4 id="vm_title" class="mb-1"></h4>
+                        <div class="text-muted mb-2" id="vm_subtitle"></div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary me-1 d-none" id="vm_rating"></span>
+                            <span class="badge bg-warning text-dark me-1 d-none" id="vm_imdb_rating"></span>
+                        </div>
+                        <dl class="row mb-0">
+                            <dt class="col-4 text-muted">Genre(s)</dt>       <dd class="col-8" id="vm_genres">—</dd>
+                            <dt class="col-4 text-muted">Director</dt>      <dd class="col-8" id="vm_director">—</dd>
+                            <dt class="col-4 text-muted">Writer</dt>        <dd class="col-8" id="vm_writer">—</dd>
+                            <dt class="col-4 text-muted">Actors</dt>        <dd class="col-8" id="vm_actors">—</dd>
+                            <dt class="col-4 text-muted">Country</dt>       <dd class="col-8" id="vm_country">—</dd>
+                            <dt class="col-4 text-muted">Language</dt>      <dd class="col-8" id="vm_language">—</dd>
+                        </dl>
+                    </div>
+                </div>
+                <hr>
+                <h6 class="text-muted">Plot</h6>
+                <p id="vm_plot" class="mb-0">—</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="vm_edit_btn"><i class="mdi mdi-pencil"></i> Edit</button>
+            </div>
         </div>
     </div>
 </div>
@@ -386,6 +485,11 @@
                                 <span class="badge bg-warning text-dark me-1" id="omdb_d_imdb"></span>
                             </div>
                             <div class="mb-2"><strong>Genre:</strong> <span id="omdb_d_genre"></span></div>
+                            <div class="mb-2"><strong>Director:</strong> <span id="omdb_d_director"></span></div>
+                            <div class="mb-2"><strong>Writer:</strong> <span id="omdb_d_writer"></span></div>
+                            <div class="mb-2"><strong>Actors:</strong> <span id="omdb_d_actors"></span></div>
+                            <div class="mb-2"><strong>Country:</strong> <span id="omdb_d_country"></span></div>
+                            <div class="mb-2"><strong>Language:</strong> <span id="omdb_d_language"></span></div>
                             <p id="omdb_d_plot" class="mb-3"></p>
                             <div id="omdb_already_imported" class="alert alert-info d-none py-2">
                                 <i class="mdi mdi-information"></i> This movie has already been imported.
@@ -503,6 +607,33 @@ $(function () {
     $('#cm_genres').select2({ placeholder: '-- Select Genre(s) --', width: '100%', dropdownParent: $('#create_master_modal') });
     $('#em_genres').select2({ placeholder: '-- Select Genre(s) --', width: '100%', dropdownParent: $('#edit_master_modal') });
 
+    // Country / Language — predefined list + free typing (select2 tags)
+    var COUNTRIES = ["Afghanistan","Albania","Algeria","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahrain","Bangladesh","Belarus","Belgium","Bolivia","Bosnia and Herzegovina","Brazil","Bulgaria","Burkina Faso","Cambodia","Cameroon","Canada","Chile","China","Colombia","Costa Rica","Croatia","Cuba","Cyprus","Czech Republic","Denmark","Dominican Republic","Ecuador","Egypt","El Salvador","Estonia","Ethiopia","Finland","France","Georgia","Germany","Ghana","Greece","Guatemala","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kuwait","Latvia","Lebanon","Libya","Liechtenstein","Lithuania","Luxembourg","Malaysia","Malta","Mexico","Monaco","Mongolia","Morocco","Myanmar","Nepal","Netherlands","New Zealand","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palestine","Panama","Paraguay","Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar","Romania","Russia","Rwanda","Saudi Arabia","Senegal","Serbia","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain","Sri Lanka","Sudan","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Tunisia","Turkey","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Venezuela","Vietnam","Yemen","Zimbabwe"];
+    var LANGUAGES = ["Arabic","Bengali","Bulgarian","Cantonese","Croatian","Czech","Danish","Dutch","English","Estonian","Farsi","Filipino","Finnish","French","German","Greek","Hebrew","Hindi","Hungarian","Icelandic","Indonesian","Italian","Japanese","Korean","Latvian","Lithuanian","Malay","Mandarin","Norwegian","Polish","Portuguese","Punjabi","Romanian","Russian","Serbian","Slovak","Slovenian","Spanish","Swahili","Swedish","Tamil","Telugu","Thai","Turkish","Ukrainian","Urdu","Vietnamese"];
+
+    function initTagSelect(selector, dropdownParent, list, placeholder) {
+        var $el = $(selector);
+        list.forEach(function (name) { $el.append(new Option(name, name)); });
+        $el.select2({ placeholder: placeholder, width: '100%', tags: true, tokenSeparators: [','], dropdownParent: dropdownParent });
+    }
+    initTagSelect('#cm_country',  $('#create_master_modal'), COUNTRIES, '-- Select or type a country --');
+    initTagSelect('#cm_language', $('#create_master_modal'), LANGUAGES, '-- Select or type a language --');
+    initTagSelect('#em_country',  $('#edit_master_modal'),   COUNTRIES, '-- Select or type a country --');
+    initTagSelect('#em_language', $('#edit_master_modal'),   LANGUAGES, '-- Select or type a language --');
+
+    // Set a country/language select2's value from a stored comma-separated string,
+    // creating tag options on the fly for any value not already in the predefined list.
+    function setTagSelectValue(selector, value) {
+        var $el = $(selector);
+        var values = (value || '').split(',').map(function (v) { return v.trim(); }).filter(Boolean);
+        values.forEach(function (v) {
+            if ($el.find('option[value="' + v.replace(/"/g, '\\"') + '"]').length === 0) {
+                $el.append(new Option(v, v, true, true));
+            }
+        });
+        $el.val(values).trigger('change');
+    }
+
     // =============================================
     //  HELPERS
     // =============================================
@@ -589,6 +720,9 @@ $(function () {
         var ratingBadge = m.rating
             ? '<span class="mm-badge mm-badge-rating">' + m.rating + ' <i class="mdi mdi-star me-1 text-warning"></i></span>'
             : '';
+        var imdbBadge = m.imdb_rating
+            ? '<span class="mm-badge mm-badge-rating"><i class="mdi mdi-star text-warning me-1"></i>' + m.imdb_rating + '/10</span>'
+            : '';
         var mappingsBadge = '<span class="mm-badge mm-badge-map">'
             + '<i class="mdi mdi-link-variant me-1"></i>' + (m.movies_count || 0) + ' mapping' + (m.movies_count !== 1 ? 's' : '')
             + '</span>';
@@ -606,13 +740,14 @@ $(function () {
             + '<div style="min-width:0;padding-left:12px;">'
             + '<div class="mm-title" title="' + m.title + '">' + m.title + '</div>'
             + '<div class="mm-subtitle">' + subtitle + '</div>'
-            + '<div>' + ratingBadge + mappingsBadge + nocBadge + '</div>'
+            + '<div>' + ratingBadge + imdbBadge + mappingsBadge + nocBadge + '</div>'
             + '</div>'
             + '</div>'
             + '</div>'
             + '<div class="mm-footer">'
             + '<a href="#" class="mm-footer-link btn-manage-mappings" data-id="' + m.id + '">Click to manage mappings</a>'
             + '<div style="display:flex;gap:4px;">'
+            + '<button data-id="' + m.id + '" class="mm-action-btn btn-view-master" title="View"><i class="mdi mdi-eye text-info"></i></button>'
             + '<button data-id="' + m.id + '" class="mm-action-btn btn-edit-master" title="Edit"><i class="mdi mdi-pencil text-warning"></i></button>'
             + '<button data-id="' + m.id + '" class="mm-action-btn btn-delete-master" title="Delete"><i class="mdi mdi-delete text-danger"></i></button>'
             + '</div>'
@@ -686,6 +821,8 @@ $(function () {
     $(document).on('click', '#btn-create-master-movie', function () {
         $('#create_master_form')[0].reset();
         $('#cm_genres').val(null).trigger('change');
+        $('#cm_country').val(null).trigger('change');
+        $('#cm_language').val(null).trigger('change');
         $('#cm_preview_img').addClass('d-none').attr('src', '');
         $('#cm_no_image').removeClass('d-none');
         $('#create_master_modal').modal('show');
@@ -753,7 +890,7 @@ $(function () {
         var imdbId = $(this).data('imdb');
         omdbShowDetailView();
         $('#omdb_d_title').text('Loading...');
-        $('#omdb_d_subtitle, #omdb_d_genre').text('');
+        $('#omdb_d_subtitle, #omdb_d_genre, #omdb_d_director, #omdb_d_writer, #omdb_d_actors, #omdb_d_country, #omdb_d_language').text('');
         $('#omdb_d_plot').text('');
         $('#omdb_d_rated, #omdb_d_imdb').addClass('d-none');
         $('#omdb_d_poster').addClass('d-none');
@@ -766,6 +903,11 @@ $(function () {
                 $('#omdb_d_title').text(m.Title || '');
                 $('#omdb_d_subtitle').text([m.Year, m.Runtime].filter(Boolean).join(' • '));
                 $('#omdb_d_genre').text(m.Genre && m.Genre !== 'N/A' ? m.Genre : '—');
+                $('#omdb_d_director').text(m.Director && m.Director !== 'N/A' ? m.Director : '—');
+                $('#omdb_d_writer').text(m.Writer && m.Writer !== 'N/A' ? m.Writer : '—');
+                $('#omdb_d_actors').text(m.Actors && m.Actors !== 'N/A' ? m.Actors : '—');
+                $('#omdb_d_country').text(m.Country && m.Country !== 'N/A' ? m.Country : '—');
+                $('#omdb_d_language').text(m.Language && m.Language !== 'N/A' ? m.Language : '—');
                 $('#omdb_d_plot').text(m.Plot && m.Plot !== 'N/A' ? m.Plot : '');
                 if (m.Rated && m.Rated !== 'N/A') $('#omdb_d_rated').text(m.Rated).removeClass('d-none');
                 if (m.imdbRating && m.imdbRating !== 'N/A') $('#omdb_d_imdb').html('<i class="mdi mdi-star"></i> ' + m.imdbRating).removeClass('d-none');
@@ -825,7 +967,7 @@ $(function () {
         e.preventDefault();
         var $btn = $(this).find('[type=submit]');
         btnLoad($btn); modalLoading($('#create_master_modal'));
-        var fd = buildMasterFormData('#cm_title', '#cm_year', '#cm_rating', '#cm_runtime', '#cm_plot', '#cm_genres', '#cm_image');
+        var fd = buildMasterFormData('cm');
         fd.append('_token', CSRF);
         $.ajax({ url: BASE + '/master-movies', method: 'POST', data: fd, processData: false, contentType: false })
             .done(function () {
@@ -851,8 +993,14 @@ $(function () {
                 $('#em_title').val(m.title);
                 $('#em_year').val(m.year);
                 $('#em_rating').val(m.rating);
+                $('#em_imdb_rating').val(m.imdb_rating);
                 $('#em_runtime').val(m.runtime);
                 $('#em_plot').val(m.plot);
+                $('#em_director').val(m.director);
+                $('#em_actors').val(m.actors);
+                $('#em_writer').val(m.writer);
+                setTagSelectValue('#em_country', m.country);
+                setTagSelectValue('#em_language', m.language);
                 $('#em_genres').val(m.genres.map(g => g.id)).trigger('change');
                 $('#em_preview_img').attr('src', m.image ? STORAGE_URL + '/' + m.image : '').toggleClass('d-none', !m.image);
             })
@@ -862,13 +1010,49 @@ $(function () {
         openEditMasterModal($(this).data('id'));
     });
 
+    // View master movie (read-only popup)
+    $(document).on('click', '.btn-view-master', function () {
+        var id = $(this).data('id');
+        var $modal = $('#view_master_modal');
+        $modal.data('id', id).modal('show');
+        modalLoading($modal);
+        $.get(BASE + '/master-movies/' + id + '/show')
+            .done(function (res) {
+                var m = res.masterMovie;
+                $('#vm_title').text(m.title || '');
+                $('#vm_subtitle').text([m.year ? formatReleaseDate(m.year) : null, m.runtime ? m.runtime + ' min' : null].filter(Boolean).join(' • '));
+                m.rating ? $('#vm_rating').text(m.rating).removeClass('d-none') : $('#vm_rating').addClass('d-none');
+                m.imdb_rating ? $('#vm_imdb_rating').html('<i class="mdi mdi-star"></i> ' + m.imdb_rating + '/10').removeClass('d-none') : $('#vm_imdb_rating').addClass('d-none');
+                $('#vm_genres').text(m.genres.length ? m.genres.map(g => g.name).join(', ') : '—');
+                $('#vm_director').text(m.director || '—');
+                $('#vm_writer').text(m.writer || '—');
+                $('#vm_actors').text(m.actors || '—');
+                $('#vm_country').text(m.country || '—');
+                $('#vm_language').text(m.language || '—');
+                $('#vm_plot').text(m.plot || '—');
+                if (m.image) {
+                    $('#vm_poster').attr('src', STORAGE_URL + '/' + m.image).removeClass('d-none');
+                    $('#vm_no_image').addClass('d-none');
+                } else {
+                    $('#vm_poster').addClass('d-none');
+                    $('#vm_no_image').removeClass('d-none');
+                }
+            })
+            .always(function () { modalLoaded($modal); });
+    });
+    $('#vm_edit_btn').on('click', function () {
+        var id = $('#view_master_modal').data('id');
+        $('#view_master_modal').modal('hide');
+        openEditMasterModal(id);
+    });
+
     // Submit edit master
     $('#edit_master_form').on('submit', function (e) {
         e.preventDefault();
         var $btn = $(this).find('[type=submit]');
         btnLoad($btn); modalLoading($('#edit_master_modal'));
         var id = $('#em_id').val();
-        var fd = buildMasterFormData('#em_title', '#em_year', '#em_rating', '#em_runtime', '#em_plot', '#em_genres', '#em_image');
+        var fd = buildMasterFormData('em');
         fd.append('_token', CSRF);
         $.ajax({ url: BASE + '/master-movies/' + id + '/update', method: 'POST', data: fd, processData: false, contentType: false })
             .done(function () {
@@ -897,16 +1081,23 @@ $(function () {
             });
     });
 
-    function buildMasterFormData(title, year, rating, runtime, plot, genres, image) {
+    // prefix is 'cm' (create) or 'em' (edit) — builds the FormData from #{prefix}_xxx fields.
+    function buildMasterFormData(prefix) {
         var fd = new FormData();
-        fd.append('title',   $(title).val());
-        fd.append('year',    $(year).val());
-        fd.append('rating',  $(rating).val());
-        fd.append('runtime', $(runtime).val());
-        fd.append('plot',    $(plot).val());
-        var genreVals = $(genres).val() || [];
+        fd.append('title',       $('#' + prefix + '_title').val());
+        fd.append('year',        $('#' + prefix + '_year').val());
+        fd.append('rating',      $('#' + prefix + '_rating').val());
+        fd.append('imdb_rating', $('#' + prefix + '_imdb_rating').val());
+        fd.append('runtime',     $('#' + prefix + '_runtime').val());
+        fd.append('plot',        $('#' + prefix + '_plot').val());
+        fd.append('country',     ($('#' + prefix + '_country').val() || []).join(', '));
+        fd.append('language',    ($('#' + prefix + '_language').val() || []).join(', '));
+        fd.append('director',    $('#' + prefix + '_director').val());
+        fd.append('actors',      $('#' + prefix + '_actors').val());
+        fd.append('writer',      $('#' + prefix + '_writer').val());
+        var genreVals = $('#' + prefix + '_genres').val() || [];
         genreVals.forEach(function (v) { fd.append('movie_genre_ids[]', v); });
-        var file = $(image)[0].files[0];
+        var file = $('#' + prefix + '_image')[0].files[0];
         if (file) fd.append('image', file);
         return fd;
     }
