@@ -204,7 +204,7 @@
                                     class="danger">(RM)</span>
                                 <div class="input-group">
                                     <span class="input-group-text">RM</span>
-                                    <input type="text" inputmode="numeric" class="form-control" id="budget" name="budget" placeholder="0" />
+                                    <input type="text" inputmode="decimal" class="form-control" id="budget" name="budget" placeholder="0.00" />
                                 </div>
                             </div>
                         </div>
@@ -375,13 +375,22 @@
                 return values.filter(v => v !== '__all__');
             }
 
-            // Desired Budget — live "1,234" formatting (digits only, backend expects an integer).
+            // Desired Budget — live "1,234.56" formatting (float, max 2 decimals).
             function rawBudgetValue() {
-                return ($('#budget').val() || '').replace(/[^0-9]/g, '');
+                return ($('#budget').val() || '').replace(/,/g, '');
             }
             $('#budget').on('input', function () {
-                let digits = rawBudgetValue();
-                $(this).val(digits ? Number(digits).toLocaleString('en-US') : '');
+                let val = $(this).val().replace(/[^0-9.]/g, '');
+                let parts = val.split('.');
+                if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+                parts = val.split('.');
+                let intPart = parts[0] ? Number(parts[0]).toLocaleString('en-US') : '';
+                let decPart = parts.length > 1 ? parts[1].slice(0, 2) : null;
+                $(this).val(decPart !== null ? intPart + '.' + decPart : intPart);
+            });
+            $('#budget').on('blur', function () {
+                let raw = parseFloat(rawBudgetValue());
+                if (!isNaN(raw)) $(this).val(raw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
             });
 
             const today = new Date().toISOString().split('T')[0];

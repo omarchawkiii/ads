@@ -106,7 +106,7 @@ class CompaignController extends Controller
             'slots.*.dcps'             => 'required|array|min:1',
             'slots.*.dcps.*.position'  => 'required|integer|min:1',
             'slots.*.dcps.*.dcp_id'    => 'required|integer|exists:dcp_creatives,id',
-            'budget'      => 'required|integer|min:1',
+            'budget'      => ['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
             'langue'      => 'required|integer|exists:langues,id',
             'gender'      => 'required|integer|exists:genders,id',
             'target_type'   => 'array',
@@ -470,7 +470,7 @@ class CompaignController extends Controller
             'slots.*.dcps.*.dcp_id'       => 'required|integer|exists:dcp_creatives,id',
             'slots.*.dcps.*.position'     => 'required|integer|min:1',
 
-            'budget'          => 'required|integer|min:1',
+            'budget'          => ['required', 'numeric', 'min:0.01', 'regex:/^\d+(\.\d{1,2})?$/'],
             'langue'          => 'required|integer|exists:langues,id',
             'gender'          => 'required|integer|exists:genders,id',
 

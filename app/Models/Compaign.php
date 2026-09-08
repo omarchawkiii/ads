@@ -38,7 +38,7 @@ class Compaign extends Model
     ];
 
     protected $casts = [
-        'budget'      => 'integer',
+        'budget'      => 'decimal:2',
         'ad_duration' => 'integer',
         'noc_sent'    => 'boolean',
     ];
