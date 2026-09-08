@@ -16,9 +16,6 @@
                 <button class="btn btn-success btn-sm" id="btn-create-master-movie">
                     <i class="mdi mdi-plus"></i> New Master Movie
                 </button>
-                <button class="btn btn-primary btn-sm" id="create_movie">
-                    <i class="mdi mdi-plus"></i> New Movie
-                </button>
             </div>
         </div>
     </div>

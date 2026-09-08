@@ -200,12 +200,8 @@
 
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label" for="budget">Desired Budget</label> <span
-                                    class="danger">(RM)</span>
-                                <div class="input-group">
-                                    <span class="input-group-text">RM</span>
-                                    <input type="text" inputmode="decimal" class="form-control" id="budget" name="budget" placeholder="0.00" />
-                                </div>
+                                <label class="form-label" for="budget">Desired Budget</label>
+                                <input type="text" inputmode="decimal" class="form-control" id="budget" name="budget" placeholder="0.00" />
                             </div>
                         </div>
                         <div class="col-md-6">
