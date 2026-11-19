@@ -34,6 +34,13 @@
                             <i class="ti ti-receipt-tax me-1"></i> Tax Configuration
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="price-tab" data-bs-toggle="tab"
+                                data-bs-target="#price-pane" type="button" role="tab"
+                                aria-controls="price-pane" aria-selected="false">
+                            <i class="ti ti-coin me-1"></i> Default Prices
+                        </button>
+                    </li>
                 </ul>
 
                 <div class="tab-content" id="configTabsContent">
@@ -108,6 +115,50 @@
                         </form>
                     </div>
 
+                    {{-- ── Tab 3 : Default prices ── --}}
+                    <div class="tab-pane fade" id="price-pane" role="tabpanel" aria-labelledby="price-tab">
+                        <form id="price_form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Default price for a location (RM / play)</label>
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">RM</span>
+                                        <input type="number" class="form-control" id="default_location_price"
+                                               min="0" step="0.01" required
+                                               value="{{ $config->default_location_price ?? 0 }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Default price for a slot (RM / play)</label>
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">RM</span>
+                                        <input type="number" class="form-control" id="default_slot_price"
+                                               min="0" step="0.01" required
+                                               value="{{ $config->default_slot_price ?? 0 }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Default price for a hall type (RM / play)</label>
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">RM</span>
+                                        <input type="number" class="form-control" id="default_hall_type_price"
+                                               min="0" step="0.01" required
+                                               value="{{ $config->default_hall_type_price ?? 0 }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block">
+                                Used when a location, a slot or a hall type has no price of its own.
+                                Invoice = confirmed plays &times; (location price + slot price + hall types price).
+                            </small>
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="submit" class="btn btn-primary hstack gap-6" id="save_prices">
+                                    <i class="ti ti-send fs-4"></i> Save Default Prices
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>{{-- end tab-content --}}
 
             </div>
@@ -158,6 +209,29 @@
                 })
                 .fail(function () {
                     Swal.fire({ title: 'Error', text: 'Operation failed.', icon: 'error' });
+                });
+            });
+
+            /* ── Save default prices ── */
+            $('#price_form').on('submit', function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '{{ route('configs.prices') }}',
+                    type: 'POST',
+                    data: {
+                        default_location_price: $('#default_location_price').val(),
+                        default_slot_price:     $('#default_slot_price').val(),
+                        default_hall_type_price: $('#default_hall_type_price').val(),
+                        _token: '{{ csrf_token() }}',
+                    },
+                })
+                .done(function (res) {
+                    Swal.fire({ title: 'Saved!', text: res.message, icon: 'success', timer: 2000, showConfirmButton: false });
+                })
+                .fail(function (xhr) {
+                    let errs = xhr.responseJSON?.errors;
+                    let msg = errs ? Object.values(errs)[0][0] : 'Operation failed.';
+                    Swal.fire({ title: 'Error', text: msg, icon: 'error' });
                 });
             });
 

@@ -18,6 +18,7 @@ class HallType extends Model
      */
     protected $fillable = [
         'name',
+        'price',
     ];
 
     /**

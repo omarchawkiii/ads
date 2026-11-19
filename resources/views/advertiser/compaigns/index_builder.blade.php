@@ -289,6 +289,7 @@
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
+    @include('advertiser.compaigns.partials.noc_auto_linking')
     <script>
         $(function() {
 
@@ -945,7 +946,7 @@
                 .done(function(res){
                     $('#page-loader').hide();
                     var nocHtml = buildNocHtml(res.noc_results);
-                    Swal.fire({ title: 'Done!', html: 'Campaign created successfully.' + nocHtml, icon: 'success', confirmButtonText: 'Continue' });
+                    Swal.fire({ title: 'Done!', html: 'Campaign created successfully.' + nocHtml, icon: 'success', confirmButtonText: 'Continue', width: nocHtml ? 760 : undefined });
                 })
                 .fail(function(){
                     $('#page-loader').hide();
@@ -969,6 +970,7 @@
                         });
                         html += '</ul>';
                     }
+                    html += buildAutoLinkingHtml(r.auto_linking);
                     html += '</li>';
                 });
                 return html + '</ul></div>';

@@ -250,19 +250,23 @@ Playlist Template Builder
 
                     {{-- ADS fields --}}
                     <div class="ads-fields m-0 col-md-9 row g-2 ${isSegment ? 'd-none' : ''}">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label>Slot Name:</label>
                             <input type="text" class="form-control slot_name" placeholder="Slot Name" value="${!isSegment ? (slot.name ?? '') : ''}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label>Max Duration (sec):</label>
                             <input type="number" min="1" class="form-control max_duration" placeholder="Duration" value="${!isSegment ? (slot.max_duration ?? '') : ''}">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label>Max Ad Slots:</label>
                             <select class="form-select max_ad_slot">
                                 ${[1,2,3,4,5,6].map(n => `<option value="${n}" ${slot.max_ad_slot == n ? 'selected' : ''}>${n}</option>`).join('')}
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Price / play (RM):</label>
+                            <input type="number" min="0" step="0.01" class="form-control slot_price" placeholder="Default" value="${!isSegment ? (slot.price ?? '') : ''}">
                         </div>
                     </div>
 
@@ -350,6 +354,7 @@ Playlist Template Builder
                         name:           $(this).find('.slot_name').val(),
                         max_duration:   $(this).find('.max_duration').val(),
                         max_ad_slot:    $(this).find('.max_ad_slot').val(),
+                        price:          $(this).find('.slot_price').val(),
                         segment_select: $(this).find('.segment_select').val(),
                         ad_slot_types:  $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });
@@ -518,6 +523,7 @@ Playlist Template Builder
                         name:           $(this).find('.slot_name').val(),
                         max_duration:   $(this).find('.max_duration').val(),
                         max_ad_slot:    $(this).find('.max_ad_slot').val(),
+                        price:          $(this).find('.slot_price').val(),
                         segment_select: $(this).find('.segment_select').val(),
                         ad_slot_types:  $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });

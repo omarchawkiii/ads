@@ -498,6 +498,7 @@
                             </div>
                         </div>
                     </div>
+                    <div id="cmpg_playouts"></div>
                 </div><!-- /body -->
             </div>
         </div>
@@ -514,6 +515,8 @@
     <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
+    @include('advertiser.compaigns.partials.noc_auto_linking')
+    @include('partials.campaign_playouts', ['playoutsBase' => url('/advertiser/compaigns/{id}/playouts')])
     <script>
         $(function() {
 
@@ -1013,11 +1016,12 @@
                                     });
                                     nocHtml += '</ul>';
                                 }
+                                nocHtml += buildAutoLinkingHtml(r.auto_linking);
                                 nocHtml += '</li>';
                             });
                             nocHtml += '</ul>';
                         }
-                        Swal.fire({ title: 'NOC Push', html: res.message + nocHtml, icon: 'info', confirmButtonText: 'OK' });
+                        Swal.fire({ title: 'NOC Push', html: res.message + nocHtml, icon: 'info', confirmButtonText: 'OK', width: 760 });
                         get_compaigns();
                     })
                     .fail(function(xhr) {
@@ -1043,6 +1047,7 @@
 
                 // reset + loader
                 $('#view_compaign_modal').modal('show');
+                window.loadPlayouts(id);
                 $('#cmpg_content').hide();
                 $.ajax({
                         url: url,

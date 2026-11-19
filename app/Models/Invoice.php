@@ -19,11 +19,21 @@ class Invoice extends Model
         'tax',
         'total_ttc',
         'total_ht',
+        'discount_type',
+        'discount_value',
+        'discount_reason',
+        'discount_by',
+        'discount_at',
     ];
 
     public function compaign()
     {
         return $this->belongsTo(Compaign::class);
+    }
+
+    public function lines()
+    {
+        return $this->hasMany(InvoiceLine::class);
     }
 
     public function payments()

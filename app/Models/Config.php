@@ -15,6 +15,9 @@ class Config extends Model
        'user',
        'password',
        'tax',
+       'default_location_price',
+       'default_slot_price',
+       'default_hall_type_price',
     ];
 
 }

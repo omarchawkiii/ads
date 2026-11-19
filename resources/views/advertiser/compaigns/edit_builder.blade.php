@@ -319,6 +319,7 @@
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
+    @include('advertiser.compaigns.partials.noc_auto_linking')
     <script>
 
         $(function(){
@@ -989,6 +990,7 @@
                         });
                         html += '</ul>';
                     }
+                    html += buildAutoLinkingHtml(r.auto_linking);
                     html += '</li>';
                 });
                 return html + '</ul></div>';
@@ -1036,7 +1038,7 @@
                 $.ajax({ url: "{{ url('advertiser/compaigns/'.$compaign->id).'/update' }}", type: 'POST', data: payload })
                 .done(function(res) {
                     $('#page-loader').hide();
-                    Swal.fire({ title: 'Success', html: 'Campaign updated successfully.' + buildNocHtml(res.noc_results), icon: 'success', confirmButtonText: 'OK' });
+                    Swal.fire({ title: 'Success', html: 'Campaign updated successfully.' + buildNocHtml(res.noc_results), icon: 'success', confirmButtonText: 'OK', width: (res.noc_results && res.noc_results.length) ? 760 : undefined });
                 })
                 .fail(function(xhr) {
                     $('#page-loader').hide();

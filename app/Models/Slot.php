@@ -21,6 +21,7 @@ class Slot extends Model
         'type',
         'name',
         'cpm',
+        'price',
         'max_duration',
         'segment_name',
         'template_slot_id',

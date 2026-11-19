@@ -1,71 +1,170 @@
+@php
+  use Carbon\Carbon;
+  $t   = $d['totals'];
+  $c   = $d['campaign'];
+  $adv = $d['advertiser'];
+  $pop = $d['proof_of_play'];
+  $fmt = fn ($v) => $v ? Carbon::parse($v)->format('j M Y') : '-';
+  $secs = function ($s) { $s = (int) $s; return ($s >= 3600 ? intdiv($s, 3600) . 'h ' : '') . ($s >= 60 ? intdiv($s % 3600, 60) . 'm ' : '') . ($s % 60) . 's'; };
+@endphp
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>{{ $invoice->number ?? 'Invoice' }}</title>
   <style>
-    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #222; }
-    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    .title { font-weight:700; font-size:18px; }
-    .muted { color:#666; font-size:11px; }
-    table { width:100%; border-collapse: collapse; margin-bottom:10px; }
-    th, td { padding:8px; border:1px solid #ddd; }
+    body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #222; }
+    h4 { margin: 14px 0 6px; font-size: 13px; }
+    .title { font-weight:700; font-size:20px; }
+    .muted { color:#666; font-size:10px; }
+    table { width:100%; border-collapse: collapse; margin-bottom:8px; }
+    th, td { padding:5px 6px; border:1px solid #ddd; vertical-align: top; }
+    th { background:#f3f4f6; text-align:left; }
+    .noborder td { border:none; padding:2px 6px; }
     .text-right { text-align:right; }
     .fw-bold { font-weight:700; }
-    .small { font-size:11px; }
+    .sub td { color:#666; font-size:10px; }
+    .grp td { background:#f9fafb; font-weight:700; }
+    .badge { padding:2px 6px; border-radius:3px; font-size:10px; font-weight:700; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div>
-      <div class="title">Invoice: {{ $invoice->number_full ?? $invoice->invoice_no ?? $invoice->number }}</div>
-      <div class="small muted">Advertiser: {{ optional($invoice->compaign->user)->name . " ". optional($invoice->compaign->user)->last_name ?? '-' }}</div>
-      <div class="small muted">Campaign: {{ $invoice->compaign->name ?? '-' }}</div>
-    </div>
-    <div class="text-right">
-      <div class="small muted">Invoice Date: {{ optional($invoice->date)->format('M j, Y') ?? optional($invoice->created_at)->format('M j, Y') }}</div>
-    </div>
-  </div>
 
-  <!-- CPM Breakdown (statique as requested) -->
-  <h4>💰 CPM Breakdown</h4>
-  <table>
-    <tbody>
-      <tr><th>Description</th><th>Value</th></tr>
-      <tr><td>Base CPM</td><td class="text-right">RM 30.00</td></tr>
-      <tr><td>Targeting Surcharge</td><td class="text-right">RM 12.00</td></tr>
-      <tr><td>Slot Multiplier (x2)</td><td class="text-right">RM 84.00</td></tr>
-      <tr><td>Impressions</td><td class="text-right">53,000</td></tr>
-      <tr><td class="fw-bold">Gross Cost</td><td class="text-right fw-bold">RM 4,452.00</td></tr>
-    </tbody>
+  <table class="noborder">
+    <tr>
+      <td>
+        <div class="title">Invoice {{ $invoice->number }}</div>
+        <div class="muted">Issued {{ $fmt($invoice->date) }} &middot; Due {{ $fmt($invoice->due_date) }}</div>
+      </td>
+      <td class="text-right">
+        @php
+          $label = $t['overdue'] ? 'OVERDUE' : strtoupper(str_replace('_', ' ', $invoice->status ?? 'unpaid'));
+        @endphp
+        <span class="badge" style="border:1px solid #999;">{{ $label }}</span>
+      </td>
+    </tr>
   </table>
 
-  <!-- Proof of Play (statique) -->
-  <h4>🎬 Proof of Play</h4>
+  <table class="noborder">
+    <tr>
+      <td style="width:50%">
+        <strong>Billed to</strong><br>
+        @if($adv)
+          {{ $adv['name'] }}<br>
+          <span class="muted">{{ $adv['email'] }}</span><br>
+        @endif
+        @foreach($d['customers'] as $cu)
+          <br><strong>{{ $cu['name'] }}</strong>@if($cu['brand']) ({{ $cu['brand'] }})@endif<br>
+          @if($cu['address'])<span class="muted">{{ $cu['address'] }}</span><br>@endif
+          @if($cu['email'] || $cu['phone'])<span class="muted">{{ collect([$cu['email'], $cu['phone']])->filter()->implode(' · ') }}</span><br>@endif
+          @if($cu['pic'])<span class="muted">Contact: {{ $cu['pic'] }}</span><br>@endif
+        @endforeach
+      </td>
+      <td style="width:50%">
+        @if($c)
+          <strong>Campaign</strong><br>
+          {{ $c['name'] }}<br>
+          <span class="muted">
+            {{ $fmt($c['start_date']) }} &rarr; {{ $fmt($c['end_date']) }}@if($c['days']) ({{ $c['days'] }} days)@endif<br>
+            @if(count($c['cinema_chains'])) Chains: {{ implode(', ', $c['cinema_chains']) }}<br>@endif
+            @if(count($c['locations'])) Locations: {{ collect($c['locations'])->pluck('name')->implode(', ') }}<br>@endif
+            @if(count($c['slots'])) Slots: {{ implode(', ', $c['slots']) }}<br>@endif
+            @if(count($c['hall_types'])) Hall types: {{ implode(', ', $c['hall_types']) }}<br>@endif
+          </span>
+        @endif
+      </td>
+    </tr>
+  </table>
+
+  <h4>Billing details</h4>
   <table>
     <thead>
-      <tr><th>Date</th><th>Time</th><th>Cinema</th><th>Film</th><th>Slot</th></tr>
+      <tr>
+        <th>Ad</th><th>Slot</th><th>Location</th>
+        <th class="text-right">Plays</th>
+        <th class="text-right">Location (RM)</th>
+        <th class="text-right">Slot (RM)</th>
+        <th class="text-right">Halls (RM)</th>
+        <th class="text-right">Amount (RM)</th>
+      </tr>
     </thead>
     <tbody>
-      <tr><td>Apr 5</td><td>19:30</td><td>KLCC</td><td>Kung Fu Panda 4</td><td>Slot A</td></tr>
-      <tr><td>Apr 6</td><td>21:45</td><td>Sunway Pyramid</td><td>Inside Out 2</td><td>Slot A</td></tr>
+      @forelse($invoice->lines as $line)
+        <tr>
+          <td>{{ $line->dcp_name }}</td>
+          <td>{{ $line->slot_name ?? '-' }}</td>
+          <td>{{ $line->location_name }}</td>
+          <td class="text-right">{{ number_format($line->played) }}</td>
+          <td class="text-right">{{ number_format($line->location_price, 2) }}</td>
+          <td class="text-right">{{ number_format($line->slot_price, 2) }}</td>
+          <td class="text-right">{{ number_format($line->hall_price, 2) }}</td>
+          <td class="text-right">{{ number_format($line->amount, 2) }}</td>
+        </tr>
+      @empty
+        <tr><td colspan="8">No detail available for this invoice.</td></tr>
+      @endforelse
     </tbody>
   </table>
+  <div class="muted">Amount = plays &times; (location price + slot price + hall types price).</div>
 
-  <!-- Totals (données depuis $invoice si dispo) -->
-  <table>
-    <tr>
-      <td class="small">Subtotal (RM)</td>
-      <td class="text-right">{{ number_format($invoice->subtotal ?? $invoice->total_ht ?? 0, 2) }}</td>
-    </tr>
-    <tr>
-      <td class="small">Tax</td>
-      <td class="text-right">{{ number_format($invoice->tax ?? 0, 2) }} % </td>
-    </tr>
-    <tr>
-      <td class="fw-bold">Total (RM)</td>
-      <td class="text-right fw-bold">{{ number_format($invoice->total ?? $invoice->total_ttc ?? ($invoice->subtotal + $invoice->tax ?? 0), 2) }}</td>
-    </tr>
+  @if($pop && $pop['fetched'])
+    <h4>Proof of play</h4>
+    <div class="muted" style="margin-bottom:4px;">
+      Confirmed by the cinema servers. Data up to {{ $pop['synced_until'] ? Carbon::parse($pop['synced_until'])->format('j M Y H:i') : 'unknown' }}.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Ad / location / day</th>
+          <th class="text-right">Played</th>
+          <th class="text-right">Incomplete</th>
+          <th class="text-right">Failed</th>
+          <th class="text-right">Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach($pop['dcps'] as $ad)
+          <tr class="grp">
+            <td>{{ $ad['name'] }}</td>
+            <td class="text-right">{{ $ad['played'] }}</td>
+            <td class="text-right">{{ $ad['incomplete'] }}</td>
+            <td class="text-right">{{ $ad['failed'] }}</td>
+            <td class="text-right">{{ $secs($ad['played_seconds']) }}</td>
+          </tr>
+          @foreach($ad['by_location'] as $loc)
+            <tr>
+              <td style="padding-left:16px;">{{ $loc['location'] }}</td>
+              <td class="text-right">{{ $loc['played'] }}</td>
+              <td class="text-right">{{ $loc['incomplete'] }}</td>
+              <td class="text-right">{{ $loc['failed'] }}</td>
+              <td class="text-right">{{ $secs($loc['played_seconds']) }}</td>
+            </tr>
+            @foreach($loc['by_day'] as $day)
+              <tr class="sub">
+                <td style="padding-left:30px;">{{ $fmt($day['date']) }}</td>
+                <td class="text-right">{{ $day['played'] }}</td>
+                <td class="text-right">{{ $day['incomplete'] }}</td>
+                <td class="text-right">{{ $day['failed'] }}</td>
+                <td></td>
+              </tr>
+            @endforeach
+          @endforeach
+        @endforeach
+      </tbody>
+    </table>
+  @endif
+
+  <h4>Summary</h4>
+  <table style="width:50%; margin-left:50%;">
+    <tr><td>Subtotal (RM)</td><td class="text-right">{{ number_format($t['subtotal'], 2) }}</td></tr>
+    @if($t['discount'])
+      <tr><td>Discount @if($t['discount_type'] === 'percent') ({{ rtrim(rtrim(number_format($t['discount_value'], 2), '0'), '.') }}%)@endif</td><td class="text-right">- {{ number_format($t['discount'], 2) }}</td></tr>
+      <tr><td>Net subtotal (RM)</td><td class="text-right">{{ number_format($t['net'], 2) }}</td></tr>
+    @endif
+    <tr><td>Tax ({{ rtrim(rtrim(number_format($t['tax_rate'], 2), '0'), '.') }}%)</td><td class="text-right">{{ number_format($t['tax_amount'], 2) }}</td></tr>
+    <tr><td class="fw-bold">Total (RM)</td><td class="text-right fw-bold">{{ number_format($t['total'], 2) }}</td></tr>
+    <tr><td>Paid (RM)</td><td class="text-right">{{ number_format($t['paid'], 2) }}</td></tr>
+    <tr><td class="fw-bold">Balance due (RM)</td><td class="text-right fw-bold">{{ number_format($t['remaining'], 2) }}</td></tr>
   </table>
 
 </body>

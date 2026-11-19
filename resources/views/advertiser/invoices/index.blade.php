@@ -35,9 +35,26 @@
     </div>
 
 </div>
+
+<div class="modal fade" id="view_invoice_modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title text-white">Invoice <span id="v_number"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="inv_detail"></div>
+            <div class="modal-footer">
+                <a href="#" id="v_download" class="btn btn-outline-secondary" target="_blank"><i class="mdi mdi-download"></i> Download PDF</a>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('custom_script')
+@include('partials.invoice_detail')
 <script>
     function getInvoiceStatusBadge(status) {
         const map = {
@@ -74,6 +91,7 @@
                         '<td class="align-middle">' + getInvoiceStatusBadge(inv.status) + '</td>' +
                         '<td class="align-middle">' + (inv.date ?? '—') + '</td>' +
                         '<td class="align-middle">' +
+                            '<button type="button" class="btn btn-sm btn-primary me-1 view_invoice" data-id="' + inv.id + '"><i class="mdi mdi-magnify"></i> View</button>' +
                             '<a href="{{ url('') }}/advertiser/invoices/' + inv.id + '/download" ' +
                                'class="btn btn-sm btn-outline-primary" target="_blank">' +
                                '<i class="mdi mdi-download"></i> Download' +
@@ -100,5 +118,22 @@
     }
 
     loadInvoices();
+
+    $(document).on('click', '.view_invoice', function () {
+        var id = $(this).data('id');
+        $('#inv_detail').html('<div class="text-center py-4"><div class="spinner-border"></div></div>');
+        $('#v_number').text('');
+        $('#v_download').attr('href', "{{ url('') }}/advertiser/invoices/" + id + '/download');
+        $('#view_invoice_modal').modal('show');
+
+        $.getJSON("{{ url('') }}/advertiser/invoices/" + id + '/show')
+            .done(function (data) {
+                $('#v_number').text(data.invoice.number || '');
+                $('#inv_detail').html(window.renderInvoiceDetail(data, { admin: false }));
+            })
+            .fail(function () {
+                $('#inv_detail').html('<div class="text-danger">Unable to load this invoice.</div>');
+            });
+    });
 </script>
 @endsection

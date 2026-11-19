@@ -19,6 +19,7 @@ use App\Models\MovieGenre;
 use App\Models\Slot;
 use App\Models\TargetType;
 use App\Models\Invoice;
+use App\Services\NocAdsPlayedService;
 use App\Models\TemplateSlot;
 use App\Services\CampaignXmlGenerator;
 use Carbon\Carbon;
@@ -117,6 +118,8 @@ class CompaignController extends Controller
 
         $compaign = DB::transaction(function () use ($v, $request) {
 
+            $this->assertNoPositionConflicts($v, $request);
+
             // 1️⃣ Création de la campagne
             $compaign = Compaign::create([
                 'name'                  => $v['compaign_name'],
@@ -213,6 +216,50 @@ class CompaignController extends Controller
         ]);
     }
 
+    /**
+     * Refuse a campaign whose (slot, position) is already taken, on a shared location,
+     * by another non-rejected campaign with overlapping dates.
+     * Must run inside a DB transaction (locks the conflicting rows).
+     */
+    private function assertNoPositionConflicts(array $v, Request $request, ?int $ignoreId = null): void
+    {
+        $locationIds = array_values(array_filter(Arr::wrap($request->input('location_id'))));
+        if (empty($locationIds)) {
+            return;
+        }
+
+        $conflicts = [];
+
+        foreach ($v['slots'] as $slotData) {
+            $positions = collect($slotData['dcps'])->pluck('position')->unique()->all();
+
+            $rows = DB::table('compaign_slot_dcp as csd')
+                ->join('compaigns as c', 'c.id', '=', 'csd.compaign_id')
+                ->where('csd.slot_id', $slotData['slot_id'])
+                ->whereIn('csd.position', $positions)
+                ->where('c.status', '!=', 4) // 4 = rejected
+                ->where('c.start_date', '<=', $v['end_date'])
+                ->where('c.end_date', '>=', $v['start_date'])
+                ->whereExists(function ($q) use ($locationIds) {
+                    $q->select(DB::raw(1))->from('compaign_location as cl')
+                        ->whereColumn('cl.compaign_id', 'c.id')
+                        ->whereIn('cl.location_id', $locationIds);
+                })
+                ->when($ignoreId, fn ($q) => $q->where('c.id', '!=', $ignoreId))
+                ->select('csd.slot_id', 'csd.position', 'c.id', 'c.name', 'c.start_date', 'c.end_date')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($rows as $r) {
+                $conflicts[] = "Slot #{$r->slot_id}, position {$r->position} already used by campaign #{$r->id} \"{$r->name}\" ({$r->start_date} → {$r->end_date})";
+            }
+        }
+
+        if ($conflicts) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['slots' => array_values(array_unique($conflicts))]);
+        }
+    }
+
     private function pushCampaignToNoc(Compaign $compaign): array
     {
         $chains  = $compaign->cinemaChains()->get();
@@ -237,6 +284,17 @@ class CompaignController extends Controller
                 $xmlContent = \Illuminate\Support\Facades\Storage::disk('public')->exists($xmlPath)
                     ? \Illuminate\Support\Facades\Storage::disk('public')->get($xmlPath)
                     : null;
+
+                if (empty($xmlContent)) {
+                    $results[] = [
+                        'cinema_chain' => $chain->name,
+                        'sent'         => false,
+                        'reason'       => "Campaign XML not found ({$xmlPath}); nothing to send.",
+                    ];
+                    continue;
+                }
+
+                \Log::info('NOC push', ['url' => $url, 'campaign_id' => $compaign->id, 'chain' => $chain->name, 'xml_bytes' => strlen($xmlContent)]);
                 $response = $client->request('POST', $url, [
                     'connect_timeout' => 5,
                     'query' => [
@@ -257,6 +315,8 @@ class CompaignController extends Controller
                     'sent'         => !empty($contents['status']),
                     'reason'       => $contents['message'] ?? null,
                     'missing_cpls' => $contents['planner']['missing_cpls'] ?? [],
+                    // Résultat de l'auto linking movie code ↔ SPL côté NOC
+                    'auto_linking' => $contents['planner']['auto_linking'] ?? null,
                 ];
 
             } catch (RequestException $e) {
@@ -496,6 +556,8 @@ class CompaignController extends Controller
             -------------------------------------------------*/
             $compaign = Compaign::findOrFail($id);
 
+            $this->assertNoPositionConflicts($v, $request, (int) $id);
+
             /* -------------------------------------------------
             | 2️⃣ update champs simples
             -------------------------------------------------*/
@@ -662,41 +724,7 @@ class CompaignController extends Controller
         {
             $compaign->update(['status' => 2]);
 
-            $tax      = (float) (Config::first()->tax ?? 6);
-            $totalHt  = $compaign->budget;
-            $totalTtc = round($totalHt * (1 + $tax / 100), 2);
-
-            $existing = Invoice::where('compaign_id', $compaign->id)->first();
-
-            if ($existing) {
-                // Re-approval: keep the same invoice number, update financial details only
-                $existing->update([
-                    'date'      => now()->toDateString(),
-                    'due_date'  => now()->addDays(30)->toDateString(),
-                    'tax'       => $tax,
-                    'total_ht'  => $totalHt,
-                    'total_ttc' => $totalTtc,
-                ]);
-            } else {
-                // First approval: generate a new sequential number for the year
-                $year    = now()->format('Y');
-                $lastSeq = Invoice::whereYear('date', $year)
-                               ->selectRaw("MAX(CAST(SUBSTRING_INDEX(number, '-', -1) AS UNSIGNED)) as max_seq")
-                               ->value('max_seq') ?? 0;
-                $number  = 'INV-' . $year . '-' . str_pad($lastSeq + 1, 5, '0', STR_PAD_LEFT);
-
-                Invoice::create([
-                    'compaign_id' => $compaign->id,
-                    'number'      => $number,
-                    'date'        => now()->toDateString(),
-                    'due_date'    => now()->addDays(30)->toDateString(),
-                    'status'      => 'unpaid',
-                    'discount'    => 0,
-                    'tax'         => $tax,
-                    'total_ht'    => $totalHt,
-                    'total_ttc'   => $totalTtc,
-                ]);
-            }
+            // La facture est générée à la fin de la campagne par `invoices:generate` (cron).
 
             return response()->json([
                 'message' => 'Compaign approuved successfully.',
@@ -722,83 +750,36 @@ class CompaignController extends Controller
         }
     }
 
-    public function billing(Compaign $compaign)
+    /**
+     * Rafraîchit les diffusions confirmées (NOC ads_played) de chaque chaîne de la campagne,
+     * les stocke, puis renvoie le résumé agrégé et le statut par chaîne.
+     */
+    public function billing(Compaign $compaign, NocAdsPlayedService $noc)
     {
-        $config = Config::first() ;
-        $url = rtrim($config->link, '/') . '/api/adsmart/proof_of_play';
-        $dcpCreatives = $compaign->dcpCreatives;
+        $result = $noc->refresh($compaign);
+        $chains = $result['chains'];
+        $okAny  = collect($chains)->contains('ok', true);
 
-        $uuids = $dcpCreatives->pluck('uuid')->toArray();
-        try {
+        return response()->json([
+            'status'  => $okAny ? 1 : 0,
+            'message' => !$chains
+                ? 'This campaign has no cinema chain.'
+                : ($okAny ? 'Ads played refreshed.' : 'No NOC could be reached.'),
+            'chains'  => $chains,
+            'summary' => $result['summary'],
+        ], 200);
+    }
 
-            $client = new Client();
-            $response = $client->request('GET', $url,[
-                'connect_timeout' => 5,
-                'query' => [
-                    'username' => $config->user,
-                    'password' =>$config->password,
-                    'uuid' =>  $uuids,
-                    'from_date' => $compaign->start_date->toDateString(),
-                    'to_date' =>  $compaign->end_date->toDateString()
-                ],
-            ]);
+    /** Résumé stocké (sans appel NOC). Un annonceur ne voit que ses campagnes. */
+    public function playouts($id, NocAdsPlayedService $noc)
+    {
+        $compaign = Compaign::findOrFail($id);
 
-            $contents = json_decode($response->getBody(), true);
-
-            if($contents)
-            {
-                if( $contents['status'])
-                {
-
-                    //dd($contents['data']);
-                    foreach($contents['data'] as $data)
-                    {
-
-                    }
-                    return response()->json([
-                        'status' =>1,
-                        'message' => 'Content Retrieved Successfully.',
-                    ], 200);
-                }
-                else
-                {
-                    return response()->json([
-                        'status' =>0,
-                        'message' => $contents['message'],
-                    ], 200);
-
-                }
-
-            }
-            else
-            {
-                return response()->json([
-                    'status' =>0,
-                    'message' => "No Data",
-                ], 200);
-            }
-
-        }
-        catch (RequestException $e) {
-            // Log de l'erreur ou traitement spécifique
-            return response()->json([
-                'status' =>0,
-                'message' => $e->getMessage(),
-            ], 500);
-
-        }
-        catch (\Exception $e) {
-            // Capture d'autres exceptions générales
-            return response()->json([
-                'status' =>0,
-                'message' => $e->getMessage(),
-            ], 500);
-
+        if (auth()->user()->role != 1) {
+            abort_unless($compaign->user_id === auth()->id(), 403, 'Access denied');
         }
 
-
-
-
+        return response()->json($noc->summary($compaign));
     }
 
     public function advertiser_destory_company(Compaign $compaign)

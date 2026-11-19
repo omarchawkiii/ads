@@ -21,6 +21,33 @@
         </div>
 
 
+        <div class="row" id="inv_summary">
+            <div class="col-md-3 col-6">
+                <div class="card"><div class="card-body py-3">
+                    <div class="text-muted small">Total billed</div>
+                    <div class="fs-5 fw-semibold" id="sum_billed">–</div>
+                </div></div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card"><div class="card-body py-3">
+                    <div class="text-muted small">Collected</div>
+                    <div class="fs-5 fw-semibold text-success" id="sum_paid">–</div>
+                </div></div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card"><div class="card-body py-3">
+                    <div class="text-muted small">Outstanding</div>
+                    <div class="fs-5 fw-semibold text-warning" id="sum_outstanding">–</div>
+                </div></div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card"><div class="card-body py-3">
+                    <div class="text-muted small">Overdue</div>
+                    <div class="fs-5 fw-semibold text-danger" id="sum_overdue">–</div>
+                </div></div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-body table-responsive">
                 <table id="invoices-table" class="table table-striped table-bordered display text-nowrap dataTable">
@@ -30,10 +57,13 @@
                             <th class="text-center">Advertiser</th>
                             <th class="text-center">Campaign</th>
                             <th class="text-center">Subtotal (RM)</th>
-                            <th class="text-center">Tax (6%)</th>
-                            <th class="text-center">Total</th>
+                            <th class="text-center">Tax</th>
+                            <th class="text-center">Total (RM)</th>
+                            <th class="text-center">Paid (RM)</th>
+                            <th class="text-center">Remaining (RM)</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Issued</th>
+                            <th class="text-center">Due</th>
                             <th class="text-center" style="width:160px;">Actions</th>
                         </tr>
                     </thead>
@@ -42,90 +72,6 @@
                 </table>
             </div>
         </div>
-    </div>
-
-    {{-- Create Modal --}}
-
-    <div class="modal  " id="create_invoice_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true"
-        role="dialog">
-        <div class="modal-dialog modal-md  modal-dialog-centered">
-            <div class="modal-content">
-                <form method="post" id="create_invoice_form">
-                    <div class="modal-header d-flex align-items-center  bg-primary ">
-                        <h4 class="modal-title text-white " id="myLargeModalLabel ">
-                            Create Invoice
-                        </h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-
-                        <div class="row">
-                            <div class="mb-3">
-                                <label for="name" class="">Name:</label>
-                                <input type="text" class="form-control" id="name" placeholder="Name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="cpm" class="">Base CPM (RM):</label>
-                                <input type="number" class="form-control" id="cpm" value="0" min="0"
-                                    required>
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn bg-danger-subtle text-danger " data-bs-dismiss="modal">
-                            Close
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            Save
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div>
-
-
-    <div class="modal " id="edit_invoice_modal" tabindex="-1" aria-labelledby="bs-example-modal-lg" aria-modal="true"
-        role="dialog">
-        <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content">
-                <form method="post" id="edit_invoice_form">
-                    <div class="modal-header d-flex align-items-center  bg-primary ">
-                        <h4 class="modal-title text-white " id="myLargeModalLabel ">
-                            Edit Invoice
-                        </h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" value="" id="id">
-                        <div class="row">
-                            <div class="mb-3">
-                                <label for="name" class="">Name:</label>
-                                <input type="text" class="form-control" id="name" placeholder="Name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="cpm" class="">Base CPM (RM):</label>
-                                <input type="number" class="form-control" id="cpm" value="0" min="0"
-                                    required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn bg-danger-subtle text-danger " data-bs-dismiss="modal">
-                            Close
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            Save
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-        </div>
-
     </div>
 
     <!-- View Invoice Modal -->
@@ -137,128 +83,68 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="inv_content">
-                        <div class="row mb-3">
-                            <div class="col-md-8">
-                                <div><strong>Advertiser:</strong> <span id="v_advertiser">–</span></div>
-                                <div><strong>Campaign:</strong> <span id="v_campaign">–</span></div>
-                                <div><strong>Billing Period:</strong> <span id="v_billing_period">–</span></div>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <div><strong>Invoice Date:</strong> <span id="v_invoice_date">–</span></div>
-                                <div class="mt-2"><strong>Status:</strong><span id="v_status">–</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- CPM Breakdown: statique -->
-                    <div class="card mb-3">
-                        <div class="card-header">💰 CPM Breakdown</div>
-                        <div class="card-body p-0">
-                            <table class="table mb-0">
-                                <tbody>
-                                    <tr>
-                                        <td><strong>Description</strong></td>
-                                        <td><strong>Value</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Base CPM</td>
-                                        <td>RM 30.00</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Targeting Surcharge</td>
-                                        <td>RM 12.00</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Slot Multiplier (x2)</td>
-                                        <td>RM 84.00</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Impressions</td>
-                                        <td>53,000</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Gross Cost</strong></td>
-                                        <td class="fw-bold">RM 4,452.00</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Proof of Play: statique -->
-                    <div class="card mb-3">
-                        <div class="card-header">🎬 Proof of Play</div>
-                        <div class="card-body p-0">
-                            <table class="table  mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <th>Cinema</th>
-                                        <th>Film</th>
-                                        <th>Slot</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Apr 5</td>
-                                        <td>19:30</td>
-                                        <td>KLCC</td>
-                                        <td>Kung Fu Panda 4</td>
-                                        <td>Slot A</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Apr 6</td>
-                                        <td>21:45</td>
-                                        <td>Sunway Pyramid</td>
-                                        <td>Inside Out 2</td>
-                                        <td>Slot A</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="card mb-3">
-                        <div class="card-body p-0">
-                            <div class="ms-auto text-end pe-3">
-                                <div><small class="">Subtotal (RM) : </small> <span id="v_subtotal"
-                                        class="fw-semibold">RM 0.00</span></div>
-                                <div class="mt-1"><small class="">Tax : </small> <span id="v_tax"
-                                        class="fw-semibold">RM 0.00</span></div>
-                                <div class="mt-1"><small class="">Total (RM): </small> <span id="v_total"
-                                        class="fw-bold fs-5">RM 0.00</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- Payment History -->
-                    <div class="card mb-3" id="v_payments_card" style="display:none;">
-                        <div class="card-header">💳 Payment History</div>
-                        <div class="card-body p-0">
-                            <table class="table mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Amount (RM)</th>
-                                        <th>Note</th>
-                                        <th>Proof</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="v_payments_body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                </div> <!-- end inv_content -->
+                    <div id="inv_content"><div id="inv_detail"></div></div>
+                </div>
 
 
                 <div class="modal-footer">
+                    <button type="button" id="v_discount" class="btn btn-outline-warning"><i class="mdi mdi-percent"></i> Discount</button>
                     <button type="button" id="v_download" class="btn btn-outline-secondary">Download PDF</button>
                     <button type="button" id="v_close" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Discount Modal ── --}}
+    <div class="modal fade" id="discount_modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+                <form id="discount_form">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title">Discount — <span id="disc_number"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="disc_invoice_id">
+                        <input type="hidden" id="disc_subtotal">
+                        <input type="hidden" id="disc_tax">
+                        <input type="hidden" id="disc_paid">
+
+                        <div class="row mb-3">
+                            <div class="col-6"><div class="small text-muted">Subtotal (RM)</div><div class="fw-semibold" id="disc_subtotal_txt">–</div></div>
+                            <div class="col-6"><div class="small text-muted">Already paid (RM)</div><div class="fw-semibold" id="disc_paid_txt">–</div></div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-5 mb-3">
+                                <label class="form-label fw-semibold">Type</label>
+                                <select class="form-select" id="disc_type">
+                                    <option value="percent">Percentage (%)</option>
+                                    <option value="fixed">Fixed amount (RM)</option>
+                                </select>
+                            </div>
+                            <div class="col-7 mb-3">
+                                <label class="form-label fw-semibold">Value <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="disc_value" min="0.01" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Reason <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="disc_reason" rows="2" maxlength="500" required
+                                      placeholder="e.g. Loyalty discount, commercial gesture, service incident…"></textarea>
+                        </div>
+                        <div class="alert alert-light border small mb-0" id="disc_preview">–</div>
+                        <div class="text-danger small mt-2" id="disc_error"></div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-outline-danger" id="disc_remove" style="display:none;">Remove discount</button>
+                        <div>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning" id="disc_submit">Apply discount</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -342,6 +228,7 @@
 
 @section('custom_script')
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
+    @include('partials.invoice_detail')
     <script>
         // Override inline to avoid browser cache issues on this page
         function getInvoiceStatusText(status) {
@@ -356,10 +243,6 @@
         }
 
         $(function() {
-            $(document).on('click', '#create_invoice', function() {
-                $('#create_invoice_modal').modal('show');
-            })
-
             function get_invoices() {
                 $('#wait-modal').modal('show');
 
@@ -378,30 +261,28 @@
                                     ? jv(value.compaign.user.name) + ' ' + jv(value.compaign.user.last_name)
                                     : '—';
                                 var campaign = value.compaign ? jv(value.compaign.name) : '—';
+                                var money = function(v) { return parseFloat(v || 0).toFixed(2); };
+                                var status = value.overdue
+                                    ? '<span class="badge bg-danger">Overdue</span>'
+                                    : getInvoiceStatusText(value.status);
                                 result = result +
                                     '<tr class="odd text-center">' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    getInvoiceNumber(value.number) + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    advertiser +
-                                    ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    campaign + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value.total_ht + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value.tax + '% </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    value.total_ttc + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    getInvoiceStatusText(value.status) + ' </td>' +
-                                    '<td class="text-body align-middle fw-medium text-decoration-none">' +
-                                    formatDateEN(value.due_date) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + getInvoiceNumber(value.number) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + advertiser + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + campaign + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + money(value.total_ht) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + (value.tax || 0) + '% </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + money(value.total_ttc) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + money(value.paid) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + money(value.remaining) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + status + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + formatDateEN(value.date) + ' </td>' +
+                                    '<td class="text-body align-middle fw-medium text-decoration-none">' + formatDateEN(value.due_date) + ' </td>' +
                                     '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                     '<button data-id="' + value.id + '" type="button" class="view btn mb-1 btn-rounded btn-primary m-1">' +
                                     '<i class="mdi mdi-magnify"></i>' +
                                     '</button>' +
-                                    (value.status !== 'paid'
+                                    (value.remaining > 0
                                         ? '<button data-id="' + value.id + '" data-total="' + value.total_ttc + '" data-number="' + value.number + '" type="button" class="pay_invoice btn mb-1 btn-rounded btn-success m-1">' +
                                           '<i class="mdi mdi-cash-plus"></i> Pay' +
                                           '</button>'
@@ -409,6 +290,12 @@
                                     '</td>' +
                                     '</tr>';
                             });
+                            var sm = response.summary || {};
+                            var rm = function(v) { return 'RM ' + parseFloat(v || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); };
+                            $('#sum_billed').text(rm(sm.billed));
+                            $('#sum_paid').text(rm(sm.paid));
+                            $('#sum_outstanding').text(rm(sm.outstanding));
+                            $('#sum_overdue').text(rm(sm.overdue_total) + ' (' + (sm.overdue_count || 0) + ')');
                             $('#invoices-table tbody').html(result)
                             $('#wait-modal').modal('hide');
                             // $('#loader-modal').css('display','none')
@@ -416,6 +303,7 @@
 
                             var invoices = $('#invoices-table').DataTable({
                                 "iDisplayLength": 10,
+                                "order": [],
                                 destroy: true,
                                 "bDestroy": true,
                                 "language": {
@@ -432,190 +320,6 @@
 
             }
             get_invoices();
-
-            $(document).on("submit", "#create_invoice_modal", function(event) {
-
-                event.preventDefault();
-                var name = $('#create_invoice_modal #name ').val();
-                var cpm = $('#create_invoice_modal #cpm').val();
-
-                var url = '{{ url('') }}' + '/invoices';
-
-                $.ajax({
-                        url: url,
-                        type: 'POST',
-                        method: 'POST',
-                        data: {
-                            name: name,
-                            cpm: cpm,
-                            "_token": "{{ csrf_token() }}",
-                        },
-                    })
-                    .done(function(response) {
-
-                        get_invoices();
-                        Swal.fire({
-                            title: 'Done!',
-                            text: 'invoice deleted successfully.',
-                            icon: 'success',
-                            confirmButtonText: 'Continue'
-                        });
-                        reset_form('#create_invoice_modal form')
-                    })
-                    .fail(function(xhr) {
-                        Swal.fire({
-                            title: 'Error',
-                            text: 'Operation failed.',
-                            icon: 'error'
-                        });
-                    })
-                    .always(function() {
-                        $('#wait-modal').modal('hide');
-                        $('#create_invoice_modal').modal('hide');
-                    });
-
-            })
-
-            $(document).on('click', '.delete', function() {
-                var id = $(this).attr('id');
-                console.log(id)
-                console.log(encodeURIComponent(id))
-                const url = '{{ url('') }}' + '/invoices/' + encodeURIComponent(id);
-                const csrf = '{{ csrf_token() }}';
-
-                // SweetAlert2 confirm
-                Swal.fire({
-                    title: 'Delete invoice?',
-                    text: 'Are you sure you want to delete this invoice?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, delete it',
-                    cancelButtonText: 'Cancel'
-                }).then(function(result) {
-                    if (!result.isConfirmed) return;
-                    $('#wait-modal').modal('show');
-                    // Bootstrap 5 Modal: passer un ELEMENT, pas une string
-                    const waitEl = document.getElementById('wait-modal');
-                    const wait = bootstrap.Modal.getOrCreateInstance(waitEl);
-                    wait.show();
-
-                    $.ajax({
-                            url: url,
-                            method: 'POST', // compat Laravel
-                            data: {
-                                _method: 'DELETE',
-                                _token: csrf
-                            },
-                            headers: {
-                                'X-CSRF-TOKEN': csrf
-                            }
-                        })
-                        .done(function(response) {
-
-                            get_invoices();
-                            Swal.fire({
-                                title: 'Done!',
-                                text: 'invoice deleted successfully.',
-                                icon: 'success',
-                                confirmButtonText: 'Continue'
-                            });
-
-                        })
-                        .fail(function(xhr) {
-                            Swal.fire({
-                                title: 'Error',
-                                text: 'Deletion failed.',
-                                icon: 'error'
-                            });
-                        })
-                        .always(function() {
-                            $('#wait-modal').modal('hide'); //
-                        });
-                });
-            });
-
-            $(document).on('click', '.edit', function() {
-                var invoice = $(this).attr('id');
-                var url = '{{ url('') }}' + '/invoices/' + invoice + '/show/';
-
-                $.ajax({
-                    url: url,
-                    type: 'GET',
-                    method: 'GET',
-                    beforeSend: function() {
-                        $("#wait-modal").modal('show');
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                        "_token": "{{ csrf_token() }}",
-                    },
-                    success: function(response) {
-
-                        $("#wait-modal").modal('hide');
-                        $('#edit_invoice_modal').modal('show');
-                        $('#edit_invoice_modal #name').val(response.invoice.name)
-                        $('#edit_invoice_modal #cpm').val(response.invoice.cpm)
-                        $('#edit_invoice_modal #id').val(invoice)
-
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(response);
-                    }
-                })
-            })
-
-            $(document).on("submit", "#edit_invoice_form", function(event) {
-                event.preventDefault();
-                var name = $('#edit_invoice_form #name').val();
-                var cpm = $('#edit_invoice_form #cpm').val();
-                var id = $('#edit_invoice_form #id').val();
-                var url = '{{ url('') }}' + '/invoices/' + id;
-
-                $.ajax({
-                        url: url,
-                        type: 'PUT',
-                        method: 'PUT',
-                        data: {
-                            name: name,
-                            cpm: cpm,
-                            "_token": "{{ csrf_token() }}",
-                        },
-                        beforeSend: function() {
-                            $("#wait-modal").modal('show');
-                        },
-                        headers: {
-                            'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                            "_token": "{{ csrf_token() }}",
-                        },
-
-                    })
-                    .done(function(response) {
-
-                        $("#wait-modal").modal('hide');
-                        $('#edit_invoice_modal').modal('hide');
-                        get_invoices()
-                        swal.fire({
-                            title: 'Done!',
-                            text: 'invoice Updated Successfully ',
-                            icon: 'success',
-                            button: {
-                                text: "Continue",
-                                value: true,
-                                visible: true,
-                                className: "btn btn-primary"
-                            }
-                        })
-                        $('#edit_user_modal').modal('hide');
-                    }).fail(function(xhr) {
-                        $('#edit_invoice_modal').modal('hide');
-                        $("#wait-modal").modal('hide');
-                        Swal.fire({
-                            title: 'Error',
-                            text: 'Operation failed.',
-                            icon: 'error'
-                        });
-                    })
-            })
 
             $(document).on('click', '.view', function() {
                 const id = $(this).data('id') || $(this).attr('id');
@@ -638,41 +342,10 @@
                     .done(function(data) {
                         var inv = data.invoice;
                         $('#v_number').text(jv(getInvoiceNumber(inv.number)));
-                        var c = inv.compaign;
-                        $('#v_advertiser').text(c && c.user ? jv(c.user.name) + ' ' + jv(c.user.last_name) : '—');
-                        $('#v_campaign').text(c ? jv(c.name) : '—');
-                        $('#v_billing_period').text(jv(formatDateEN(inv.date)));
-                        $('#v_invoice_date').text(jv(inv.due_date));
-                        $('#v_status').html(getInvoiceStatusText(inv.status));
-
-                        $('#v_subtotal').text(parseFloat(inv.total_ht || 0).toFixed(2));
-                        $('#v_tax').text((inv.tax || 0) + '%');
-                        $('#v_total').text(parseFloat(inv.total_ttc || 0).toFixed(2));
-
-                        // Payment history
-                        if (inv.payments && inv.payments.length > 0) {
-                            var rows = '';
-                            $.each(inv.payments, function (i, p) {
-                                var proofBtn = p.proof
-                                    ? '<button type="button" class="btn btn-sm btn-outline-primary view_proof_btn" ' +
-                                      'data-id="' + p.id + '" data-proof="' + p.proof + '">' +
-                                      '<i class="mdi mdi-eye"></i> View' +
-                                      '</button>'
-                                    : '—';
-                                rows += '<tr>' +
-                                    '<td>' + formatDateEN(p.created_at) + '</td>' +
-                                    '<td>RM ' + parseFloat(p.amount).toFixed(2) + '</td>' +
-                                    '<td>' + jv(p.note) + '</td>' +
-                                    '<td>' + proofBtn + '</td>' +
-                                    '</tr>';
-                            });
-                            $('#v_payments_body').html(rows);
-                            $('#v_payments_card').show();
-                        } else {
-                            $('#v_payments_card').hide();
-                        }
+                        $('#inv_detail').html(window.renderInvoiceDetail(data, { admin: true }));
 
                         $('#view_invoice_modal #v_download').attr('data-invoice-id', data.invoice.id);
+                        window.currentInvoice = data;
                         // hide loader & show content
                         $("#wait-modal").modal('hide');
                     })
@@ -691,6 +364,71 @@
                         $('#inv_content').show();
                     });
             });
+            /* ── Discount ── */
+            function rm(v) { return parseFloat(v || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+
+            function discountPreview() {
+                var sub = parseFloat($('#disc_subtotal').val()) || 0;
+                var tax = parseFloat($('#disc_tax').val()) || 0;
+                var paid = parseFloat($('#disc_paid').val()) || 0;
+                var val = parseFloat($('#disc_value').val()) || 0;
+                var amount = $('#disc_type').val() === 'percent' ? Math.round(sub * val) / 100 : val;
+                var net = sub - amount;
+                var total = Math.round(net * (1 + tax / 100) * 100) / 100;
+                var msg = 'Discount: <strong>RM ' + rm(amount) + '</strong> &rarr; net RM ' + rm(net) +
+                          ' + tax ' + tax + '% = new total <strong>RM ' + rm(total) + '</strong>';
+                var bad = amount >= sub || total < paid;
+                $('#disc_preview').html(msg).toggleClass('border-danger', bad);
+                $('#disc_submit').prop('disabled', val <= 0 || bad);
+            }
+            $(document).on('input change', '#disc_type, #disc_value', discountPreview);
+
+            $(document).on('click', '#v_discount', function () {
+                var d = window.currentInvoice;
+                if (!d) return;
+                var inv = d.invoice, t = d.totals;
+                $('#disc_invoice_id').val(inv.id);
+                $('#disc_number').text(inv.number);
+                $('#disc_subtotal').val(t.subtotal); $('#disc_tax').val(t.tax_rate); $('#disc_paid').val(t.paid);
+                $('#disc_subtotal_txt').text(rm(t.subtotal)); $('#disc_paid_txt').text(rm(t.paid));
+                $('#disc_type').val(t.discount_type || 'percent');
+                $('#disc_value').val(t.discount_value || '');
+                $('#disc_reason').val(t.discount_reason || '');
+                $('#disc_error').text('');
+                $('#disc_remove').toggle(t.discount > 0);
+                discountPreview();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('discount_modal')).show();
+            });
+
+            function sendDiscount(payload) {
+                var id = $('#disc_invoice_id').val();
+                $('#disc_error').text('');
+                return $.ajax({
+                    url: "{{ url('') }}/invoices/" + id + '/discount',
+                    type: 'POST',
+                    data: Object.assign({ _method: 'PUT', _token: "{{ csrf_token() }}" }, payload),
+                    headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" }
+                }).done(function (res) {
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('discount_modal')).hide();
+                    get_invoices();
+                    // recharge le détail ouvert
+                    $.getJSON("{{ url('') }}/invoices/" + id + '/show', function (data) {
+                        window.currentInvoice = data;
+                        $('#inv_detail').html(window.renderInvoiceDetail(data, { admin: true }));
+                    });
+                    Swal.fire({ title: 'Done!', text: res.message, icon: 'success', timer: 1800, showConfirmButton: false });
+                }).fail(function (xhr) {
+                    var errs = xhr.responseJSON && xhr.responseJSON.errors;
+                    $('#disc_error').text(errs ? Object.values(errs)[0][0] : 'Operation failed.');
+                });
+            }
+
+            $(document).on('submit', '#discount_form', function (e) {
+                e.preventDefault();
+                sendDiscount({ type: $('#disc_type').val(), value: $('#disc_value').val(), reason: $('#disc_reason').val() });
+            });
+            $(document).on('click', '#disc_remove', function () { sendDiscount({ type: 'none' }); });
+
             $(document).on('click', '#v_download', function() {
                 const invoiceId = $(this).attr('data-invoice-id');
                 if (!invoiceId) {

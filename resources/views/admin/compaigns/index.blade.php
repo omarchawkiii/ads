@@ -467,6 +467,7 @@ Campaign
                             </div>
                         </div>
                     </div>
+                    <div id="cmpg_playouts"></div>
                 </div>
             </div>
         </div>
@@ -482,6 +483,7 @@ Campaign
     <script src="{{ asset('assets/libs/select2/dist/js/select2.min.js') }}"></script>
     <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
     <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
+    @include('partials.campaign_playouts', ['playoutsBase' => url('/compaigns/{id}/playouts'), 'refreshBase' => url('/compaigns/billing/{id}')])
     <script>
         $(function() {
 
@@ -1035,6 +1037,7 @@ Campaign
 
                 // open modal + show loader
                 $('#view_compaign_modal').modal('show');
+                window.loadPlayouts(id);
                 $('#cmpg_content').hide();
                 $('#cmpg_loader').show();
 

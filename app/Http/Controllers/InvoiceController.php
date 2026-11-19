@@ -4,98 +4,206 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\InvoiceDetails;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use PDF; // alias fourni par barryvdh/laravel-dompdf
 use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
+    /** Types de preuve acceptés (type MIME détecté côté serveur => extension imposée). */
+    private const PROOF_TYPES = [
+        'application/pdf' => 'pdf',
+        'image/jpeg'      => 'jpg',
+        'image/png'       => 'png',
+    ];
+
     public function index(Request $request)
     {
         return view('admin.invoices.index');
     }
 
-    public function show(Request $request)
+    /** Détail complet d'une facture (admin). */
+    public function show(Request $request, InvoiceDetails $details)
     {
-        $invoice = Invoice::with([
-            'compaign',
-            'compaign.user',
-            'payments',
-        ])->findOrFail($request->id);
+        return response()->json($details->build(Invoice::findOrFail($request->id)));
+    }
 
-        return Response()->json(compact('invoice'));
+    /** Détail complet d'une facture, réservé à son annonceur. */
+    public function my_invoice_show($id, InvoiceDetails $details)
+    {
+        $invoice = Invoice::with('compaign')->findOrFail($id);
+        abort_unless(optional($invoice->compaign)->user_id === auth()->id(), 403, 'Access denied');
+
+        return response()->json($details->build($invoice));
     }
 
     public function storePayment(Request $request, $id)
     {
-        $invoice = Invoice::with('payments')->findOrFail($id);
+        // Transaction + verrou sur la facture : deux paiements simultanés ne peuvent pas
+        // dépasser le total, et le statut est recalculé sur la somme réelle des paiements.
+        return DB::transaction(function () use ($request, $id) {
+            $invoice = Invoice::lockForUpdate()->findOrFail($id);
 
-        $totalPaid = $invoice->payments->sum('amount');
-        $remaining = round($invoice->total_ttc - $totalPaid, 2);
+            $totalPaid = round((float) $invoice->payments()->sum('amount'), 2);
+            $remaining = round($invoice->total_ttc - $totalPaid, 2);
 
-        $request->validate([
-            'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $remaining],
-            'note'   => ['nullable', 'string', 'max:1000'],
+            $request->validate([
+                'amount' => ['required', 'numeric', 'min:0.01', 'max:' . max($remaining, 0)],
+                'note'   => ['nullable', 'string', 'max:1000'],
+            ], [
+                'amount.max' => $remaining <= 0
+                    ? 'This invoice is already fully paid.'
+                    : 'The amount cannot exceed the remaining balance (RM ' . number_format($remaining, 2) . ').',
+            ]);
+
+            $proofPath = null;
+            $file      = $request->file('proof');
+            if ($file && $file->isValid() && $file->getSize() > 0) {
+                $ext = self::PROOF_TYPES[$file->getMimeType()] ?? null;
+                if (!$ext) {
+                    return response()->json(['errors' => ['proof' => ['Only PDF, JPG and PNG files are allowed.']]], 422);
+                }
+                if ($file->getSize() > 5 * 1024 * 1024) {
+                    return response()->json(['errors' => ['proof' => ['File must not exceed 5 MB.']]], 422);
+                }
+
+                // Dossier privé : non servi directement par le serveur web (accès via showProof).
+                $dir = storage_path('app/private/payment_proofs');
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                $filename = Str::random(40) . '.' . $ext;
+                $file->move($dir, $filename);
+                $proofPath = 'private/payment_proofs/' . $filename;
+            }
+
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'amount'     => $request->amount,
+                'note'       => $request->note,
+                'proof'      => $proofPath,
+            ]);
+
+            $newTotalPaid = round($totalPaid + (float) $request->amount, 2);
+            $invoice->update(['status' => $newTotalPaid >= (float) $invoice->total_ttc ? 'paid' : 'partially_paid']);
+
+            return response()->json([
+                'message'   => 'Payment recorded successfully.',
+                'paid'      => $newTotalPaid,
+                'remaining' => round($invoice->total_ttc - $newTotalPaid, 2),
+                'status'    => $invoice->status,
+            ]);
+        });
+    }
+
+    /**
+     * Applique, modifie ou retire une remise sur une facture (admin).
+     * La remise s'applique au sous-total HT ; la taxe est recalculée sur le net.
+     * Elle ne peut pas ramener le total sous ce qui a déjà été payé.
+     */
+    public function applyDiscount(Request $request, $id)
+    {
+        $v = $request->validate([
+            'type'   => ['required', 'in:percent,fixed,none'],
+            'value'  => ['required_unless:type,none', 'nullable', 'numeric', 'min:0.01', 'max:999999.99'],
+            'reason' => ['required_unless:type,none', 'nullable', 'string', 'max:500'],
         ]);
 
-        $proofPath = null;
-        $file = $request->file('proof');
-        if ($file && $file->isValid() && $file->getSize() > 0) {
-            if (!in_array($file->getClientMimeType(), ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'])) {
-                return response()->json(['errors' => ['proof' => ['Only PDF and image files are allowed.']]], 422);
+        return DB::transaction(function () use ($v, $id) {
+            $invoice = Invoice::lockForUpdate()->findOrFail($id);
+
+            $gross = round((float) $invoice->total_ht, 2);
+            $type  = $v['type'];
+
+            if ($type === 'none') {
+                $amount = 0.0;
+            } elseif ($type === 'percent') {
+                $amount = round($gross * (float) $v['value'] / 100, 2);
+            } else {
+                $amount = round((float) $v['value'], 2);
             }
-            if ($file->getSize() > 5 * 1024 * 1024) {
-                return response()->json(['errors' => ['proof' => ['File must not exceed 5 MB.']]], 422);
+
+            if ($amount >= $gross && $type !== 'none') {
+                throw ValidationException::withMessages([
+                    'value' => 'The discount must be lower than the subtotal (RM ' . number_format($gross, 2) . ').',
+                ]);
             }
 
-            $dir = storage_path('app/public/payment_proofs');
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+            $newTotal = round(($gross - $amount) * (1 + (float) $invoice->tax / 100), 2);
+            $paid     = round((float) $invoice->payments()->sum('amount'), 2);
+
+            if ($newTotal < $paid) {
+                throw ValidationException::withMessages([
+                    'value' => 'Discount too high: RM ' . number_format($paid, 2) . ' has already been paid, which would exceed the new total (RM ' . number_format($newTotal, 2) . ').',
+                ]);
             }
-            $ext      = $file->getClientOriginalExtension() ?: ($file->guessExtension() ?? 'bin');
-            $filename = Str::random(40) . '.' . $ext;
-            $file->move($dir, $filename);
-            $proofPath = 'payment_proofs/' . $filename;
-        }
 
-        Payment::create([
-            'invoice_id' => $invoice->id,
-            'amount'     => $request->amount,
-            'note'       => $request->note,
-            'proof'      => $proofPath,
-        ]);
+            $invoice->update([
+                'discount'        => $amount,
+                'discount_type'   => $type === 'none' ? null : $type,
+                'discount_value'  => $type === 'none' ? null : $v['value'],
+                'discount_reason' => $type === 'none' ? null : $v['reason'],
+                'discount_by'     => $type === 'none' ? null : auth()->id(),
+                'discount_at'     => $type === 'none' ? null : now(),
+                'total_ttc'       => $newTotal,
+                'status'          => $paid <= 0 ? 'unpaid' : ($paid >= $newTotal ? 'paid' : 'partially_paid'),
+            ]);
 
-        $newTotalPaid = round($totalPaid + $request->amount, 2);
-        if ($newTotalPaid >= $invoice->total_ttc) {
-            $invoice->update(['status' => 'paid']);
-        } else {
-            $invoice->update(['status' => 'partially_paid']);
-        }
-
-        return response()->json([
-            'message'    => 'Payment recorded successfully.',
-            'paid'       => $newTotalPaid,
-            'remaining'  => round($invoice->total_ttc - $newTotalPaid, 2),
-            'status'     => $invoice->fresh()->status,
-        ]);
+            return response()->json([
+                'message'   => $type === 'none' ? 'Discount removed.' : 'Discount applied.',
+                'discount'  => $amount,
+                'total'     => $newTotal,
+                'remaining' => round($newTotal - $paid, 2),
+                'status'    => $invoice->status,
+            ]);
+        });
     }
 
     public function showProof(Payment $payment)
     {
-        $path = storage_path('app/public/' . $payment->proof);
+        abort_unless($payment->proof, 404, 'Proof file not found.');
 
-        if (!$payment->proof || !file_exists($path)) {
-            abort(404, 'Proof file not found.');
+        // Nouveaux fichiers : storage/app/private/... ; anciens : storage/app/public/...
+        $path = storage_path('app/' . $payment->proof);
+        if (!file_exists($path)) {
+            $path = storage_path('app/public/' . $payment->proof);
         }
+        abort_unless(file_exists($path), 404, 'Proof file not found.');
 
         $mime = mime_content_type($path);
-        return response()->file($path, ['Content-Type' => $mime]);
+        abort_unless(isset(self::PROOF_TYPES[$mime]), 415, 'Unsupported file type.');
+
+        return response()->file($path, [
+            'Content-Type'           => $mime,
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function get()
     {
-        $invoices = Invoice::with('compaign.user')->orderBy('date', 'asc')->get();
-        return Response()->json(compact('invoices'));
+        $invoices = Invoice::with('compaign.user')
+            ->withSum('payments as paid', 'amount')
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->each(function ($i) {
+                $i->paid      = round((float) $i->paid, 2);
+                $i->remaining = round((float) $i->total_ttc - $i->paid, 2);
+                $i->overdue   = $i->remaining > 0 && $i->due_date && $i->due_date < now()->toDateString();
+            });
+
+        $summary = [
+            'billed'        => round($invoices->sum('total_ttc'), 2),
+            'paid'          => round($invoices->sum('paid'), 2),
+            'outstanding'   => round($invoices->sum('remaining'), 2),
+            'overdue_count' => $invoices->where('overdue', true)->count(),
+            'overdue_total' => round($invoices->where('overdue', true)->sum('remaining'), 2),
+        ];
+
+        return Response()->json(compact('invoices', 'summary'));
     }
 
     public function advertiser_index()
@@ -112,37 +220,21 @@ class InvoiceController extends Controller
         return response()->json(compact('invoices'));
     }
 
-    public function download($id)
+    public function download($id, InvoiceDetails $details)
     {
-        // Charger l'invoice avec relations nécessaires
-        $invoice = Invoice::with([
-            'compaign',
-            'compaign.user',
-            // ajoute d'autres relations si besoin
-        ])->findOrFail($id);
+        $invoice = Invoice::with('compaign')->findOrFail($id);
 
-        // Préparer les données pour la vue PDF
-        $data = [
-            'invoice' => $invoice,
-            // tu peux transmettre d'autres variables utiles (subtotal/tax/total)
-            // si ton InvoiceController@show calculait subtotal/tax/total, reproduis la logique ici
-        ];
+        // Un annonceur ne télécharge que ses propres factures.
+        if (auth()->user()->role != 1) {
+            abort_unless(optional($invoice->compaign)->user_id === auth()->id(), 403, 'Access denied');
+        }
 
-        // Nom de fichier (ex: INV-2401.pdf). Adapte selon ton accessor invoice_no / number
-        $number = $invoice->number_full ?? $invoice->invoice_no ?? $invoice->number ?? 'invoice-' . $invoice->id;
-        $safeNumber = Str::slug($number, '_'); // sûr pour nom fichier
-        $filename = "invoice_{$safeNumber}.pdf";
+        $number     = $invoice->number ?? 'invoice-' . $invoice->id;
+        $safeNumber = Str::slug($number, '_');
+        $filename   = "invoice_{$safeNumber}.pdf";
 
-        // Charger la view Blade pour le PDF (voir exemple plus bas)
-        $html = view('admin.invoices.pdf', $data)->render();
+        $html = view('admin.invoices.pdf', ['invoice' => $invoice, 'd' => $details->build($invoice)])->render();
 
-        // Générer le PDF
-        $pdf = PDF::loadHTML($html)->setPaper('a4', 'portrait');
-
-        // Retourner en téléchargement
-        return $pdf->download($filename);
-
-        // Option alternative: stream() pour affichage inline
-        // return $pdf->stream($filename);
+        return PDF::loadHTML($html)->setPaper('a4', 'portrait')->download($filename);
     }
 }

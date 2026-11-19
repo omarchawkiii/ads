@@ -108,6 +108,7 @@
                                             <th class="text-center">Name</th>
                                             <th class="text-center">Cinema Chain</th>
                                             <th class="text-center">CPM</th>
+                                            <th class="text-center">Price / play (RM)</th>
                                             <th class="text-center" style="width:160px;">Actions</th>
                                         </tr>
                                     </thead>
@@ -182,6 +183,7 @@
                                         <tr class="text-center">
                                             <th class="text-center" style="width:160px;">ID</th>
                                             <th class="text-center">Name</th>
+                                            <th class="text-center">Price / play (RM)</th>
                                             <th  class="text-center" style="width:160px;">Actions</th>
                                         </tr>
                                     </thead>
@@ -326,6 +328,12 @@
                                     <input type="number" class="form-control" id="cpm" value="0" min="0"
                                         required>
                                 </div>
+                                <div class="mb-3">
+                                    <label for="price" class="">Price per play (RM):</label>
+                                    <input type="number" class="form-control" id="price" min="0" step="0.01"
+                                        placeholder="Empty = default price (Settings)">
+                                    <small class="text-muted">Billed for each confirmed play in this location.</small>
+                                </div>
                             </div>
 
                         </div>
@@ -375,6 +383,12 @@
                                     <label for="cpm" class="">Base CPM (RM):</label>
                                     <input type="number" class="form-control" id="cpm" value="0" min="0"
                                         required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price" class="">Price per play (RM):</label>
+                                    <input type="number" class="form-control" id="price" min="0" step="0.01"
+                                        placeholder="Empty = default price (Settings)">
+                                    <small class="text-muted">Billed for each confirmed play in this location.</small>
                                 </div>
                             </div>
                         </div>
@@ -493,6 +507,12 @@
                                     <label for="name" class="">Name:</label>
                                     <input type="text" class="form-control" id="name" placeholder="Name" required>
                                 </div>
+                                <div class="mb-3">
+                                    <label for="price" class="">Price per play (RM):</label>
+                                    <input type="number" class="form-control" id="price" min="0" step="0.01"
+                                        placeholder="Empty = default price (Settings)">
+                                    <small class="text-muted">Added to each confirmed play of a campaign targeting this hall type.</small>
+                                </div>
 
                             </div>
 
@@ -528,6 +548,12 @@
                                 <div class="mb-3">
                                     <label for="name" class="">Name:</label>
                                     <input type="text" class="form-control" id="name" placeholder="Name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price" class="">Price per play (RM):</label>
+                                    <input type="number" class="form-control" id="price" min="0" step="0.01"
+                                        placeholder="Empty = default price (Settings)">
+                                    <small class="text-muted">Added to each confirmed play of a campaign targeting this hall type.</small>
                                 </div>
                             </div>
                         </div>
@@ -824,6 +850,8 @@
                                         '</td>' +
                                         '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         value.cpm + ' </td>' +
+                                        '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                        (value.price !== null && value.price !== undefined ? Number(value.price).toFixed(2) : '<span class="text-muted">default</span>') + ' </td>' +
 
                                         '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         '<button id="' + value.id +
@@ -871,6 +899,7 @@
                     event.preventDefault();
                     var name = $('#create_location_modal #name ').val();
                     var cpm = $('#create_location_modal #cpm').val();
+                    var price = $('#create_location_modal #price').val();
                     var cinema_chain_id = $('#create_location_modal #cinema_chain_id').val();
                     var url = '{{ url('') }}' + '/locations';
 
@@ -881,6 +910,8 @@
                             data: {
                                 name: name,
                                 cpm: cpm,
+                                price: price,
+                                
                                 cinema_chain_id:cinema_chain_id,
                                 "_token": "{{ csrf_token() }}",
                             },
@@ -991,6 +1022,7 @@
                             $('#edit_location_modal').modal('show');
                             $('#edit_location_modal #name').val(response.location.name)
                             $('#edit_location_modal #cpm').val(response.location.cpm)
+                            $('#edit_location_modal #price').val(response.location.price)
                             $('#edit_location_modal #cinema_chain_id').val(response.location.cinema_chain_id ?? '');
                             $('#edit_location_modal #id').val(location)
 
@@ -1006,6 +1038,7 @@
 
                     var name = $('#edit_location_form #name').val();
                     var cpm = $('#edit_location_form #cpm').val();
+                    var price = $('#edit_location_form #price').val();
                     var id = $('#edit_location_form #id').val();
                     var cinema_chain_id = $('#edit_location_form #cinema_chain_id').val();
                     var url = '{{ url('') }}' + '/locations/' + id;
@@ -1017,6 +1050,8 @@
                             data: {
                                 name: name,
                                 cpm: cpm,
+                                price: price,
+                                
                                 cinema_chain_id:cinema_chain_id,
                                 "_token": "{{ csrf_token() }}",
                             },
@@ -1454,6 +1489,8 @@
                                         '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         value.name + ' </td>' +
                                         '<td class="text-body align-middle fw-medium text-decoration-none">' +
+                                        (value.price !== null && value.price !== undefined ? Number(value.price).toFixed(2) : '<span class="text-muted">default</span>') + ' </td>' +
+                                        '<td class="text-body align-middle fw-medium text-decoration-none">' +
                                         '<button id="' + value.id +
                                         '" type="button" class="edit ustify-content-center btn mb-1 btn-rounded btn-warning m-1" >' +
                                         '<i class="mdi mdi-tooltip-edit "></i>' +
@@ -1497,6 +1534,7 @@
 
                     event.preventDefault();
                     var name = $('#create_hall_modal #name ').val();
+                    var price = $('#create_hall_modal #price').val();
 
                     var url = '{{ url('') }}' + '/halls';
 
@@ -1506,6 +1544,8 @@
                             method: 'POST',
                             data: {
                                 name: name,
+                                price: price,
+                                
                                 "_token": "{{ csrf_token() }}",
                             },
                         })
@@ -1612,6 +1652,7 @@
                             $("#wait-modal").modal('hide');
                             $('#edit_hall_modal').modal('show');
                             $('#edit_hall_modal #name').val(response.hall.name)
+                            $('#edit_hall_modal #price').val(response.hall.price)
                             $('#edit_hall_modal #id').val(hall)
 
                         },
@@ -1624,6 +1665,7 @@
                 $(document).on("submit","#edit_hall_form" , function(event) {
                     event.preventDefault();
                     var name = $('#edit_hall_form #name').val();
+                    var price = $('#edit_hall_form #price').val();
                     var id = $('#edit_hall_form #id').val();
                     var url = '{{ url('') }}' + '/halls/'+ id;
 
@@ -1633,6 +1675,8 @@
                         method: 'PUT',
                         data: {
                             name: name,
+                            price: price,
+                            
                             "_token": "{{ csrf_token() }}",
                         },
                         beforeSend: function () {

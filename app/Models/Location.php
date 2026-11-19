@@ -19,6 +19,7 @@ class Location extends Model
     protected $fillable = [
         'name',
         'cpm',
+        'price',
         'cinema_chain_id',
     ];
 

@@ -53,8 +53,9 @@ class LocationController extends Controller
         {
 
             $validated = $request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'cpm'  => ['required', 'integer', 'min:0'],
+                'name'  => ['required', 'string', 'max:255'],
+                'cpm'   => ['required', 'integer', 'min:0'],
+                'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             ]);
             $location = Location::create($validated);
 
@@ -76,6 +77,7 @@ class LocationController extends Controller
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
                 'cpm'  => ['required', 'integer', 'min:0'],
+                'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
                 'cinema_chain_id' => ['nullable', 'exists:cinema_chains,id'],
             ]);
 

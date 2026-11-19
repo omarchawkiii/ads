@@ -19,6 +19,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('refreshplaybackdata')->everyFiveMinutes();
         $schedule->command('refreshsnmpdata')->everyFiveMinutes();
         $schedule->command('refreshmacrosdata')->everyFiveMinutes();
+
+        // Diffusions confirmées des campagnes en cours (NOC ads_played), chaque nuit
+        $schedule->command('compaigns:refresh-playouts')->dailyAt('03:00')->withoutOverlapping();
+
+        // Facture des campagnes terminées, chaque nuit à minuit
+        $schedule->command('invoices:generate')->dailyAt('00:00')->withoutOverlapping();
     }
 
     /**

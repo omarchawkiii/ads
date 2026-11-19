@@ -31,6 +31,7 @@ class HallTypeController extends Controller
         {
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
+                'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             ]);
             $hall = HallType::create($validated);
             return response()->json([
@@ -50,6 +51,7 @@ class HallTypeController extends Controller
         {
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
+                'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
             ]);
 
             $hall->update($validated);

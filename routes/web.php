@@ -188,6 +188,7 @@ Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::cla
 Route::put('/compaigns/approuve/{compaign}', [App\Http\Controllers\CompaignController::class, 'approuve'])->name('compaigns.approuve')->middleware(['auth','admin']);
 Route::put('/compaigns/reject/{compaign}', [App\Http\Controllers\CompaignController::class, 'reject'])->name('compaigns.reject')->middleware(['auth','admin']);
 Route::put('/compaigns/billing/{compaign}', [App\Http\Controllers\CompaignController::class, 'billing'])->name('compaigns.billing')->middleware(['auth','admin']);
+Route::get('/compaigns/{id}/playouts', [App\Http\Controllers\CompaignController::class, 'playouts'])->name('compaigns.playouts')->middleware(['auth','admin']);
 Route::get('/compaigns/refresh_camapaign', [App\Http\Controllers\CompaignController::class, 'refresh_camapaign'])->name('compaigns.refresh_camapaign')->middleware(['auth','admin']);
 
 
@@ -204,12 +205,10 @@ Route::get('/planning/slots/reserved/all', [App\Http\Controllers\CompaignControl
 
 Route::get('invoices', [App\Http\Controllers\InvoiceController::class, 'index'])->name('invoices.index')->middleware(['auth','admin']);
 Route::get('/invoices/list', [App\Http\Controllers\InvoiceController::class, 'get'])->name('invoices.list')->middleware(['auth','admin']);
-Route::post('/invoices', [App\Http\Controllers\InvoiceController::class, 'store'])->name('invoices.store')->middleware(['auth','admin']);
-Route::put('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class, 'update'])->name('invoices.update')->middleware(['auth','admin']);
-Route::delete('/invoices/{invoice}', [App\Http\Controllers\InvoiceController::class, 'destroy'])->name('invoices.destroy')->middleware(['auth','admin']);
 Route::get('/invoices/{id}/show', [App\Http\Controllers\InvoiceController::class, 'show'])->name('invoices.show')->middleware(['auth','admin']);
 Route::get('/invoices/{id}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoices.download')->middleware(['auth','admin']);
 Route::post('/invoices/{id}/payments', [App\Http\Controllers\InvoiceController::class, 'storePayment'])->name('invoices.payments.store')->middleware(['auth','admin']);
+Route::put('/invoices/{id}/discount', [App\Http\Controllers\InvoiceController::class, 'applyDiscount'])->name('invoices.discount')->middleware(['auth','admin']);
 Route::get('/payments/{payment}/proof', [App\Http\Controllers\InvoiceController::class, 'showProof'])->name('payments.proof')->middleware(['auth','admin']);
 
 
@@ -217,6 +216,7 @@ Route::get('/payments/{payment}/proof', [App\Http\Controllers\InvoiceController:
 Route::get('configs', [App\Http\Controllers\ConfigController::class, 'edit'])->name('invoices.edit')->middleware(['auth','admin']);
 Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update'])->name('configs.store')->middleware(['auth','admin']);
 Route::post('/configs/tax', [App\Http\Controllers\ConfigController::class, 'updateTax'])->name('configs.tax')->middleware(['auth','admin']);
+Route::post('/configs/prices', [App\Http\Controllers\ConfigController::class, 'updatePrices'])->name('configs.prices')->middleware(['auth','admin']);
 
 
 
@@ -236,6 +236,7 @@ Route::put('profile', [App\Http\Controllers\ProfileController::class, 'update'])
     Route::put('/compaigns/{id}/update', [App\Http\Controllers\CompaignController::class, 'update'])->name('compaigns.update');
     Route::get('compaigns', [App\Http\Controllers\CompaignController::class, 'advertiser_index'])->name('compaigns.index');
     Route::get('compaigns/list', [App\Http\Controllers\CompaignController::class, 'my_compaigns'])->name('compaigns.my_compaigns');
+    Route::get('/compaigns/{id}/playouts', [App\Http\Controllers\CompaignController::class, 'playouts'])->name('compaigns.playouts');
     Route::get('/compaigns/{id}/show', [App\Http\Controllers\CompaignController::class, 'show'])->name('compaigns.show');
     Route::post('/compaigns', [App\Http\Controllers\CompaignController::class, 'store'])->name('compaigns.store');
     Route::delete('/compaigns/{compaign}', [App\Http\Controllers\CompaignController::class, 'advertiser_destory_company'])->name('compaigns.destroy');
@@ -273,6 +274,7 @@ Route::put('profile', [App\Http\Controllers\ProfileController::class, 'update'])
 
     Route::get('/invoices', [App\Http\Controllers\InvoiceController::class, 'advertiser_index'])->name('invoices.index');
     Route::get('/invoices/list', [App\Http\Controllers\InvoiceController::class, 'my_invoices'])->name('invoices.list');
+    Route::get('/invoices/{id}/show', [App\Http\Controllers\InvoiceController::class, 'my_invoice_show'])->name('invoices.show');
     Route::get('/invoices/{id}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoices.download');
 
 });

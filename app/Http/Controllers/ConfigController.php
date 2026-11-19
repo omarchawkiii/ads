@@ -53,6 +53,17 @@ class ConfigController extends Controller
         return response()->json(['message' => 'Tax updated successfully.', 'tax' => $config->tax]);
     }
 
+    public function updatePrices(Request $request)
+    {
+        $v = $request->validate([
+            'default_location_price' => 'required|numeric|min:0|max:999999.99',
+            'default_slot_price'     => 'required|numeric|min:0|max:999999.99',
+            'default_hall_type_price' => 'required|numeric|min:0|max:999999.99',
+        ]);
+        Config::first()->update($v);
+        return response()->json(['message' => 'Default prices updated successfully.'] + $v);
+    }
+
     public function update_use_noc(Request $request)
     {
         $config = Config::all()->first();
