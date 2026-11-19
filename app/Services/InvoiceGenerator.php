@@ -88,10 +88,10 @@ class InvoiceGenerator
 
     /**
      * Crée la facture d'une campagne. Idempotent : si la campagne a déjà une facture, elle est
-     * renvoyée sans modification. Renvoie null s'il n'y a rien à facturer (aucune diffusion
-     * confirmée, ou montant nul) : on ne génère jamais de facture à 0.
+     * renvoyée sans modification. La facture est créée même sans diffusion confirmée (montant 0,
+     * sans ligne, statut « paid » puisqu'il n'y a rien à payer).
      */
-    public function generate(Compaign $compaign): ?Invoice
+    public function generate(Compaign $compaign): Invoice
     {
         return DB::transaction(function () use ($compaign) {
             if ($existing = Invoice::where('compaign_id', $compaign->id)->lockForUpdate()->first()) {
@@ -100,10 +100,6 @@ class InvoiceGenerator
 
             $lines   = $this->lines($compaign);
             $totalHt = round(array_sum(array_column($lines, 'amount')), 2);
-
-            if ($totalHt <= 0) {
-                return null;
-            }
 
             $tax      = (float) (Config::first()->tax ?? 6);
             $totalTtc = round($totalHt * (1 + $tax / 100), 2);
@@ -119,7 +115,7 @@ class InvoiceGenerator
                 'number'      => 'INV-' . $year . '-' . str_pad($lastSeq + 1, 5, '0', STR_PAD_LEFT),
                 'date'        => now()->toDateString(),
                 'due_date'    => now()->addDays(30)->toDateString(),
-                'status'      => 'unpaid',
+                'status'      => $totalTtc > 0 ? 'unpaid' : 'paid',
                 'discount'    => 0,
                 'tax'         => $tax,
                 'total_ht'    => $totalHt,

@@ -119,38 +119,45 @@ final class InvoiceGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function no_invoice_when_nothing_was_played(): void
+    public function zero_amount_invoice_is_generated_when_nothing_was_played(): void
     {
-        $this->assertNull(app(InvoiceGenerator::class)->generate($this->campaign));
-        $this->assertSame(0, $this->campaign->invoices()->count());
+        $i = app(InvoiceGenerator::class)->generate($this->campaign);
+        $this->assertEquals(0, $i->total_ht);
+        $this->assertEquals(0, $i->total_ttc);
+        $this->assertSame('paid', $i->status);
+        $this->assertSame(0, $i->lines()->count());
+        $this->assertSame(1, $this->campaign->invoices()->count());
     }
 
     #[Test]
-    public function command_waits_for_noc_sync_then_invoices(): void
+    public function command_invoices_ended_campaign_even_if_noc_is_unreachable_or_empty(): void
+    {
+        $this->id('compaign_cinema_chain', ['compaign_id' => $this->campaign->id, 'cinema_chain_id' => $this->chain]);
+        Http::fake(['noc.test/*' => Http::response('route not found', 404)]);
+
+        $this->artisan('invoices:generate')->assertSuccessful();
+
+        $invoice = $this->campaign->invoices()->first();
+        $this->assertNotNull($invoice);
+        $this->assertEquals(0, $invoice->total_ht);
+    }
+
+    #[Test]
+    public function command_invoices_with_confirmed_plays(): void
     {
         $this->id('locations', ['name' => 'KLCC', 'cpm' => 0, 'price' => 5.00, 'cinema_chain_id' => $this->chain]);
         $this->id('compaign_cinema_chain', ['compaign_id' => $this->campaign->id, 'cinema_chain_id' => $this->chain]);
 
-        $noc = fn (string $synced) => ([
-            'status' => 1, 'synced_until' => $synced, 'data' => [[
+        Http::fake(['noc.test/*' => Http::response([
+            'status' => 1, 'synced_until' => '2026-10-11 02:00:00', 'data' => [[
                 'cpl_uuid' => 'urn:uuid:aaaa-1', 'played' => 10, 'by_location' => [[
                     'location' => 'KLCC', 'played' => 10, 'incomplete' => 0, 'failed' => 0, 'played_seconds' => 300,
                     'by_day' => [['date' => '2026-10-02', 'played' => 10, 'incomplete' => 0, 'failed' => 0]],
                 ]],
             ]], 'message' => 'ok',
-        ]);
+        ])]);
 
-        Http::fake(['noc.test/*' => Http::sequence()
-            ->push($noc('2026-10-05 00:00:00'))   // NOC en retard
-            ->push($noc('2026-10-11 02:00:00'))]); // NOC à jour
-
-        // NOC en retard (sync avant la fin de campagne) : pas de facture. --wait élevé pour
-        // ne pas déclencher l'échéance d'attente (la campagne de test est ancienne).
-        $this->artisan('invoices:generate --wait=99999')->assertSuccessful();
-        $this->assertSame(0, $this->campaign->invoices()->count());
-
-        // NOC à jour : facture créée (10 × (5+3) = 80 HT).
-        $this->artisan('invoices:generate --wait=99999')->assertSuccessful();
-        $this->assertEquals(80.00, $this->campaign->invoices()->first()->total_ht);
+        $this->artisan('invoices:generate')->assertSuccessful();
+        $this->assertEquals(80.00, $this->campaign->invoices()->first()->total_ht); // 10 × (5+3)
     }
 }
