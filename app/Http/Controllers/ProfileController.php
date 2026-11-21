@@ -17,6 +17,10 @@ class ProfileController extends Controller
             return view('admin.profile.index', compact('user'));
         }
 
+        if ($user->role == 5) {
+            return view('cinema_chain.profile.index', compact('user'));
+        }
+
         if ($user->role == 4) {
             return view('content_approval.profile.index', compact('user'));
         }

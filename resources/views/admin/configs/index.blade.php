@@ -146,6 +146,16 @@
                                                value="{{ $config->default_hall_type_price ?? 0 }}">
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Default cinema chain revenue share (%)</label>
+                                    <div class="input-group mb-3">
+                                        <input type="number" class="form-control" id="default_revenue_share_percent"
+                                               min="0" max="100" step="0.01" required
+                                               value="{{ $config->default_revenue_share_percent ?? 100 }}">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted">Part of the invoice subtotal (HT) shown to a cinema chain user, unless the chain has its own %.</small>
+                                </div>
                             </div>
                             <small class="text-muted d-block">
                                 Used when a location, a slot or a hall type has no price of its own.
@@ -222,6 +232,7 @@
                         default_location_price: $('#default_location_price').val(),
                         default_slot_price:     $('#default_slot_price').val(),
                         default_hall_type_price: $('#default_hall_type_price').val(),
+                        default_revenue_share_percent: $('#default_revenue_share_percent').val(),
                         _token: '{{ csrf_token() }}',
                     },
                 })

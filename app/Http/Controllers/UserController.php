@@ -36,6 +36,9 @@ class UserController extends Controller
             'role'  => ['required', 'integer', 'min:0'],
             'username'  => ['required', 'string', 'min:0', 'max:255'],
             'last_name'  => ['required', 'string', 'min:0', 'max:255'],
+            // Un utilisateur « Cinema Chain » (rôle 5) doit être rattaché à au moins une chaîne.
+            'cinema_chain_ids'   => [$request->role == 5 ? 'required' : 'nullable', 'array', $request->role == 5 ? 'min:1' : 'min:0'],
+            'cinema_chain_ids.*' => ['integer', 'exists:cinema_chains,id'],
         ]);
 
         $user = User::create([
@@ -48,6 +51,10 @@ class UserController extends Controller
             'last_name'       => $request->last_name,
             'advertiser_type' => $request->role == 2 ? $request->advertiser_type : null,
         ]);
+
+        if ($request->role == 5) {
+            $user->cinemaChains()->sync($validated['cinema_chain_ids']);
+        }
 
         return response()->json([
             'message' => 'User created successfully.',

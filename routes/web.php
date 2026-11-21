@@ -22,6 +22,9 @@ Route::get('/', function () {
     if (Auth::user()->role == 4) {
         return redirect()->route('content_approval.dashboard');
     }
+    if (Auth::user()->role == 5) {
+        return redirect()->route('cinema_chain.dashboard');
+    }
     return app(\App\Http\Controllers\DashboardController::class)->advertiser();
 })->name('dashboard')->middleware(['auth']);
 
@@ -280,6 +283,16 @@ Route::put('profile', [App\Http\Controllers\ProfileController::class, 'update'])
 });
 
 
+
+/* ************ Cinema Chain route ********** */
+Route::middleware(['auth', 'cinema_chain'])->prefix('cinema-chain')->name('cinema_chain.')->group(function () {
+    Route::get('/', [App\Http\Controllers\CinemaChainPortalController::class, 'dashboard'])->name('dashboard');
+    Route::get('/revenue', [App\Http\Controllers\CinemaChainPortalController::class, 'revenue'])->name('revenue');
+    Route::get('/revenue/export', [App\Http\Controllers\CinemaChainPortalController::class, 'export'])->name('revenue.export');
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [App\Http\Controllers\CinemaChainPortalController::class, 'updatePassword'])->name('profile.password');
+});
 
 /* ************ Content Approval route ********** */
 Route::middleware(['auth', 'content_approval'])->prefix('content-approval')->name('content_approval.')->group(function () {

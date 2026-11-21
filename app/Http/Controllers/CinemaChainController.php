@@ -39,6 +39,7 @@ class CinemaChainController extends Controller
                 'ip_address'    => ['nullable', 'string', 'max:255'],
                 'username'      => ['nullable', 'string', 'max:255'],
                 'password'      => ['nullable', 'string', 'max:255'],
+                'revenue_share_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             ]);
 
             $cinemaChain = CinemaChain::create($validated);
@@ -65,6 +66,7 @@ class CinemaChainController extends Controller
                 'ip_address'    => ['nullable', 'string', 'max:255'],
                 'username'      => ['nullable', 'string', 'max:255'],
                 'password'      => ['nullable', 'string', 'max:255'],
+                'revenue_share_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             ]);
 
             $cinemaChain->update($validated);

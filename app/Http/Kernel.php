@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'admin'              => \App\Http\Middleware\Admin::class,
         'advertiser'         => \App\Http\Middleware\Advertiser::class,
         'content_approval'   => \App\Http\Middleware\ContentApproval::class,
+        'cinema_chain'       => \App\Http\Middleware\CinemaChain::class,
     ];
 }

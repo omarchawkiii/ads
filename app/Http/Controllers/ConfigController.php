@@ -59,6 +59,7 @@ class ConfigController extends Controller
             'default_location_price' => 'required|numeric|min:0|max:999999.99',
             'default_slot_price'     => 'required|numeric|min:0|max:999999.99',
             'default_hall_type_price' => 'required|numeric|min:0|max:999999.99',
+            'default_revenue_share_percent' => 'required|numeric|min:0|max:100',
         ]);
         Config::first()->update($v);
         return response()->json(['message' => 'Default prices updated successfully.'] + $v);

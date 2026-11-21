@@ -222,6 +222,10 @@
                                     <label>Contact Email</label>
                                     <input type="email" class="form-control" id="contact_email" placeholder="Contact Email">
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Revenue share (%)</label>
+                                    <input type="number" class="form-control" id="revenue_share_percent" min="0" max="100" step="0.01" placeholder="Default from settings">
+                                </div>
                                 <div class="col-md-12 mb-3">
                                     <label>IP Address</label>
                                     <input type="text" class="form-control" id="ip_address" placeholder="e.g. 192.168.1.1">
@@ -269,6 +273,10 @@
                                 <div class="col-md-6 mb-3">
                                     <label>Contact Email</label>
                                     <input type="email" class="form-control" id="contact_email" placeholder="Contact Email">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Revenue share (%)</label>
+                                    <input type="number" class="form-control" id="revenue_share_percent" min="0" max="100" step="0.01" placeholder="Default from settings">
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label>IP Address</label>
@@ -654,6 +662,7 @@
                             contact_name:  $('#create_cinema_chain_modal #contact_name').val(),
                             contact_email: $('#create_cinema_chain_modal #contact_email').val(),
                             ip_address:    $('#create_cinema_chain_modal #ip_address').val(),
+                            revenue_share_percent: $('#create_cinema_chain_modal #revenue_share_percent').val(),
                             username:      $('#create_cinema_chain_modal #cc_username').val(),
                             password:      $('#create_cinema_chain_modal #cc_password').val(),
                             "_token": "{{ csrf_token() }}",
@@ -756,6 +765,7 @@
                             $('#edit_cinema_chain_modal #contact_name').val(c.contact_name || '');
                             $('#edit_cinema_chain_modal #contact_email').val(c.contact_email || '');
                             $('#edit_cinema_chain_modal #ip_address').val(c.ip_address || '');
+                            $('#edit_cinema_chain_modal #revenue_share_percent').val(c.revenue_share_percent ?? '');
                             $('#edit_cinema_chain_modal #cc_username').val(c.username || '');
                             $('#edit_cinema_chain_modal #cc_password').val('');
                             $('#edit_cinema_chain_modal').modal('show');
@@ -775,6 +785,7 @@
                         contact_name:  $('#edit_cinema_chain_form #contact_name').val(),
                         contact_email: $('#edit_cinema_chain_form #contact_email').val(),
                         ip_address:    $('#edit_cinema_chain_form #ip_address').val(),
+                        revenue_share_percent: $('#edit_cinema_chain_form #revenue_share_percent').val(),
                         username:      $('#edit_cinema_chain_form #cc_username').val(),
                         "_token": "{{ csrf_token() }}",
                     };

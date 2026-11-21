@@ -18,6 +18,7 @@ class Config extends Model
        'default_location_price',
        'default_slot_price',
        'default_hall_type_price',
+       'default_revenue_share_percent',
     ];
 
 }

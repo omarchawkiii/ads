@@ -53,7 +53,8 @@ class InvoiceGenerator
 
         $slots = Slot::withTrashed()->whereIn('id', $slotByDcp->values())->get()->keyBy('id');
         $dcps  = DcpCreative::withTrashed()->whereIn('id', $totals->pluck('dcp_creative_id')->unique())->get()->keyBy('id');
-        $chains = \App\Models\CinemaChain::whereIn('id', $totals->pluck('cinema_chain_id')->unique())->pluck('name', 'id');
+        $chains = \App\Models\CinemaChain::whereIn('id', $totals->pluck('cinema_chain_id')->unique())->get()->keyBy('id');
+        $defaultShare = (float) ($config->default_revenue_share_percent ?? 100);
 
         $halls     = $compaign->hallTypes()->get();
         $hallPrice = round($halls->sum(fn ($h) => (float) ($h->price ?? $defaultHall)), 2);
@@ -72,7 +73,10 @@ class InvoiceGenerator
             $lines[] = [
                 'dcp_name'       => $dcps[$t->dcp_creative_id]->name ?? ('#' . $t->dcp_creative_id),
                 'slot_name'      => $slot?->name,
-                'cinema_chain'   => $chains[$t->cinema_chain_id] ?? null,
+                'cinema_chain'   => $chains[$t->cinema_chain_id]->name ?? null,
+                'cinema_chain_id' => $t->cinema_chain_id,
+                // % de partage de la chaîne figé à la génération : changer le % plus tard ne touche pas cette facture.
+                'share_percent'  => (float) ($chains[$t->cinema_chain_id]->revenue_share_percent ?? $defaultShare),
                 'location_name'  => $t->location_name,
                 'played'         => (int) $t->played,
                 'location_price' => $locPrice,

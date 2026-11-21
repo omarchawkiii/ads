@@ -16,6 +16,7 @@ class CinemaChain extends Model
         'ip_address',
         'username',
         'password',
+        'revenue_share_percent',
     ];
 
     public function compaigns()

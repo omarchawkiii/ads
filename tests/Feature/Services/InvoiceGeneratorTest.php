@@ -71,6 +71,7 @@ final class InvoiceGeneratorTest extends TestCase
         $this->assertSame(800.0, $lines['KLCC']['amount']);
         $this->assertSame(200.0, $lines['Sunway']['amount']);
         $this->assertSame('Trailers', $lines['KLCC']['slot_name']);
+        $this->assertSame($this->chain, $lines['KLCC']['cinema_chain_id']); // lien fiable vers la chaîne
     }
 
     #[Test]

@@ -127,7 +127,16 @@
                                         <option value="2">Advertiser </option>
                                         <option value="3">Marketing </option>
  
-                                        <option value="4">Content Approval </option>                                   </select>
+                                        <option value="4">Content Approval </option>
+                                        <option value="5">Cinema Chain </option>                                   </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 d-none" id="create_chains_wrap">
+                                <div class="form-group mb-4">
+                                    <label class="mr-sm-2">Cinema chain(s) <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="create_chain_ids" multiple size="4"></select>
+                                    <small class="text-muted">This user will only see the revenue of these chains. Hold Ctrl to select several.</small>
                                 </div>
                             </div>
 
@@ -199,7 +208,8 @@
                                         <option value="2">Advertiser </option>
                                         <option value="3">Marketing </option>
  
-                                        <option value="4">Content Approval </option>                                   </select>
+                                        <option value="4">Content Approval </option>
+                                        <option value="5">Cinema Chain </option>                                   </select>
                                 </div>
                             </div>
 
@@ -401,6 +411,8 @@
                                     role = "Advertiser" + typeLabel;
                                 } else if (value.role == 4) {
                                     role = "Content Approval"
+                                } else if (value.role == 5) {
+                                    role = "Cinema Chain"
                                 } else {
                                     role = "Marketing"
                                 }
@@ -426,7 +438,7 @@
                                     '" type="button" class="edit_password justify-content-center btn mb-1 btn-rounded btn-warning m-1">' +
                                     '<i class="mdi mdi-pencil-lock"></i>' +
                                     '</button>' +
-                                    (value.role == 2 ?
+                                    ((value.role == 2 || value.role == 5) ?
                                     '<button id="' + value.id +
                                     '" type="button" class="assign_chains justify-content-center btn mb-1 btn-rounded btn-info m-1" title="Assign Cinema Chains">' +
                                     '<i class="mdi mdi-home-modern"></i>' +
@@ -474,6 +486,22 @@
                 }
             });
 
+            $(document).on('change', '#create_user_modal #role', function() {
+                var wrap = $('#create_chains_wrap');
+                if ($(this).val() == 5) {
+                    wrap.removeClass('d-none');
+                    var $s = $('#create_chain_ids');
+                    if ($s.children().length === 0) {
+                        $.get('{{ url('') }}/cinema-chains/list', function(res) {
+                            $.each(res.cinemaChains, function(i, c) { $s.append('<option value="' + c.id + '">' + c.name + '</option>'); });
+                        });
+                    }
+                } else {
+                    wrap.addClass('d-none');
+                    $('#create_chain_ids').val([]);
+                }
+            });
+
             $(document).on('change', '#edit_user_modal #role', function() {
                 var wrap = $('#edit_advertiser_type_wrap');
                 if ($(this).val() == 2) {
@@ -498,8 +526,14 @@
                     password: $form.find('#password').val(),
                     role: role,
                     advertiser_type: role == 2 ? $form.find('#advertiser_type').val() : null,
+                    cinema_chain_ids: role == 5 ? ($form.find('#create_chain_ids').val() || []) : [],
                     _token: "{{ csrf_token() }}",
                 };
+
+                if (role == 5 && payload.cinema_chain_ids.length === 0) {
+                    Swal.fire({ title: 'Cinema chain required', text: 'Select at least one cinema chain for this user.', icon: 'warning' });
+                    return;
+                }
 
                 $.ajax({
                         url: "{{ url('') }}/users",
