@@ -22,7 +22,7 @@ class CinemaChainRevenue
     /** Chaînes de l'utilisateur, indexées par id, avec leur % de partage effectif. */
     public function chains(User $user): array
     {
-        $default = (float) (Config::first()?->default_revenue_share_percent ?? 100);
+        $default = (float) (Config::first()?->default_revenue_share_percent ?? 60);
 
         return $user->cinemaChains()->orderBy('name')->get()
             ->mapWithKeys(fn (CinemaChain $c) => [$c->id => [

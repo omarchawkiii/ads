@@ -47,7 +47,7 @@ final class CinemaChainPortalTest extends TestCase
         parent::setUp();
 
         Config::query()->delete();
-        Config::create(['use_noc' => 0, 'tax' => 6, 'default_revenue_share_percent' => 50]);
+        Config::create(['use_noc' => 0, 'tax' => 6, 'default_revenue_share_percent' => 50, 'min_outlet_week_price' => 0]);
 
         $this->chainA = $this->id('cinema_chains', ['name' => 'Chain A', 'revenue_share_percent' => null]);
         $this->chainB = $this->id('cinema_chains', ['name' => 'Chain B', 'revenue_share_percent' => 20]);

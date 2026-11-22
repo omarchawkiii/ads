@@ -77,35 +77,58 @@
   </table>
 
   <h4>Billing details</h4>
+  @php
+    $mx = fn ($v) => rtrim(rtrim(number_format((float) ($v ?? 1), 3, '.', ''), '0'), '.');
+  @endphp
   <table>
     <thead>
       <tr>
         <th>Ad</th><th>Slot</th><th>Location</th>
         <th class="text-right">Plays</th>
-        <th class="text-right">Location (RM)</th>
-        <th class="text-right">Slot (RM)</th>
-        <th class="text-right">Halls (RM)</th>
+        <th class="text-right">Base (RM)</th>
+        <th class="text-right">Multiplier</th>
+        <th class="text-right">Per play (RM)</th>
         <th class="text-right">Amount (RM)</th>
       </tr>
     </thead>
     <tbody>
       @forelse($invoice->lines as $line)
-        <tr>
-          <td>{{ $line->dcp_name }}</td>
-          <td>{{ $line->slot_name ?? '-' }}</td>
-          <td>{{ $line->location_name }}</td>
-          <td class="text-right">{{ number_format($line->played) }}</td>
-          <td class="text-right">{{ number_format($line->location_price, 2) }}</td>
-          <td class="text-right">{{ number_format($line->slot_price, 2) }}</td>
-          <td class="text-right">{{ number_format($line->hall_price, 2) }}</td>
-          <td class="text-right">{{ number_format($line->amount, 2) }}</td>
-        </tr>
+        @if($line->line_type === 'minimum')
+          <tr>
+            <td colspan="3">{{ $line->dcp_name }} - {{ $line->location_name }}</td>
+            <td class="text-right">-</td><td class="text-right">-</td><td class="text-right">-</td><td class="text-right">-</td>
+            <td class="text-right">{{ number_format($line->amount, 2) }}</td>
+          </tr>
+        @else
+          @php $base = (float) $line->location_price + (float) $line->slot_price + (float) $line->hall_price; @endphp
+          <tr>
+            <td>{{ $line->dcp_name }}</td>
+            <td>{{ $line->slot_name ?? '-' }}</td>
+            <td>{{ $line->location_name }}</td>
+            <td class="text-right">{{ number_format($line->played) }}</td>
+            <td class="text-right">{{ number_format($base, 2) }}</td>
+            <td class="text-right">x{{ $mx($line->multiplier) }}@if((float) $line->multiplier_raw > (float) $line->multiplier) (cap)@endif</td>
+            <td class="text-right">{{ number_format($line->unit_price ?? $base, 2) }}</td>
+            <td class="text-right">{{ number_format($line->amount, 2) }}</td>
+          </tr>
+          @if((float) $line->multiplier != 1.0)
+            <tr>
+              <td colspan="8" class="muted" style="font-size:10px;">
+                Multiplier x{{ $mx($line->multiplier) }} = position x{{ $mx($line->multiplier_position) }}
+                &middot; targeting x{{ $mx($line->multiplier_targeting) }}@if($line->targeting_level) ({{ $line->targeting_level }})@endif
+                &middot; length x{{ $mx($line->multiplier_length) }}
+                &middot; season x{{ $mx($line->multiplier_season) }}
+                &middot; volume x{{ $mx($line->multiplier_volume) }}@if((float) $line->multiplier_raw > (float) $line->multiplier) &middot; capped from x{{ $mx($line->multiplier_raw) }}@endif
+              </td>
+            </tr>
+          @endif
+        @endif
       @empty
         <tr><td colspan="8">No detail available for this invoice.</td></tr>
       @endforelse
     </tbody>
   </table>
-  <div class="muted">Amount = plays &times; (location price + slot price + hall types price).</div>
+  <div class="muted">Amount = plays &times; per-play price. Per-play price = (location + slot + hall types price) &times; multipliers (position, targeting, ad length, season, volume; combined multiplier capped). A minimum charge per cinema and per week may apply.</div>
 
   @if($pop && $pop['fetched'])
     <h4>Proof of play</h4>

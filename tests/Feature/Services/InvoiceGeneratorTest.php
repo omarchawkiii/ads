@@ -33,7 +33,7 @@ final class InvoiceGeneratorTest extends TestCase
         parent::setUp();
 
         Config::query()->delete();
-        Config::create(['use_noc' => 0, 'tax' => 6, 'default_location_price' => 2.00, 'default_slot_price' => 1.00, 'default_hall_type_price' => 0.50]);
+        Config::create(['use_noc' => 0, 'tax' => 6, 'default_location_price' => 2.00, 'default_slot_price' => 1.00, 'default_hall_type_price' => 0.50, 'min_outlet_week_price' => 0]);
 
         $this->chain  = $this->id('cinema_chains', ['name' => 'Chain A', 'ip_address' => 'http://noc.test', 'username' => 'u', 'password' => 'p']);
         $this->slotId = $this->id('slots', ['name' => 'Trailers', 'cpm' => 0, 'price' => 3.00]);

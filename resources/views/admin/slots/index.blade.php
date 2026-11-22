@@ -268,6 +268,12 @@ Playlist Template Builder
                             <label>Price / play (RM):</label>
                             <input type="number" min="0" step="0.01" class="form-control slot_price" placeholder="Default" value="${!isSegment ? (slot.price ?? '') : ''}">
                         </div>
+                        <div class="col-md-3">
+                            <label>Position in show:</label>
+                            <select class="form-select position_tier">
+                                ${[['first','First segment'],['middle','Middle segment'],['premium','Premium (before film)']].map(([v,l]) => `<option value="${v}" ${(slot.position_tier || 'first') === v ? 'selected' : ''}>${l}</option>`).join('')}
+                            </select>
+                        </div>
                     </div>
 
                     {{-- SEGMENT fields --}}
@@ -355,6 +361,7 @@ Playlist Template Builder
                         max_duration:   $(this).find('.max_duration').val(),
                         max_ad_slot:    $(this).find('.max_ad_slot').val(),
                         price:          $(this).find('.slot_price').val(),
+                        position_tier:  $(this).find('.position_tier').val(),
                         segment_select: $(this).find('.segment_select').val(),
                         ad_slot_types:  $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });
@@ -524,6 +531,7 @@ Playlist Template Builder
                         max_duration:   $(this).find('.max_duration').val(),
                         max_ad_slot:    $(this).find('.max_ad_slot').val(),
                         price:          $(this).find('.slot_price').val(),
+                        position_tier:  $(this).find('.position_tier').val(),
                         segment_select: $(this).find('.segment_select').val(),
                         ad_slot_types:  $(this).find('.ad_slot_type').map(function() { return $(this).val(); }).get()
                     });

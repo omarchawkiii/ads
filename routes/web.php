@@ -220,6 +220,10 @@ Route::get('configs', [App\Http\Controllers\ConfigController::class, 'edit'])->n
 Route::post('/configs', [App\Http\Controllers\ConfigController::class, 'update'])->name('configs.store')->middleware(['auth','admin']);
 Route::post('/configs/tax', [App\Http\Controllers\ConfigController::class, 'updateTax'])->name('configs.tax')->middleware(['auth','admin']);
 Route::post('/configs/prices', [App\Http\Controllers\ConfigController::class, 'updatePrices'])->name('configs.prices')->middleware(['auth','admin']);
+Route::post('/configs/multipliers', [App\Http\Controllers\ConfigController::class, 'updateMultipliers'])->name('configs.multipliers')->middleware(['auth','admin']);
+Route::post('/configs/seasons', [App\Http\Controllers\ConfigController::class, 'seasonStore'])->name('configs.seasons.store')->middleware(['auth','admin']);
+Route::put('/configs/seasons/{id}', [App\Http\Controllers\ConfigController::class, 'seasonUpdate'])->name('configs.seasons.update')->middleware(['auth','admin']);
+Route::delete('/configs/seasons/{id}', [App\Http\Controllers\ConfigController::class, 'seasonDestroy'])->name('configs.seasons.destroy')->middleware(['auth','admin']);
 
 
 

@@ -85,18 +85,29 @@
 
         /* ---- Détail de facturation ---- */
         var lines = '';
+        function mx(v) { return Number(v == null ? 1 : v).toFixed(2).replace(/\.?0+$/, ''); }
         $.each(inv.lines || [], function (i, l) {
+            if (l.line_type === 'minimum') {
+                lines += '<tr class="table-warning"><td colspan="3">' + esc(l.dcp_name) + ' &ndash; ' + esc(l.location_name) + '</td>' +
+                         '<td class="text-end">&ndash;</td><td class="text-end">&ndash;</td><td class="text-end">&ndash;</td>' +
+                         '<td class="text-end fw-semibold">' + money(l.amount) + '</td></tr>';
+                return;
+            }
+            var base = Number(l.location_price) + Number(l.slot_price) + Number(l.hall_price);
+            var tip = 'Position x' + mx(l.multiplier_position) + ' | Targeting x' + mx(l.multiplier_targeting) + (l.targeting_level ? ' (' + l.targeting_level + ')' : '') +
+                      ' | Length x' + mx(l.multiplier_length) + ' | Season x' + mx(l.multiplier_season) + ' | Volume x' + mx(l.multiplier_volume) +
+                      (Number(l.multiplier_raw) > Number(l.multiplier) ? ' | capped from x' + mx(l.multiplier_raw) : '');
             lines += '<tr><td>' + esc(l.dcp_name) + '</td><td>' + esc(l.slot_name || '–') + '</td><td>' + esc(l.location_name) + '</td>' +
                      '<td class="text-end">' + Number(l.played).toLocaleString('en-US') + '</td>' +
-                     '<td class="text-end">' + money(l.location_price) + '</td>' +
-                     '<td class="text-end">' + money(l.slot_price) + '</td>' +
-                     '<td class="text-end">' + money(l.hall_price) + '</td>' +
+                     '<td class="text-end">' + money(base) + '</td>' +
+                     '<td class="text-end" title="' + esc(tip) + '">&times;' + mx(l.multiplier) + (Number(l.multiplier_raw) > Number(l.multiplier) ? ' <small class="text-warning">cap</small>' : '') + '</td>' +
+                     '<td class="text-end">' + money(l.unit_price != null ? l.unit_price : base) + '</td>' +
                      '<td class="text-end fw-semibold">' + money(l.amount) + '</td></tr>';
         });
-        html += card('Billing details <small class="text-muted fw-normal">(confirmed plays &times; (location + slot + hall types price))</small>',
+        html += card('Billing details <small class="text-muted fw-normal">(plays &times; base price &times; multipliers; hover a multiplier for its breakdown)</small>',
             '<table class="table table-sm mb-0 text-nowrap"><thead class="table-light"><tr>' +
-            '<th>Ad</th><th>Slot</th><th>Location</th><th class="text-end">Plays</th><th class="text-end">Location (RM)</th>' +
-            '<th class="text-end">Slot (RM)</th><th class="text-end">Halls (RM)</th><th class="text-end">Amount (RM)</th></tr></thead><tbody>' +
+            '<th>Ad</th><th>Slot</th><th>Location</th><th class="text-end">Plays</th><th class="text-end">Base (RM)</th>' +
+            '<th class="text-end">Multiplier</th><th class="text-end">Per play (RM)</th><th class="text-end">Amount (RM)</th></tr></thead><tbody>' +
             (lines || '<tr><td colspan="8" class="text-muted">No detail available for this invoice.</td></tr>') +
             '</tbody></table>', true);
 

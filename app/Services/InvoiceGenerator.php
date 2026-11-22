@@ -18,7 +18,13 @@ class InvoiceGenerator
      * Lignes de facturation d'une campagne, à partir des diffusions confirmées stockées
      * (compaign_playout_totals) :
      *
-     *   montant = played × (prix de la location + prix du slot de la pub + prix des types de salle ciblés)
+     *   prix de base  = prix de la location + prix du slot de la pub + prix des types de salle ciblés
+     *   prix unitaire = prix de base × position × ciblage × durée × saison × volume   (cumul plafonné)
+     *   montant       = played × prix unitaire
+     *
+     * Multiplicateurs (voir PricingRules) : position = slot ; ciblage, saison et volume = campagne ;
+     * durée = pub. Tous sont figés sur la ligne de facture. Ensuite, pour chaque cinéma ayant diffusé,
+     * une ligne « minimum » complète son total jusqu'au minimum par cinéma et par semaine.
      *
      * Un prix NULL sur la location ou le slot est remplacé par le prix par défaut de la config.
      * Types de salle : la somme des prix des types de salle ciblés par la campagne s'ajoute à chaque
@@ -54,7 +60,12 @@ class InvoiceGenerator
         $slots = Slot::withTrashed()->whereIn('id', $slotByDcp->values())->get()->keyBy('id');
         $dcps  = DcpCreative::withTrashed()->whereIn('id', $totals->pluck('dcp_creative_id')->unique())->get()->keyBy('id');
         $chains = \App\Models\CinemaChain::whereIn('id', $totals->pluck('cinema_chain_id')->unique())->get()->keyBy('id');
-        $defaultShare = (float) ($config->default_revenue_share_percent ?? 100);
+        $defaultShare = (float) ($config->default_revenue_share_percent ?? 60);
+
+        $rules = new PricingRules($config);
+        [$targetMult, $targetLevel] = $rules->targeting($compaign);
+        $seasonMult = $rules->season($compaign->start_date, $compaign->end_date);
+        $volumeMult = $rules->volume($rules->days($compaign));
 
         $halls     = $compaign->hallTypes()->get();
         $hallPrice = round($halls->sum(fn ($h) => (float) ($h->price ?? $defaultHall)), 2);
@@ -70,6 +81,14 @@ class InvoiceGenerator
             $locPrice  = round((float) ($location?->price ?? $defaultLoc), 2);
             $slotPrice = round((float) ($slot?->price ?? $defaultSlot), 2);
 
+            $seconds = (int) ($dcps[$t->dcp_creative_id]->duration ?? 0) ?: (int) $compaign->ad_duration;
+            $posMult = $rules->position($slot);
+            $lenMult = $rules->length($seconds);
+            [$rawMult, $mult] = $rules->combine($posMult, $targetMult, $lenMult, $seasonMult, $volumeMult);
+
+            // Prix unitaire arrondi au centime : le client peut refaire le calcul (plays × prix unitaire).
+            $unitPrice = round(($locPrice + $slotPrice + $hallPrice) * $mult, 2);
+
             $lines[] = [
                 'dcp_name'       => $dcps[$t->dcp_creative_id]->name ?? ('#' . $t->dcp_creative_id),
                 'slot_name'      => $slot?->name,
@@ -83,11 +102,82 @@ class InvoiceGenerator
                 'slot_price'     => $slotPrice,
                 'hall_price'     => $hallPrice,
                 'hall_types'     => $hallNames,
-                'amount'         => round($t->played * ($locPrice + $slotPrice + $hallPrice), 2),
+                'line_type'      => 'plays',
+                'unit_price'     => $unitPrice,
+                'multiplier'     => $mult,
+                'multiplier_raw' => $rawMult,
+                'multiplier_position'  => $posMult,
+                'multiplier_targeting' => $targetMult,
+                'multiplier_length'    => $lenMult,
+                'multiplier_season'    => $seasonMult,
+                'multiplier_volume'    => $volumeMult,
+                'targeting_level'      => $targetLevel,
+                'amount'         => round($t->played * $unitPrice, 2),
             ];
         }
 
-        return $lines;
+        return array_merge($lines, $this->minimumLines($compaign, $rules, $lines));
+    }
+
+    /**
+     * Minimum par cinéma et par semaine : pour chaque cinéma ayant au moins une diffusion confirmée,
+     * si le total de ses lignes est inférieur à (minimum × semaines de la campagne), une ligne de
+     * complément égale à l'écart est ajoutée. Minimum à 0 = désactivé.
+     *
+     * @param  array<int, array<string, mixed>>  $lines
+     * @return array<int, array<string, mixed>>
+     */
+    private function minimumLines(Compaign $compaign, PricingRules $rules, array $lines): array
+    {
+        $minimum = $rules->minimumPerOutletWeek();
+        if ($minimum <= 0 || !$lines) {
+            return [];
+        }
+
+        $weeks    = $rules->weeks($compaign);
+        $required = round($minimum * $weeks, 2);
+
+        $byOutlet = [];
+        foreach ($lines as $l) {
+            $key = $l['cinema_chain_id'] . '|' . $l['location_name'];
+            $byOutlet[$key] ??= ['total' => 0.0, 'line' => $l];
+            $byOutlet[$key]['total'] += $l['amount'];
+        }
+
+        $extra = [];
+        foreach ($byOutlet as $o) {
+            $shortfall = round($required - $o['total'], 2);
+            if ($shortfall <= 0) {
+                continue;
+            }
+            $l = $o['line'];
+            $extra[] = [
+                'dcp_name'       => sprintf('Minimum charge (RM %s x %d %s)', number_format($minimum, 2), $weeks, $weeks > 1 ? 'weeks' : 'week'),
+                'slot_name'      => null,
+                'cinema_chain'   => $l['cinema_chain'],
+                'cinema_chain_id' => $l['cinema_chain_id'],
+                'share_percent'  => $l['share_percent'],
+                'location_name'  => $l['location_name'],
+                'played'         => 0,
+                'location_price' => 0,
+                'slot_price'     => 0,
+                'hall_price'     => 0,
+                'hall_types'     => null,
+                'line_type'      => 'minimum',
+                'unit_price'     => null,
+                'multiplier'     => 1,
+                'multiplier_raw' => 1,
+                'multiplier_position'  => 1,
+                'multiplier_targeting' => 1,
+                'multiplier_length'    => 1,
+                'multiplier_season'    => 1,
+                'multiplier_volume'    => 1,
+                'targeting_level'      => null,
+                'amount'         => $shortfall,
+            ];
+        }
+
+        return $extra;
     }
 
     /**
@@ -105,7 +195,7 @@ class InvoiceGenerator
             $lines   = $this->lines($compaign);
             $totalHt = round(array_sum(array_column($lines, 'amount')), 2);
 
-            $tax      = (float) (Config::first()->tax ?? 6);
+            $tax      = (float) (Config::first()->tax ?? 8);
             $totalTtc = round($totalHt * (1 + $tax / 100), 2);
 
             // Numéro séquentiel par année ; le verrou évite deux numéros identiques.

@@ -64,6 +64,7 @@ class SlotController extends Controller
                 'slots.*.name'           => 'required_if:slots.*.type,ads|nullable|string|max:255',
                 'slots.*.max_duration'   => 'required_if:slots.*.type,ads|nullable|integer|min:1',
             'slots.*.price'          => 'nullable|numeric|min:0|max:999999.99',
+            'slots.*.position_tier'  => 'nullable|in:first,middle,premium',
                 'slots.*.segment_select' => 'required_if:slots.*.type,segment|nullable|string',
             ]);
 
@@ -83,6 +84,7 @@ class SlotController extends Controller
                     'max_duration'     => !$isSegment ? ($slotData['max_duration'] ?? 0) : 0,
                     'cpm'              => 0,
                     'price'            => !$isSegment ? (($slotData['price'] ?? '') !== '' ? $slotData['price'] : null) : null,
+                    'position_tier'    => !$isSegment ? ($slotData['position_tier'] ?? 'first') : null,
                     'max_ad_slot'      => !$isSegment ? ($slotData['max_ad_slot'] ?? 1) : 0,
                 ]);
 
@@ -114,6 +116,7 @@ class SlotController extends Controller
             'slots.*.name'           => 'required_if:slots.*.type,ads|nullable|string|max:255',
             'slots.*.max_duration'   => 'required_if:slots.*.type,ads|nullable|integer|min:1',
             'slots.*.price'          => 'nullable|numeric|min:0|max:999999.99',
+            'slots.*.position_tier'  => 'nullable|in:first,middle,premium',
             'slots.*.segment_select' => 'required_if:slots.*.type,segment|nullable|string',
         ]);
 
@@ -144,6 +147,7 @@ class SlotController extends Controller
                         'max_duration' => !$isSegment ? ($slotData['max_duration'] ?? 0) : 0,
                         'max_ad_slot'  => !$isSegment ? ($slotData['max_ad_slot'] ?? 1) : 0,
                         'price'        => !$isSegment ? (($slotData['price'] ?? '') !== '' ? $slotData['price'] : null) : null,
+                        'position_tier' => !$isSegment ? ($slotData['position_tier'] ?? 'first') : null,
                     ]);
 
                     $sentSlotIds[] = $slot->id;
@@ -168,6 +172,7 @@ class SlotController extends Controller
                     'max_duration'     => !$isSegment ? ($slotData['max_duration'] ?? 0) : 0,
                     'cpm'              => 0,
                     'price'            => !$isSegment ? (($slotData['price'] ?? '') !== '' ? $slotData['price'] : null) : null,
+                    'position_tier'    => !$isSegment ? ($slotData['position_tier'] ?? 'first') : null,
                     'max_ad_slot'      => !$isSegment ? ($slotData['max_ad_slot'] ?? 1) : 0,
                 ]);
 
